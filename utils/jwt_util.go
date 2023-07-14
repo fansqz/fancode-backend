@@ -17,6 +17,7 @@ type claims struct {
 	UserID   string `json:"userID"`
 	Phone    string `json:"phone"`
 	Email    string `json:"email"`
+	Role     int    `json:"role"`
 	jwt.StandardClaims
 }
 
@@ -36,6 +37,7 @@ func GenerateToken(user *models.User) (string, error) {
 		UserID:   user.UserID,
 		Phone:    user.Phone,
 		Email:    user.Email,
+		Role:     user.Role,
 		StandardClaims: jwt.StandardClaims{
 			//过期时间
 			ExpiresAt: expiredTime.Unix(),
@@ -69,6 +71,7 @@ func ParseToken(token string) (*models.User, error) {
 			user.UserID = claims.UserID
 			user.Phone = claims.Phone
 			user.Email = claims.Email
+			user.Role = claims.Role
 			return user, nil
 		}
 	}
