@@ -3,6 +3,7 @@ package FanCode
 import (
 	"FanCode/db"
 	"FanCode/models"
+	"FanCode/routers"
 	"FanCode/setting"
 	"fmt"
 	"os"
@@ -30,4 +31,6 @@ func main() {
 	db.DB.AutoMigrate(&models.User{})
 	defer db.CloseMysql()
 
+	//注册路由
+	routers.Run()
 }
