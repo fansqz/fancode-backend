@@ -20,20 +20,11 @@ type AppConfig struct {
 	ProUrl           string `ini:"proUrl"`
 	*MySqlConfig
 	*ReleasePathConfig
+	*StoreConfig
 }
 
 type ReleasePathConfig struct {
 	StartWith []string
-}
-
-// MySqlConfig
-// @Description: mysql相关配置
-type MySqlConfig struct {
-	User     string `ini:"user"`     //用户名
-	Password string `ini:"password"` //密码
-	DB       string `ini:"db"`       //要操作的数据库
-	Host     string `ini:"host"`     //host
-	Port     string `ini:"port"`     //端口
 }
 
 // Init
@@ -46,14 +37,19 @@ func Init(file string) error {
 	if err != nil {
 		return err
 	}
+
+	storeConfig := &StoreConfig{}
 	mysqlConfig := &MySqlConfig{}
+
 	cfg.MapTo(Conf)
 	cfg.Section("mysql").MapTo(mysqlConfig)
+	cfg.Section("store").MapTo(storeConfig)
 	//遍历releasePath
 	startPaths := strings.Split(Conf.ReleaseStartPath, ",")
 	releasePathConfig := &ReleasePathConfig{StartWith: startPaths}
 
 	Conf.MySqlConfig = mysqlConfig
 	Conf.ReleasePathConfig = releasePathConfig
+	Conf.StoreConfig = storeConfig
 	return nil
 }
