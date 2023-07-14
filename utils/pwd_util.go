@@ -11,6 +11,7 @@ func GetPwd(pwd string) ([]byte, error) {
 }
 
 // ComparePwd
+//
 //	@Description: 检验密码是否是否正确
 //	@param pwd1   原密码
 //	@param pwd2   加密以后密码
