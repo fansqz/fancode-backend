@@ -24,6 +24,9 @@ func Run() {
 	// 允许跨域
 	r.Use(interceptor.Cors())
 
+	// 拦截非法用户
+	r.Use(interceptor.TokenAuthorize())
+
 	//设置静态文件位置
 	r.Static("/static", "/")
 
