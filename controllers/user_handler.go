@@ -53,6 +53,7 @@ func (u *userController) Register(ctx *gin.Context) {
 		return
 	}
 	user := &models.User{}
+	user.UserID = userID
 	user.Password = string(newPassword)
 	user.Username = username
 	//插入
