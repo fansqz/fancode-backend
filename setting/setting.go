@@ -6,6 +6,7 @@ package setting
 
 import (
 	"gopkg.in/ini.v1"
+	"strings"
 )
 
 var Conf = new(AppConfig)
@@ -18,6 +19,11 @@ type AppConfig struct {
 	ReleaseStartPath string `ini:"releaseStartPath"`
 	ProUrl           string `ini:"proUrl"`
 	*MySqlConfig
+	*ReleasePathConfig
+}
+
+type ReleasePathConfig struct {
+	StartWith []string
 }
 
 // MySqlConfig
@@ -44,6 +50,10 @@ func Init(file string) error {
 	cfg.MapTo(Conf)
 	cfg.Section("mysql").MapTo(mysqlConfig)
 	//遍历releasePath
+	startPaths := strings.Split(Conf.ReleaseStartPath, ",")
+	releasePathConfig := &ReleasePathConfig{StartWith: startPaths}
+
 	Conf.MySqlConfig = mysqlConfig
+	Conf.ReleasePathConfig = releasePathConfig
 	return nil
 }
