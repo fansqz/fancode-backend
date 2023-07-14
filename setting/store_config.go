@@ -1,10 +1,18 @@
 package setting
 
+import "gopkg.in/ini.v1"
+
 // @Description:oss的配置
-type StoreConfig struct {
-	Type            string `ini:"type"`
-	EndPoint        string `ini:"endPoint"`
-	AccessKeyId     string `ini:"accessKeyId"`
-	AccessKeySecret string `ini:"accessKeySecret"`
-	BucketName      string `ini:"bucketName"`
+type COSConfig struct {
+	AppID      string `ini:"appID"`
+	Region     string `ini:"region"`
+	SecretID   string `ini:"secretKey"`
+	SecretKey  string `ini:"secretKey"`
+	BucketName string `ini:"bucketName"`
+}
+
+func NewCOSConfig(cfg *ini.File) *COSConfig {
+	cosConfig := &COSConfig{}
+	cfg.Section("cos").MapTo(cosConfig)
+	return cosConfig
 }

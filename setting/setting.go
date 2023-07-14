@@ -20,7 +20,7 @@ type AppConfig struct {
 	ProUrl           string `ini:"proUrl"`
 	*MySqlConfig
 	*ReleasePathConfig
-	*StoreConfig
+	*COSConfig
 }
 
 type ReleasePathConfig struct {
@@ -38,18 +38,13 @@ func Init(file string) error {
 		return err
 	}
 
-	storeConfig := &StoreConfig{}
-	mysqlConfig := &MySqlConfig{}
-
 	cfg.MapTo(Conf)
-	cfg.Section("mysql").MapTo(mysqlConfig)
-	cfg.Section("store").MapTo(storeConfig)
 	//遍历releasePath
 	startPaths := strings.Split(Conf.ReleaseStartPath, ",")
 	releasePathConfig := &ReleasePathConfig{StartWith: startPaths}
-
-	Conf.MySqlConfig = mysqlConfig
 	Conf.ReleasePathConfig = releasePathConfig
-	Conf.StoreConfig = storeConfig
+
+	Conf.MySqlConfig = NewMySqlConfig(cfg)
+	Conf.COSConfig = NewCOSConfig(cfg)
 	return nil
 }

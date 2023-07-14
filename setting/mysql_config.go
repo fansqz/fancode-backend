@@ -1,5 +1,7 @@
 package setting
 
+import "gopkg.in/ini.v1"
+
 // MySqlConfig
 // @Description: mysql相关配置
 type MySqlConfig struct {
@@ -8,4 +10,10 @@ type MySqlConfig struct {
 	DB       string `ini:"db"`       //要操作的数据库
 	Host     string `ini:"host"`     //host
 	Port     string `ini:"port"`     //端口
+}
+
+func NewMySqlConfig(cfg *ini.File) *MySqlConfig {
+	mysqlConfig := &MySqlConfig{}
+	cfg.Section("mysql").MapTo(mysqlConfig)
+	return mysqlConfig
 }
