@@ -6,7 +6,6 @@ package result
 
 // ResultCode
 // @Description: response code and message return to the frontend
-//
 type ResultCode struct {
 	code    int    //response code
 	message string //response message
