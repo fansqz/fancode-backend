@@ -1,4 +1,4 @@
-package FanCode
+package main
 
 import (
 	"FanCode/db"
