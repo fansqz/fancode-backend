@@ -36,5 +36,5 @@ func CheckUserID(userID string) bool {
 	row := db.DB.Model(&models.User{}).Select("user_id").Where("user_id = ?", userID)
 	user := &models.User{}
 	row.Scan(&user)
-	return user.Username != ""
+	return user.UserID != ""
 }
