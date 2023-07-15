@@ -4,13 +4,25 @@ import (
 	"FanCode/dao"
 	"FanCode/models"
 	r "FanCode/result"
-	"FanCode/utils"
+	"FanCode/store"
 	"github.com/gin-gonic/gin"
-	"log"
 	"strconv"
 )
 
-func (u *userController) InsertQuestion(ctx *gin.Context) {
+// QuestionController
+// @Description: 题目管理相关功能
+type QuestionController interface {
+	InsertQuestion(ctx *gin.Context)
+}
+
+type questionController struct {
+}
+
+func NewQuestionController() QuestionController {
+	return &questionController{}
+}
+
+func (q *questionController) InsertQuestion(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	questionNumber := ctx.PostForm("number")
 	questionName := ctx.PostForm("name")
@@ -34,7 +46,7 @@ func (u *userController) InsertQuestion(ctx *gin.Context) {
 
 }
 
-func (u *userController) UpdateQuestion(ctx *gin.Context) {
+func (q *questionController) UpdateQuestion(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	questionIDString := ctx.PostForm("id")
 	quesetionID, err := strconv.Atoi(questionIDString)
@@ -59,53 +71,22 @@ func (u *userController) UpdateQuestion(ctx *gin.Context) {
 	result.SuccessData("修改成功")
 }
 
-func (u *userController) DeleteQuestion(ctx *gin.Context) {
+func (q *questionController) DeleteQuestion(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	userNumber := ctx.PostForm("number")
-	oldPassword := ctx.PostForm("oldPassword")
-	newPassword := ctx.PostForm("newPassword")
-	if userNumber == "" {
-		result.SimpleErrorMessage("用户名不可为空")
+	ids := ctx.Param("id")
+	id, convertErr := strconv.Atoi(ids)
+	if convertErr != nil {
+		result.SimpleErrorMessage("id错误")
 		return
 	}
-	if oldPassword == "" {
-		result.SimpleErrorMessage("请输入原始密码")
-		return
-	}
-	//检验用户名
-	user, err := dao.GetUserByUserNumber(userNumber)
+	// 读取question
+	question, err := dao.GetQuestionByQuestionID(uint(id))
 	if err != nil {
-		log.Println(err)
-		result.SimpleErrorMessage("系统错误")
+		result.SimpleErrorMessage("不存在该题目")
 		return
 	}
-	if user == nil {
-		result.SimpleErrorMessage("用户不存在")
-		return
-	}
-	//检验旧密码
-	if !utils.ComparePwd(oldPassword, user.Password) {
-		result.SimpleErrorMessage("原始密码输入错误")
-		return
-	}
-	password, getPwdErr := utils.GetPwd(newPassword)
-	if getPwdErr != nil {
-		result.SimpleErrorMessage("系统错误")
-		log.Println(getPwdErr)
-		return
-	}
-	user.Password = string(password)
-	_ = dao.UpdateUser(user)
-	token, daoErr := utils.GenerateToken(user)
-	if daoErr != nil {
-		result.SimpleErrorMessage("登录失败")
-		return
-	}
-	result.SuccessData(token)
-}
-
-func (u *userController) GetUserInfo(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	user := ctx.Keys["user"].(*models.User)
-	result.SuccessData(user)
+	// 删除题目文件
+	s := store.NewCOS()
+	s.DeleteFolder(question.Path)
+	result.SuccessData("删除成功")
 }

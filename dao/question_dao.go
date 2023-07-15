@@ -22,6 +22,18 @@ func GetQuestionByQuestionNumber(questionNumber string) (*models.Question, error
 	return question, nil
 }
 
+// GetQuestionByQuestioinNumber
+func GetQuestionByQuestionID(questionID uint) (*models.Question, error) {
+	//写sql语句
+	sqlStr := `select id,name,number,description,title,path
+	from questions where id = ?`
+	//执行
+	row := db.DB.Raw(sqlStr, questionID)
+	question := &models.Question{}
+	row.Scan(&question)
+	return question, nil
+}
+
 // UpdateQuestion 更新题目
 func UpdateQuestion(question *models.Question) error {
 	sqlStr := "update `questions` set name = ?, number = ?, discriptioin = ?, title = ?, path = ? where id = ?"
