@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"github.com/tencentyun/cos-go-sdk-v5/debug"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -51,33 +53,52 @@ func (c *COS) LoadFile(storePath, localPath string) error {
 
 func (c *COS) LoadFolder(storePath, localPath string) error {
 	// 列出文件夹下的对象
-	objects, _, err := c.client.Bucket.Get(context.TODO(), &cos.BucketGetOptions{
-		Prefix:    storePath,
-		Delimiter: "/",
-	})
+	// 获取指定前缀下的文件列表
+	options := &cos.BucketGetOptions{
+		Prefix: storePath,
+	}
+	res, _, err := c.client.Bucket.Get(context.Background(), options)
 	if err != nil {
-		fmt.Println("Error:", err)
+		fmt.Println("Failed to get bucket:", err)
 		return err
 	}
 
-	for _, obj := range objects.Contents {
-		// 获取文件的名称
-		filename := obj.Key[strings.LastIndex(obj.Key, "/")+1:]
-		// 创建本地文件
-		file, err := os.Create(filename)
-		if err != nil {
-			fmt.Println("Error:", err)
-			return err
-		}
-		defer file.Close()
+	// 遍历文件列表并下载每个文件
+	for _, object := range res.Contents {
+		// 构建文件下载的本地路径
+		filePathInCos := object.Key
 
 		// 下载文件
-		_, err = c.client.Object.Get(context.TODO(), obj.Key, nil)
-		if err != nil {
-			fmt.Println("Error:", err)
-		} else {
-			fmt.Printf("Downloaded %s\n", filename)
+		resp, err1 := c.client.Object.Get(context.Background(), object.Key, nil)
+		if err1 != nil {
+			fmt.Println("Failed to download file:", err1)
+			return err1
 		}
+		defer resp.Body.Close()
+
+		// 读取文件内容
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Failed to read file:", err)
+			return err
+		}
+
+		// 创建文件夹
+		filePathInLocal := strings.Replace(filePathInCos, storePath, localPath, 1)
+		err = os.MkdirAll(filepath.Dir(filePathInLocal), 0755)
+		if err != nil {
+			fmt.Println("Failed to save file:", err)
+			return err
+		}
+
+		// 将文件内容写入本地文件
+		err = ioutil.WriteFile(filePathInLocal, data, 0644)
+		if err != nil {
+			fmt.Println("Failed to save file:", err)
+			return err
+		}
+
+		fmt.Println("File downloaded:", localPath)
 	}
 	return nil
 }
