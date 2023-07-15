@@ -19,6 +19,8 @@ type QuestionController interface {
 	InsertQuestion(ctx *gin.Context)
 	UpdateQuestion(ctx *gin.Context)
 	DeleteQuestion(ctx *gin.Context)
+	GetQuestionList(ctx *gin.Context)
+	UploadQuestionFile(ctx *gin.Context)
 }
 
 type questionController struct {
@@ -100,8 +102,8 @@ func (q *questionController) DeleteQuestion(ctx *gin.Context) {
 // 读取一个列表的题目
 func (q *questionController) GetQuestionList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageStr := ctx.Param("page")
-	pageSizeStr := ctx.Param("pageSize")
+	pageStr := ctx.Query("page")
+	pageSizeStr := ctx.Query("pageSize")
 	var page int
 	var pageSize int
 	var convertErr error
