@@ -6,17 +6,17 @@ import (
 )
 
 // InsertQestion 添加题库
-func Insert(question *models.Question) {
+func InsertQuestion(question *models.Question) {
 	db.DB.Create(question)
 }
 
 // GetQuestionByQuestioinNumber
-func GetQuestionByQuestionNumber(questionID string) (*models.Question, error) {
+func GetQuestionByQuestionNumber(questionNumber string) (*models.Question, error) {
 	//写sql语句
 	sqlStr := `select id,name,number,description,title,path
-	from questions where question_number = ?`
+	from questions where number = ?`
 	//执行
-	row := db.DB.Raw(sqlStr, questionID)
+	row := db.DB.Raw(sqlStr, questionNumber)
 	question := &models.Question{}
 	row.Scan(&question)
 	return question, nil

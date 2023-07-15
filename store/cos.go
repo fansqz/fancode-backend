@@ -127,3 +127,36 @@ func (c *COS) DeleteFolder(storePath string) error {
 	}
 	return nil
 }
+
+func (c *COS) UploadFolder(storePath string, localPath string) {
+
+	// 对每个文件进行上传
+	err := filepath.Walk(localPath, func(filePath string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("Failed to access file %q: %v\n", filePath, err)
+			return err
+		}
+
+		if !info.IsDir() {
+			dstPath, _ := filepath.Rel(localPath, filePath) // 计算文件相对路径，用于指定远程路径
+			key := filepath.ToSlash(dstPath)                // 将路径中的 \ 替换为 /
+
+			// 使用 PutObject 接口上传文件
+			_, err = c.client.Object.PutFromFile(context.Background(), storePath+"/"+key, filePath, nil)
+			if err != nil {
+				fmt.Printf("Failed to upload file %q: %v\n", filePath, err)
+				return err
+			}
+
+			fmt.Printf("Successfully uploaded file: %s\n", key)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		fmt.Println("Failed to upload folder:", err)
+	} else {
+		fmt.Println("Folder upload completed.")
+	}
+}

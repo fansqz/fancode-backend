@@ -44,3 +44,11 @@ func TestCOS_DeleteFolder(t *testing.T) {
 	store := NewCOS()
 	store.DeleteFolder("question1")
 }
+
+func TestCOS_UploadFolder(t *testing.T) {
+	InitConfig()
+	path, _ := os.Getwd()
+	path = strings.ReplaceAll(path, "\\", "/")
+	store := NewCOS()
+	store.UploadFolder("question", path+"/question")
+}
