@@ -4,8 +4,12 @@ import (
 	"FanCode/dao"
 	"FanCode/models"
 	r "FanCode/result"
+	"FanCode/setting"
 	"FanCode/store"
+	"FanCode/utils"
 	"github.com/gin-gonic/gin"
+	"os"
+	"path/filepath"
 	"strconv"
 )
 
@@ -106,6 +110,63 @@ func (q *questionController) GetQuestionList(ctx *gin.Context) {
 		result.SimpleErrorMessage("参数错误")
 	}
 	pageSize, convertErr = strconv.Atoi(pageSizeStr)
-	questions := dao.GetQuestionList(page, pageSize)
+	questions, err := dao.GetQuestionList(page, pageSize)
+	if err != nil {
+		result.SimpleErrorMessage("读取失败")
+	}
 	result.SuccessData(questions)
+}
+
+func (q *questionController) UploadQuestionFile(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	file, err := ctx.FormFile("questionFile")
+	if err != nil {
+		result.SimpleErrorMessage("文件上传失败")
+		return
+	}
+	filename := file.Filename
+	questionNumber := ctx.PostForm("questionNumber")
+	// 保存文件到本地
+	tempPath := setting.Conf.FilePathConfig.TempDir
+	tempPath = tempPath + "/" + utils.GetUUID()
+	err = ctx.SaveUploadedFile(file, tempPath)
+	if err != nil {
+		result.SimpleErrorMessage("文件存储失败")
+		return
+	}
+	//解压
+	err = utils.Extract(tempPath+"/"+filename, tempPath+"/"+questionNumber)
+	if err != nil {
+		result.SimpleErrorMessage("文件解压失败")
+		return
+	}
+	//检测文件内有一个文件夹，或者是多个文件
+	questionPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + questionNumber)
+	s := store.NewCOS()
+	s.DeleteFolder(questionNumber)
+	s.UploadFolder(questionNumber, questionPathInLocal)
+	// 存储到数据库
+	updateError := dao.UpdatePathByNumber(questionNumber, questionNumber)
+	if updateError != nil {
+		result.SimpleErrorMessage("题目数据标识存储到数据库失败")
+		return
+	}
+	//删除temp中所有文件
+	os.RemoveAll(tempPath)
+	result.SuccessData("题目文件上传成功")
+}
+
+// 如果文件夹内有且仅有一个文件夹，返回内部文件夹路径
+func getSingleDirectoryPath(path string) (string, error) {
+	dirEntries, err := os.ReadDir(path)
+	if err != nil {
+		return path, err
+	}
+
+	// 检查目录中文件和文件夹的数量
+	if len(dirEntries) != 1 || !dirEntries[0].IsDir() {
+		return path, nil
+	}
+
+	return filepath.Join(path, dirEntries[0].Name()), nil
 }
