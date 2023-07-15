@@ -50,3 +50,10 @@ func CheckQuestionNumber(questionNumber string) bool {
 	row.Scan(&question)
 	return question.Number != ""
 }
+
+func GetQuestionList(page int, pageSize int) []*models.Question {
+	offset := (page - 1) * pageSize
+	var questions []*models.Question
+	db.DB.Limit(pageSize).Offset(offset).Find(questions)
+	return questions
+}

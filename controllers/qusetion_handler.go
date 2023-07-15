@@ -13,6 +13,8 @@ import (
 // @Description: 题目管理相关功能
 type QuestionController interface {
 	InsertQuestion(ctx *gin.Context)
+	UpdateQuestion(ctx *gin.Context)
+	DeleteQuestion(ctx *gin.Context)
 }
 
 type questionController struct {
@@ -89,4 +91,21 @@ func (q *questionController) DeleteQuestion(ctx *gin.Context) {
 	s := store.NewCOS()
 	s.DeleteFolder(question.Path)
 	result.SuccessData("删除成功")
+}
+
+// 读取一个列表的题目
+func (q *questionController) GetQuestionList(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	pageStr := ctx.Param("page")
+	pageSizeStr := ctx.Param("pageSize")
+	var page int
+	var pageSize int
+	var convertErr error
+	page, convertErr = strconv.Atoi(pageStr)
+	if convertErr != nil {
+		result.SimpleErrorMessage("参数错误")
+	}
+	pageSize, convertErr = strconv.Atoi(pageSizeStr)
+	questions := dao.GetQuestionList(page, pageSize)
+	result.SuccessData(questions)
 }
