@@ -6,7 +6,7 @@ import "gopkg.in/ini.v1"
 type COSConfig struct {
 	AppID      string `ini:"appID"`
 	Region     string `ini:"region"`
-	SecretID   string `ini:"secretKey"`
+	SecretID   string `ini:"secretID"`
 	SecretKey  string `ini:"secretKey"`
 	BucketName string `ini:"bucketName"`
 }
