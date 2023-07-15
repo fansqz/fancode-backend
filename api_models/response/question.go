@@ -1,4 +1,4 @@
-package request
+package response
 
 import (
 	"FanCode/models"

@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"FanCode/api_models/request"
+	"FanCode/api_models/response"
 	"FanCode/dao"
 	"FanCode/models"
 	r "FanCode/result"
@@ -114,9 +114,9 @@ func (q *questionController) GetQuestionList(ctx *gin.Context) {
 	}
 	pageSize, convertErr = strconv.Atoi(pageSizeStr)
 	questions, err := dao.GetQuestionList(page, pageSize)
-	newQuestions := make([]*request.QuestionResponseForList, len(questions))
+	newQuestions := make([]*response.QuestionResponseForList, len(questions))
 	for i := 0; i < len(questions); i++ {
-		newQuestions[i] = request.NewQuestionResponseForList(questions[i])
+		newQuestions[i] = response.NewQuestionResponseForList(questions[i])
 	}
 	if err != nil {
 		result.SimpleErrorMessage("读取失败")
