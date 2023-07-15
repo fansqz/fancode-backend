@@ -102,3 +102,28 @@ func (c *COS) LoadFolder(storePath, localPath string) error {
 	}
 	return nil
 }
+
+func (c *COS) DeleteFolder(storePath string) error {
+	// 列出文件夹下的对象
+	// 获取指定前缀下的文件列表
+	options := &cos.BucketGetOptions{
+		Prefix: storePath,
+	}
+	res, _, err := c.client.Bucket.Get(context.Background(), options)
+	if err != nil {
+		fmt.Println("Failed to get bucket:", err)
+		return err
+	}
+	// 遍历文件列表并下载每个文件
+	for _, object := range res.Contents {
+		// 构建文件下载的本地路径
+		filePathInCos := object.Key
+
+		// 下载文件
+		_, deleteError := c.client.Object.Delete(context.Background(), filePathInCos, nil)
+		if deleteError != nil {
+			return deleteError
+		}
+	}
+	return nil
+}
