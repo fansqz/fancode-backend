@@ -136,7 +136,7 @@ func (q *questionController) UploadQuestionFile(ctx *gin.Context) {
 	// 保存文件到本地
 	tempPath := setting.Conf.FilePathConfig.TempDir
 	tempPath = tempPath + "/" + utils.GetUUID()
-	err = ctx.SaveUploadedFile(file, tempPath)
+	err = ctx.SaveUploadedFile(file, tempPath+"/"+filename)
 	if err != nil {
 		result.SimpleErrorMessage("文件存储失败")
 		return
