@@ -14,6 +14,6 @@ func SetupQuestionRoutes(r *gin.Engine) {
 		question.PUT("/update", questionController.UpdateQuestion)
 		question.DELETE("/delete/:id", questionController.DeleteQuestion)
 		question.GET("/list", questionController.GetQuestionList)
-		question.POST("/upload/question/file", questionController.UploadQuestionFile)
+		question.POST("/upload/file", questionController.UploadQuestionFile)
 	}
 }
