@@ -1,4 +1,4 @@
-package store
+package file_store
 
 import (
 	"strings"

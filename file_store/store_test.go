@@ -1,4 +1,4 @@
-package store
+package file_store
 
 import (
 	"FanCode/setting"
@@ -10,7 +10,7 @@ import (
 func InitConfig() {
 	path, _ := os.Getwd()
 	path = strings.ReplaceAll(path, "\\", "/")
-	path = strings.ReplaceAll(path, "store", "conf/config.ini")
+	path = strings.ReplaceAll(path, "file_store", "conf/config.ini")
 	setting.Init(path)
 }
 

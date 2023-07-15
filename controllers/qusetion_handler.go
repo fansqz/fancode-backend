@@ -4,9 +4,9 @@ import (
 	"FanCode/api_models/response"
 	r "FanCode/api_models/result"
 	"FanCode/dao"
+	"FanCode/file_store"
 	"FanCode/models"
 	"FanCode/setting"
-	"FanCode/store"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"os"
@@ -95,7 +95,7 @@ func (q *questionController) DeleteQuestion(ctx *gin.Context) {
 		return
 	}
 	// 删除题目文件
-	s := store.NewCOS()
+	s := file_store.NewCOS()
 	s.DeleteFolder(question.Path)
 	result.SuccessData("删除成功")
 }
@@ -149,7 +149,7 @@ func (q *questionController) UploadQuestionFile(ctx *gin.Context) {
 	}
 	//检测文件内有一个文件夹，或者是多个文件
 	questionPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + questionNumber)
-	s := store.NewCOS()
+	s := file_store.NewCOS()
 	s.DeleteFolder(questionNumber)
 	s.UploadFolder(questionNumber, questionPathInLocal)
 	// 存储到数据库
