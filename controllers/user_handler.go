@@ -31,14 +31,14 @@ func NewUserController() UserController {
 
 func (u *userController) Register(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	userID := ctx.PostForm("userID")
+	userNumber := ctx.PostForm("number")
 	username := ctx.PostForm("username")
 	password := ctx.PostForm("password")
 	if username == "" {
 		username = "fancoder"
 		return
 	}
-	if dao.CheckUserID(userID) {
+	if dao.CheckUserNumber(userNumber) {
 		result.SimpleErrorMessage("用户名称已存在")
 		return
 	}
@@ -53,7 +53,7 @@ func (u *userController) Register(ctx *gin.Context) {
 		return
 	}
 	user := &models.User{}
-	user.UserID = userID
+	user.Number = userNumber
 	user.Password = string(newPassword)
 	user.Username = username
 	//插入
@@ -70,9 +70,9 @@ func (u *userController) Register(ctx *gin.Context) {
 func (u *userController) Login(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	//获取并检验用户参数
-	userID := ctx.PostForm("userID")
+	userNumber := ctx.PostForm("number")
 	password := ctx.PostForm("password")
-	if userID == "" {
+	if userNumber == "" {
 		result.SimpleErrorMessage("用户ID不可为空")
 		return
 	}
@@ -80,7 +80,7 @@ func (u *userController) Login(ctx *gin.Context) {
 		result.SimpleErrorMessage("密码不可为空")
 		return
 	}
-	user, userErr := dao.GetUserByUserID(userID)
+	user, userErr := dao.GetUserByUserNumber(userNumber)
 	if userErr != nil {
 		result.SimpleErrorMessage("系统错误")
 		log.Println(userErr)
@@ -101,10 +101,10 @@ func (u *userController) Login(ctx *gin.Context) {
 
 func (u *userController) ChangePassword(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	userID := ctx.PostForm("userID")
+	userNumber := ctx.PostForm("number")
 	oldPassword := ctx.PostForm("oldPassword")
 	newPassword := ctx.PostForm("newPassword")
-	if userID == "" {
+	if userNumber == "" {
 		result.SimpleErrorMessage("用户名不可为空")
 		return
 	}
@@ -113,7 +113,7 @@ func (u *userController) ChangePassword(ctx *gin.Context) {
 		return
 	}
 	//检验用户名
-	user, err := dao.GetUserByUserID(userID)
+	user, err := dao.GetUserByUserNumber(userNumber)
 	if err != nil {
 		log.Println(err)
 		result.SimpleErrorMessage("系统错误")
