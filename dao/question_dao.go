@@ -54,7 +54,7 @@ func CheckQuestionNumber(questionNumber string) bool {
 func GetQuestionList(page int, pageSize int) ([]*models.Question, error) {
 	offset := (page - 1) * pageSize
 	var questions []*models.Question
-	err := db.DB.Limit(pageSize).Offset(offset).Find(questions).Error
+	err := db.DB.Limit(pageSize).Offset(offset).Find(&questions).Error
 	return questions, err
 }
 
