@@ -10,11 +10,11 @@ func InsertUser(user *models.User) {
 	db.DB.Create(user)
 }
 
-// GetUserByUserID
-func GetUserByUserID(userID string) (*models.User, error) {
+// GetUserByUserNumber
+func GetUserByUserNumber(userID string) (*models.User, error) {
 	//写sql语句
-	sqlStr := `select id,username,password,email,sex,phone,user_id,role 
-	from users where user_id = ?`
+	sqlStr := `select id,username,password,email,sex,phone,number,role 
+	from users where number = ?`
 	//执行
 	row := db.DB.Raw(sqlStr, userID)
 	user := &models.User{}
@@ -30,11 +30,11 @@ func UpdateUser(user *models.User) error {
 	return nil
 }
 
-// CheckUserID检测用户ID是否存在
-func CheckUserID(userID string) bool {
+// CheckUserNumber检测用户number是否存在
+func CheckUserNumber(userNumber string) bool {
 	//执行
-	row := db.DB.Model(&models.User{}).Select("user_id").Where("user_id = ?", userID)
+	row := db.DB.Model(&models.User{}).Select("user_number").Where("user_number = ?", userNumber)
 	user := &models.User{}
 	row.Scan(&user)
-	return user.UserID != ""
+	return user.Number != ""
 }
