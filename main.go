@@ -29,6 +29,7 @@ func main() {
 
 	// 模型绑定
 	db.DB.AutoMigrate(&models.User{})
+	db.DB.AutoMigrate(&models.Question{})
 	defer db.CloseMysql()
 
 	//注册路由
