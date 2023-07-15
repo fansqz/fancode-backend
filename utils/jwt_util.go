@@ -12,9 +12,9 @@ const (
 )
 
 type claims struct {
-	ID       int    `json:"id"`
+	ID       uint   `json:"id"`
 	Username string `json:"username"`
-	UserID   string `json:"userID"`
+	Number   string `json:"number"`
 	Phone    string `json:"phone"`
 	Email    string `json:"email"`
 	Role     int    `json:"role"`
@@ -34,7 +34,7 @@ func GenerateToken(user *models.User) (string, error) {
 	claims := claims{
 		ID:       user.ID,
 		Username: user.Username,
-		UserID:   user.UserID,
+		Number:   user.Number,
 		Phone:    user.Phone,
 		Email:    user.Email,
 		Role:     user.Role,
@@ -68,7 +68,7 @@ func ParseToken(token string) (*models.User, error) {
 			user := &models.User{}
 			user.ID = claims.ID
 			user.Username = claims.Username
-			user.UserID = claims.UserID
+			user.Number = claims.Number
 			user.Phone = claims.Phone
 			user.Email = claims.Email
 			user.Role = claims.Role
