@@ -14,7 +14,7 @@ func TestCOS_SaveFile(t *testing.T) {
 	setting.Init(path)
 	path, _ = os.Getwd()
 	path = strings.ReplaceAll(path, "\\", "/")
-	f := strings.NewReader(path + "/test.file")
+	f := strings.NewReader("文件内容")
 	store := NewCOS()
-	store.SaveFile("/question1/file.text", f)
+	store.SaveFile("/question1/file2.text", f)
 }
