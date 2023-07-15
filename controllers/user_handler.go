@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	r "FanCode/api_models/result"
 	"FanCode/dao"
 	"FanCode/models"
-	r "FanCode/result"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"log"

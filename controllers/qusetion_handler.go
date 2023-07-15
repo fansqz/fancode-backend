@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"FanCode/api_models/response"
+	r "FanCode/api_models/result"
 	"FanCode/dao"
 	"FanCode/models"
-	r "FanCode/result"
 	"FanCode/setting"
 	"FanCode/store"
 	"FanCode/utils"

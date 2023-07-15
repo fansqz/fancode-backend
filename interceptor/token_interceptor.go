@@ -1,7 +1,7 @@
 package interceptor
 
 import (
-	"FanCode/result"
+	result2 "FanCode/api_models/result"
 	"FanCode/setting"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
@@ -23,12 +23,12 @@ func TokenAuthorize() gin.HandlerFunc {
 			}
 		}
 		// 检验是否携带token
-		r := result.NewResult(c)
+		r := result2.NewResult(c)
 		token := c.Request.Header.Get("token")
 		user, err := utils.ParseToken(token)
 		if err != nil || user == nil {
-			r.Error(result.IDENTITY_INVALID.GetCode(),
-				result.IDENTITY_INVALID.GetMessage(), nil)
+			r.Error(result2.IDENTITY_INVALID.GetCode(),
+				result2.IDENTITY_INVALID.GetMessage(), nil)
 			return
 		}
 		if c.Keys == nil {
