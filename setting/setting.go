@@ -18,10 +18,10 @@ type AppConfig struct {
 	Port             string `ini:"port"`    //端口
 	ReleaseStartPath string `ini:"releaseStartPath"`
 	ProUrl           string `ini:"proUrl"`
-	FileDir          string `ini:"fileDir"`
 	*MySqlConfig
 	*ReleasePathConfig
 	*COSConfig
+	*FilePathConfig
 }
 
 type ReleasePathConfig struct {
@@ -47,5 +47,6 @@ func Init(file string) error {
 
 	Conf.MySqlConfig = NewMySqlConfig(cfg)
 	Conf.COSConfig = NewCOSConfig(cfg)
+	Conf.FilePathConfig = NewFilePathConfig(cfg)
 	return nil
 }
