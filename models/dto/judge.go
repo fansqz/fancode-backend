@@ -20,5 +20,6 @@ type ExecuteResultDto struct {
 	ProblemId    uint
 	Status       uint
 	ErrorMessage string
-	Timestamp    *time.Time
+
+	Timestamp *time.Time
 }
