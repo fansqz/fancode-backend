@@ -1,10 +1,52 @@
 package controllers
 
-import "github.com/gin-gonic/gin"
+import (
+	e "FanCode/error"
+	"FanCode/models/dto"
+	r "FanCode/models/vo"
+	"FanCode/service"
+	"github.com/gin-gonic/gin"
+	"strconv"
+)
 
 // JudgeController
 // @Description: 判题模块
 type JudgeController interface {
 	Execute(ctx *gin.Context)
 	Submit(ctx *gin.Context)
+}
+
+type judgeController struct {
+	judgeService service.JudgeService
+}
+
+func NewJudgeController() JudgeController {
+	return &judgeController{
+		judgeService: service.NewJudgeService(),
+	}
+}
+
+func (j *judgeController) Execute(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	questionIDStr := ctx.PostForm("questionID")
+	questionID, err := strconv.Atoi(questionIDStr)
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	judgeRequest := &dto.JudgingRequestDTO{
+		Code:       ctx.PostForm("code"),
+		QuestionID: uint(questionID),
+	}
+	// 读取题目id
+	response, err2 := j.judgeService.Execute(judgeRequest)
+	if err2 != nil {
+		result.Error(err2)
+	} else {
+		result.SuccessData(response)
+	}
+}
+
+func (j *judgeController) Submit(ctx *gin.Context) {
+
 }

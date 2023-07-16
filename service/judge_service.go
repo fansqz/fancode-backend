@@ -65,7 +65,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 	err = cmd.Run()
 	if err != nil {
 		return &dto.ExecuteResultDto{
-			ProblemId:    question.ID,
+			QuestionId:   question.ID,
 			Status:       CompileError,
 			ErrorMessage: err.Error(),
 			Timestamp:    nil,
@@ -78,7 +78,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 	}
 	i := 0
 	for _, fileInfo := range files {
-		if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".out") {
+		if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".in") {
 			i++
 			input, err3 := os.Open(localPath + "/" + fileInfo.Name())
 			if err3 != nil {
@@ -95,7 +95,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 				return nil, e.ErrExecuteFailed
 			}
 			// 读取.in文件
-			inFilePath := localPath + "/" + strings.ReplaceAll(fileInfo.Name(), ".out", ".in")
+			inFilePath := localPath + "/" + strings.ReplaceAll(fileInfo.Name(), ".in", ".out")
 			inFileContent, err4 := os.ReadFile(inFilePath)
 			if err4 != nil {
 				log.Println(err4)
@@ -106,10 +106,12 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 				continue
 			} else {
 				return &dto.ExecuteResultDto{
-					ProblemId:    question.ID,
-					Status:       AnswerError,
-					ErrorMessage: "",
-					Timestamp:    nil,
+					QuestionId:     question.ID,
+					Status:         AnswerError,
+					ErrorMessage:   "",
+					ExpectedOutput: string(inFileContent),
+					UserOutput:     string(cmd2.Stdout.(*bytes.Buffer).Bytes()),
+					Timestamp:      nil,
 				}, nil
 			}
 		}
@@ -118,7 +120,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 		}
 	}
 	return &dto.ExecuteResultDto{
-		ProblemId:    question.ID,
+		QuestionId:   question.ID,
 		Status:       ExecuteSuccess,
 		ErrorMessage: "",
 		Timestamp:    nil,

@@ -35,6 +35,7 @@ func Run() {
 
 	SetupUserRoutes(r)
 	SetupQuestionRoutes(r)
+	SetupJudgeRoutes(r)
 
 	err := r.Run(":" + setting.Conf.Port)
 	if err != nil {
