@@ -53,3 +53,16 @@ var (
 	ErrQuestionFileUploadFailed = NewError(CodeQuestionFileUploadFailed, "The question file storage failed", ErrTypeServer)
 	ErrQuestionNotExist         = NewError(CodeQuestionNotExist, "The question does not exist", ErrTypeBus)
 )
+
+/************judge错误**************/
+const (
+	CodeSubmitFailed = 12000 + iota //题目编号已存在
+	CodeExecuteFailed
+	CodeCompileFailed
+)
+
+var (
+	ErrSubmitFailed  = NewError(CodeSubmitFailed, "Submit error", ErrTypeBus)
+	ErrExecuteFailed = NewError(CodeExecuteFailed, "Execute error", ErrTypeServer)
+	ErrCompileFailed = NewError(CodeCompileFailed, "Compilation error", ErrTypeBus)
+)

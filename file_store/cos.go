@@ -14,11 +14,11 @@ import (
 	"strings"
 )
 
-type COS struct {
+type cosStore struct {
 	client *cos.Client
 }
 
-func NewCOS() *COS {
+func NewCOS() Store {
 	storeConfig := setting.Conf.COSConfig
 	u, _ := url.Parse(fmt.Sprintf("http://%s-%s.cos.%s.myqcloud.com",
 		storeConfig.BucketName, storeConfig.AppID, storeConfig.Region))
@@ -35,23 +35,23 @@ func NewCOS() *COS {
 			},
 		},
 	})
-	return &COS{
+	return &cosStore{
 		client: client,
 	}
 }
 
-func (c *COS) SaveFile(storePath string, file *strings.Reader) error {
+func (c *cosStore) SaveFile(storePath string, file *strings.Reader) error {
 	_, err := c.client.Object.Put(context.Background(), storePath, file, nil)
 	return err
 }
 
 // storePaht:对象存储的路劲，loadPath:本地路径
-func (c *COS) LoadFile(storePath, localPath string) error {
+func (c *cosStore) DownloadFile(storePath, localPath string) error {
 	_, err := c.client.Object.GetToFile(context.Background(), storePath, localPath, nil)
 	return err
 }
 
-func (c *COS) LoadFolder(storePath, localPath string) error {
+func (c *cosStore) DownloadFolder(storePath, localPath string) error {
 	// 列出文件夹下的对象
 	// 获取指定前缀下的文件列表
 	options := &cos.BucketGetOptions{
@@ -103,7 +103,7 @@ func (c *COS) LoadFolder(storePath, localPath string) error {
 	return nil
 }
 
-func (c *COS) DeleteFolder(storePath string) error {
+func (c *cosStore) DeleteFolder(storePath string) error {
 	// 列出文件夹下的对象
 	// 获取指定前缀下的文件列表
 	options := &cos.BucketGetOptions{
@@ -128,7 +128,7 @@ func (c *COS) DeleteFolder(storePath string) error {
 	return nil
 }
 
-func (c *COS) UploadFolder(storePath string, localPath string) {
+func (c *cosStore) UploadFolder(storePath string, localPath string) {
 
 	// 对每个文件进行上传
 	err := filepath.Walk(localPath, func(filePath string, info os.FileInfo, err error) error {

@@ -22,7 +22,7 @@ const (
 
 type Error struct {
 	Code     int
-	Message  string
+	Msg      string
 	HttpCode int
 }
 
@@ -30,7 +30,7 @@ type Error struct {
 func NewError(code int, msg string, httpCode int) *Error {
 	return &Error{
 		Code:     code,
-		Message:  msg,
+		Msg:      msg,
 		HttpCode: httpCode,
 	}
 }
@@ -39,7 +39,7 @@ func NewError(code int, msg string, httpCode int) *Error {
 func NewCustomMsg(msg string) *Error {
 	return &Error{
 		Code:     CodeCustomMsg,
-		Message:  msg,
+		Msg:      msg,
 		HttpCode: ErrTypeBus,
 	}
 }
@@ -48,7 +48,7 @@ func NewCustomMsg(msg string) *Error {
 func NewRecordNotFoundErr(msg string) *Error {
 	return &Error{
 		Code:     CodeRecordNotFound,
-		Message:  msg,
+		Msg:      msg,
 		HttpCode: ErrTypeBus,
 	}
 }
@@ -57,7 +57,7 @@ func NewRecordNotFoundErr(msg string) *Error {
 func NewParamErr(msg string) *Error {
 	return &Error{
 		Code:     CodeBadRequest,
-		Message:  msg,
+		Msg:      msg,
 		HttpCode: ErrTypeBadReq,
 	}
 }

@@ -28,7 +28,7 @@ func TestCOS_LoadFile(t *testing.T) {
 	store := NewCOS()
 	path, _ := os.Getwd()
 	path = strings.ReplaceAll(path, "\\", "/")
-	store.LoadFile("question1/file.text", path+"/file.text")
+	store.DownloadFile("question1/file.text", path+"/file.text")
 }
 
 func TestCOS_LoadFolder(t *testing.T) {
@@ -36,7 +36,7 @@ func TestCOS_LoadFolder(t *testing.T) {
 	store := NewCOS()
 	path, _ := os.Getwd()
 	path = strings.ReplaceAll(path, "\\", "/")
-	store.LoadFolder("question1", path+"/question1")
+	store.DownloadFolder("question1", path+"/question1")
 }
 
 func TestCOS_DeleteFolder(t *testing.T) {
