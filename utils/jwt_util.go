@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"FanCode/models"
+	"FanCode/models/po"
 	"github.com/dgrijalva/jwt-go"
 	"time"
 )
@@ -28,7 +28,7 @@ type claims struct {
 //	@param user    用户
 //	@return string 生成的token
 //	@return error
-func GenerateToken(user *models.User) (string, error) {
+func GenerateToken(user *po.User) (string, error) {
 	nowTime := time.Now()
 	expiredTime := nowTime.Add(expiredTime)
 	claims := claims{
@@ -57,7 +57,7 @@ func GenerateToken(user *models.User) (string, error) {
 //	@Description: 解析token，返回user
 //	@param token
 //	@return user
-func ParseToken(token string) (*models.User, error) {
+func ParseToken(token string) (*po.User, error) {
 	//获取到token对象
 	tokenClaims, err := jwt.ParseWithClaims(token, &claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(key), nil
@@ -65,7 +65,7 @@ func ParseToken(token string) (*models.User, error) {
 	//通过断言获取到claim
 	if tokenClaims != nil {
 		if claims, ok := tokenClaims.Claims.(*claims); ok && tokenClaims.Valid {
-			user := &models.User{}
+			user := &po.User{}
 			user.ID = claims.ID
 			user.Username = claims.Username
 			user.Number = claims.Number

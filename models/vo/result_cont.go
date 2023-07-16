@@ -1,4 +1,4 @@
-package result
+package vo
 
 // ResultCont
 // @Description: unified response format

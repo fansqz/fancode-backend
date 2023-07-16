@@ -1,4 +1,4 @@
-package models
+package po
 
 import "github.com/jinzhu/gorm"
 

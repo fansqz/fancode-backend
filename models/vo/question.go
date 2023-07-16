@@ -1,7 +1,7 @@
-package response
+package vo
 
 import (
-	"FanCode/models"
+	"FanCode/models/po"
 	"time"
 )
 
@@ -17,7 +17,7 @@ type QuestionResponseForList struct {
 	Path        string     `json:"path"`
 }
 
-func NewQuestionResponseForList(question *models.Question) *QuestionResponseForList {
+func NewQuestionResponseForList(question *po.Question) *QuestionResponseForList {
 	response := &QuestionResponseForList{
 		ID:          question.ID,
 		CreatedAt:   question.CreatedAt,

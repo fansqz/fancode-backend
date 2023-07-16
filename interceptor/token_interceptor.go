@@ -1,8 +1,8 @@
 package interceptor
 
 import (
-	result2 "FanCode/api_models/result"
 	e "FanCode/error"
+	result2 "FanCode/models/vo"
 	"FanCode/setting"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"

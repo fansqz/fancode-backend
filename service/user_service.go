@@ -3,7 +3,7 @@ package service
 import (
 	"FanCode/dao"
 	e "FanCode/error"
-	"FanCode/models"
+	"FanCode/models/po"
 	"FanCode/utils"
 	"log"
 )
@@ -12,7 +12,7 @@ type UserService interface {
 	// Login 用户登录
 	Login(userNumber string, password string) (string, *e.Error)
 	// Register 注册
-	Register(user *models.User) *e.Error
+	Register(user *po.User) *e.Error
 	// ChangePassword 改密码
 	ChangePassword(userNumber, oldPassword, newPassword string) *e.Error
 }
@@ -24,7 +24,7 @@ func NewUserService() UserService {
 	return &userService{}
 }
 
-func (u *userService) Register(user *models.User) *e.Error {
+func (u *userService) Register(user *po.User) *e.Error {
 	if user.Username == "" {
 		user.Username = "fancoder"
 		return nil

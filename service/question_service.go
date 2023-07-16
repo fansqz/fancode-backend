@@ -1,11 +1,11 @@
 package service
 
 import (
-	"FanCode/api_models/response"
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/file_store"
-	"FanCode/models"
+	"FanCode/models/po"
+	"FanCode/models/vo"
 	"FanCode/setting"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
@@ -16,10 +16,10 @@ import (
 )
 
 type QuestionService interface {
-	InsertQuestion(question *models.Question) *e.Error
-	UpdateQuestion(question *models.Question) *e.Error
+	InsertQuestion(question *po.Question) *e.Error
+	UpdateQuestion(question *po.Question) *e.Error
 	DeleteQuestion(id uint) *e.Error
-	GetQuestionList(page int, pageSize int) ([]*response.QuestionResponseForList, *e.Error)
+	GetQuestionList(page int, pageSize int) ([]*vo.QuestionResponseForList, *e.Error)
 	UploadQuestionFile(ctx *gin.Context, file *multipart.FileHeader, questionNumber string) *e.Error
 }
 
@@ -30,7 +30,7 @@ func NewQuestionService() QuestionService {
 	return &questionService{}
 }
 
-func (q *questionService) InsertQuestion(question *models.Question) *e.Error {
+func (q *questionService) InsertQuestion(question *po.Question) *e.Error {
 	if dao.CheckQuestionNumber(question.Number) {
 		return e.ErrQuestionNumberIsExist
 	}
@@ -39,7 +39,7 @@ func (q *questionService) InsertQuestion(question *models.Question) *e.Error {
 	return nil
 }
 
-func (q *questionService) UpdateQuestion(question *models.Question) *e.Error {
+func (q *questionService) UpdateQuestion(question *po.Question) *e.Error {
 	err := dao.UpdateQuestion(question)
 	if err != nil {
 		log.Println(err)
@@ -73,15 +73,15 @@ func (q *questionService) DeleteQuestion(id uint) *e.Error {
 }
 
 // 读取一个列表的题目
-func (q *questionService) GetQuestionList(page int, pageSize int) ([]*response.QuestionResponseForList, *e.Error) {
+func (q *questionService) GetQuestionList(page int, pageSize int) ([]*vo.QuestionResponseForList, *e.Error) {
 
 	questions, err := dao.GetQuestionList(page, pageSize)
 	if err != nil {
 		return nil, e.ErrQuestionListFailed
 	}
-	newQuestions := make([]*response.QuestionResponseForList, len(questions))
+	newQuestions := make([]*vo.QuestionResponseForList, len(questions))
 	for i := 0; i < len(questions); i++ {
-		newQuestions[i] = response.NewQuestionResponseForList(questions[i])
+		newQuestions[i] = vo.NewQuestionResponseForList(questions[i])
 	}
 	return newQuestions, nil
 }

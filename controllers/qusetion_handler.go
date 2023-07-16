@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	r "FanCode/api_models/result"
 	e "FanCode/error"
-	"FanCode/models"
+	"FanCode/models/po"
+	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
 	"strconv"
@@ -31,7 +31,7 @@ func NewQuestionController() QuestionController {
 
 func (q *questionController) InsertQuestion(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	question := &models.Question{}
+	question := &po.Question{}
 	question.Number = ctx.PostForm("number")
 	question.Name = ctx.PostForm("name")
 	question.Description = ctx.PostForm("description")
@@ -54,7 +54,7 @@ func (q *questionController) UpdateQuestion(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	question := &models.Question{}
+	question := &po.Question{}
 	question.ID = uint(quesetionID)
 	question.Number = ctx.PostForm("number")
 	question.Name = ctx.PostForm("name")

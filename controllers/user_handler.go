@@ -1,9 +1,9 @@
 package controllers
 
 import (
-	r "FanCode/api_models/result"
 	e "FanCode/error"
-	"FanCode/models"
+	"FanCode/models/po"
+	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +33,7 @@ func NewUserController() UserController {
 
 func (u *userController) Register(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	user := &models.User{}
+	user := &po.User{}
 	user.Number = ctx.PostForm("number")
 	user.Password = ctx.PostForm("password")
 	user.Username = ctx.PostForm("username")
@@ -81,6 +81,6 @@ func (u *userController) ChangePassword(ctx *gin.Context) {
 
 func (u *userController) GetUserInfo(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	user := ctx.Keys["user"].(*models.User)
+	user := ctx.Keys["user"].(*po.User)
 	result.SuccessData(user)
 }

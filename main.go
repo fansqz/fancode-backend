@@ -2,7 +2,7 @@ package main
 
 import (
 	"FanCode/db"
-	"FanCode/models"
+	"FanCode/models/po"
 	"FanCode/routers"
 	"FanCode/setting"
 	"fmt"
@@ -28,8 +28,8 @@ func main() {
 	}
 
 	// 模型绑定
-	db.DB.AutoMigrate(&models.User{})
-	db.DB.AutoMigrate(&models.Question{})
+	db.DB.AutoMigrate(&po.User{})
+	db.DB.AutoMigrate(&po.Question{})
 	defer db.CloseMysql()
 
 	//注册路由

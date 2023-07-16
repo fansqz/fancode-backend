@@ -2,7 +2,7 @@
 // @Author: fzw
 // @Create: 2023/7/14
 // @Description: 用做统一结果返回的
-package result
+package vo
 
 import (
 	e "FanCode/error"
