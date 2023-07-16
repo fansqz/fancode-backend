@@ -2,6 +2,7 @@ package interceptor
 
 import (
 	result2 "FanCode/api_models/result"
+	e "FanCode/error"
 	"FanCode/setting"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
@@ -27,8 +28,7 @@ func TokenAuthorize() gin.HandlerFunc {
 		token := c.Request.Header.Get("token")
 		user, err := utils.ParseToken(token)
 		if err != nil || user == nil {
-			r.Error(result2.IDENTITY_INVALID.GetCode(),
-				result2.IDENTITY_INVALID.GetMessage(), nil)
+			r.Error(e.ErrSessionInvalid)
 			return
 		}
 		if c.Keys == nil {

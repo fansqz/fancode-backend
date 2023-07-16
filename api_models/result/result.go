@@ -5,6 +5,7 @@
 package result
 
 import (
+	e "FanCode/error"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -28,15 +29,19 @@ func (r *result) SuccessData(data interface{}) {
 	if data == nil {
 		data = gin.H{}
 	}
-	res := Success()
-	res.Data = data
+	res := &ResultCont{
+		Code:    200,
+		Message: "request success",
+		Data:    data,
+	}
 	r.ctx.JSON(http.StatusOK, res)
 }
 
 func (r *result) SuccessMessage(message string) {
 	res := &ResultCont{
-		Code:    OK.GetCode(),
+		Code:    200,
 		Message: message,
+		Data:    nil,
 	}
 	r.ctx.JSON(http.StatusOK, res)
 }
@@ -46,26 +51,23 @@ func (r *result) Success(message string, data interface{}) {
 		data = gin.H{}
 	}
 	res := &ResultCont{
-		Code:    OK.GetCode(),
+		Code:    200,
 		Message: message,
 		Data:    data,
 	}
 	r.ctx.JSON(http.StatusOK, res)
 }
 
-// Error1
-//
-//	@Description: 返回错误的消息
-//	@receiver r
-func (r *result) ErrorMessage(code int, message string) {
+// 返回异常信息
+func (r *result) Error(e *e.Error) {
 	res := &ResultCont{
-		Code:    code,
-		Message: message,
+		Code:    e.Code,
+		Message: e.Message,
 	}
-	r.ctx.JSON(http.StatusOK, res)
+	r.ctx.JSON(e.HttpCode, res)
 }
 
-func (r *result) Error(code int, message string, data interface{}) {
+func (r *result) SimpleError(code int, message string, data interface{}) {
 	res := &ResultCont{
 		Code:    code,
 		Message: message,
@@ -76,7 +78,7 @@ func (r *result) Error(code int, message string, data interface{}) {
 
 func (r *result) SimpleErrorMessage(message string) {
 	res := &ResultCont{
-		Code:    CUSTOM_SIMPLE_ERROR_MESSAGE.code,
+		Code:    400,
 		Message: message,
 	}
 	r.ctx.JSON(http.StatusOK, res)
