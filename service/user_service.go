@@ -60,7 +60,7 @@ func (u *userService) Login(userNumber string, password string) (string, *e.Erro
 		return "", e.ErrUserUnknownError
 	}
 	if user == nil || user.Number == "" {
-		return "", e.ErrUserNotFound
+		return "", e.ErrUserNotExist
 	}
 	if user == nil || !utils.ComparePwd(user.Password, password) {
 		return "", e.ErrUserNameOrPasswordWrong
@@ -81,7 +81,7 @@ func (u *userService) ChangePassword(userNumber, oldPassword, newPassword string
 		return e.ErrUserUnknownError
 	}
 	if user == nil || user.Number == "" {
-		return e.ErrUserNotFound
+		return e.ErrUserNotExist
 	}
 	//检验旧密码
 	if !utils.ComparePwd(oldPassword, user.Password) {

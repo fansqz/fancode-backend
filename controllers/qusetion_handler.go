@@ -1,16 +1,11 @@
 package controllers
 
 import (
-	"FanCode/api_models/response"
 	r "FanCode/api_models/result"
-	"FanCode/dao"
-	"FanCode/file_store"
+	e "FanCode/error"
 	"FanCode/models"
-	"FanCode/setting"
-	"FanCode/utils"
+	"FanCode/service"
 	"github.com/gin-gonic/gin"
-	"os"
-	"path/filepath"
 	"strconv"
 )
 
@@ -25,34 +20,30 @@ type QuestionController interface {
 }
 
 type questionController struct {
+	questionService service.QuestionService
 }
 
 func NewQuestionController() QuestionController {
-	return &questionController{}
+	return &questionController{
+		questionService: service.NewQuestionService(),
+	}
 }
 
 func (q *questionController) InsertQuestion(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	questionNumber := ctx.PostForm("number")
-	questionName := ctx.PostForm("name")
-	description := ctx.PostForm("description")
-	title := ctx.PostForm("title")
-	path := ctx.PostForm("path")
-	if dao.CheckQuestionNumber(questionNumber) {
-		result.SimpleErrorMessage("题目编号已存在")
+	question := &models.Question{}
+	question.Number = ctx.PostForm("number")
+	question.Name = ctx.PostForm("name")
+	question.Description = ctx.PostForm("description")
+	question.Title = ctx.PostForm("title")
+	question.Path = ctx.PostForm("path")
+	//插入
+	err := q.questionService.InsertQuestion(question)
+	if err != nil {
+		result.Error(err)
 		return
 	}
-	question := &models.Question{}
-	question.Number = questionNumber
-	question.Name = questionName
-	question.Description = description
-	question.Title = title
-	question.Path = path
-	//插入
-	dao.InsertQuestion(question)
-
 	result.SuccessMessage("题库添加成功")
-
 }
 
 func (q *questionController) UpdateQuestion(ctx *gin.Context) {
@@ -60,23 +51,22 @@ func (q *questionController) UpdateQuestion(ctx *gin.Context) {
 	questionIDString := ctx.PostForm("id")
 	quesetionID, err := strconv.Atoi(questionIDString)
 	if err != nil {
-		result.SimpleErrorMessage("题目id出错")
+		result.Error(e.ErrBadRequest)
+		return
 	}
-	questionNumber := ctx.PostForm("number")
-	questionName := ctx.PostForm("name")
-	description := ctx.PostForm("description")
-	title := ctx.PostForm("title")
-	path := ctx.PostForm("path")
-
 	question := &models.Question{}
 	question.ID = uint(quesetionID)
-	question.Number = questionNumber
-	question.Name = questionName
-	question.Description = description
-	question.Title = title
-	question.Path = path
+	question.Number = ctx.PostForm("number")
+	question.Name = ctx.PostForm("name")
+	question.Description = ctx.PostForm("description")
+	question.Title = ctx.PostForm("title")
+	question.Path = ctx.PostForm("path")
 
-	dao.UpdateQuestion(question)
+	err2 := q.questionService.InsertQuestion(question)
+	if err != nil {
+		result.Error(err2)
+		return
+	}
 	result.SuccessData("修改成功")
 }
 
@@ -85,18 +75,14 @@ func (q *questionController) DeleteQuestion(ctx *gin.Context) {
 	ids := ctx.Param("id")
 	id, convertErr := strconv.Atoi(ids)
 	if convertErr != nil {
-		result.SimpleErrorMessage("id错误")
+		result.Error(e.ErrBadRequest)
 		return
 	}
-	// 读取question
-	question, err := dao.GetQuestionByQuestionID(uint(id))
-	if err != nil {
-		result.SimpleErrorMessage("不存在该题目")
+	err2 := q.questionService.DeleteQuestion(uint(id))
+	if err2 != nil {
+		result.Error(err2)
 		return
 	}
-	// 删除题目文件
-	s := file_store.NewCOS()
-	s.DeleteFolder(question.Path)
 	result.SuccessData("删除成功")
 }
 
@@ -110,70 +96,35 @@ func (q *questionController) GetQuestionList(ctx *gin.Context) {
 	var convertErr error
 	page, convertErr = strconv.Atoi(pageStr)
 	if convertErr != nil {
-		result.SimpleErrorMessage("参数错误")
+		result.Error(e.ErrBadRequest)
+		return
 	}
 	pageSize, convertErr = strconv.Atoi(pageSizeStr)
-	questions, err := dao.GetQuestionList(page, pageSize)
-	newQuestions := make([]*response.QuestionResponseForList, len(questions))
-	for i := 0; i < len(questions); i++ {
-		newQuestions[i] = response.NewQuestionResponseForList(questions[i])
+	if convertErr != nil {
+		result.Error(e.ErrBadRequest)
+		return
 	}
+	questions, err := q.questionService.GetQuestionList(page, pageSize)
 	if err != nil {
-		result.SimpleErrorMessage("读取失败")
+		result.Error(err)
+		return
 	}
-	result.SuccessData(newQuestions)
+	result.SuccessData(questions)
 }
 
 func (q *questionController) UploadQuestionFile(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	file, err := ctx.FormFile("questionFile")
 	if err != nil {
-		result.SimpleErrorMessage("文件上传失败")
+		result.Error(e.ErrBadRequest)
 		return
 	}
-	filename := file.Filename
 	questionNumber := ctx.PostForm("questionNumber")
 	// 保存文件到本地
-	tempPath := setting.Conf.FilePathConfig.TempDir
-	tempPath = tempPath + "/" + utils.GetUUID()
-	err = ctx.SaveUploadedFile(file, tempPath+"/"+filename)
-	if err != nil {
-		result.SimpleErrorMessage("文件存储失败")
+	uploadErr := q.questionService.UploadQuestionFile(ctx, file, questionNumber)
+	if uploadErr != nil {
+		result.Error(uploadErr)
 		return
 	}
-	//解压
-	err = utils.Extract(tempPath+"/"+filename, tempPath+"/"+questionNumber)
-	if err != nil {
-		result.SimpleErrorMessage("文件解压失败")
-		return
-	}
-	//检测文件内有一个文件夹，或者是多个文件
-	questionPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + questionNumber)
-	s := file_store.NewCOS()
-	s.DeleteFolder(questionNumber)
-	s.UploadFolder(questionNumber, questionPathInLocal)
-	// 存储到数据库
-	updateError := dao.UpdatePathByNumber(questionNumber, questionNumber)
-	if updateError != nil {
-		result.SimpleErrorMessage("题目数据标识存储到数据库失败")
-		return
-	}
-	//删除temp中所有文件
-	os.RemoveAll(tempPath)
 	result.SuccessData("题目文件上传成功")
-}
-
-// 如果文件夹内有且仅有一个文件夹，返回内部文件夹路径
-func getSingleDirectoryPath(path string) (string, error) {
-	dirEntries, err := os.ReadDir(path)
-	if err != nil {
-		return path, err
-	}
-
-	// 检查目录中文件和文件夹的数量
-	if len(dirEntries) != 1 || !dirEntries[0].IsDir() {
-		return path, nil
-	}
-
-	return filepath.Join(path, dirEntries[0].Name()), nil
 }

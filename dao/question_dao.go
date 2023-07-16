@@ -64,3 +64,7 @@ func UpdatePathByNumber(path string, questionNumber string) error {
 	err := db.DB.Exec(sqlStr, path, questionNumber).Error
 	return err
 }
+
+func DeleteQuestionByID(id uint) error {
+	return db.DB.Delete(&models.Question{}, id).Error
+}
