@@ -114,12 +114,12 @@ func (q *problemController) GetProblemList(ctx *gin.Context) {
 
 func (q *problemController) UploadProblemFile(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	file, err := ctx.FormFile("ProblemFile")
+	file, err := ctx.FormFile("problemFile")
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	ProblemNumber := ctx.PostForm("ProblemNumber")
+	ProblemNumber := ctx.PostForm("problemNumber")
 	// 保存文件到本地
 	uploadErr := q.ProblemService.UploadProblemFile(ctx, file, ProblemNumber)
 	if uploadErr != nil {
