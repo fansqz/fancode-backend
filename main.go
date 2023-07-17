@@ -29,7 +29,8 @@ func main() {
 
 	// 模型绑定
 	db.DB.AutoMigrate(&po.User{})
-	db.DB.AutoMigrate(&po.Question{})
+	db.DB.AutoMigrate(&po.Problem{})
+	db.DB.AutoMigrate(&po.Submission{})
 	defer db.CloseMysql()
 
 	//注册路由
