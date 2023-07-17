@@ -6,11 +6,11 @@ import (
 )
 
 type Submission struct {
-	gorm.DB
-	UserID         uint
-	QuestionID     uint
-	Code           string
-	SubmissionTime *time.Time
-	Status         int
-	ErrorMessage   string
+	gorm.Model
+	UserID       uint       `gorm:"column:user_id"`
+	ProblemID    uint       `gorm:"column:problem_id"`
+	Code         string     `gorm:"column:code"`
+	SubmitTime   *time.Time `gorm:"column:submit_time"`
+	Status       int        `gorm:"column:status"`
+	ErrorMessage string     `gorm:"column:error_message"`
 }

@@ -37,9 +37,9 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 	uuid := utils.GetUUID()
 	// 提交结果对象
 	submission := &po.Submission{
-		Code:       judgeRequest.Code,
-		QuestionID: judgeRequest.ProblemID,
-		UserID:     ctx.Keys["user"].(*po.User).ID,
+		Code:      judgeRequest.Code,
+		ProblemID: judgeRequest.ProblemID,
+		UserID:    ctx.Keys["user"].(*po.User).ID,
 	}
 	//读取题目到本地，并编译
 	problem, err := dao.GetProblemByProblemID(judgeRequest.ProblemID)
