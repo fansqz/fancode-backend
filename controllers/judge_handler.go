@@ -48,5 +48,22 @@ func (j *judgeController) Execute(ctx *gin.Context) {
 }
 
 func (j *judgeController) Submit(ctx *gin.Context) {
-
+	result := r.NewResult(ctx)
+	problemIDStr := ctx.PostForm("problemID")
+	problemID, err := strconv.Atoi(problemIDStr)
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	judgeRequest := &dto.JudgingRequestDTO{
+		Code:      ctx.PostForm("code"),
+		ProblemID: uint(problemID),
+	}
+	// 读取题目id
+	response, err2 := j.judgeService.Submit(ctx, judgeRequest)
+	if err2 != nil {
+		result.Error(err2)
+	} else {
+		result.SuccessData(response)
+	}
 }

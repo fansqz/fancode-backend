@@ -6,10 +6,12 @@ import (
 	e "FanCode/error"
 	"FanCode/file_store"
 	"FanCode/models/dto"
+	"FanCode/models/po"
 	"FanCode/setting"
 	"FanCode/utils"
 	"bytes"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"log"
 	"os"
 	"os/exec"
@@ -19,7 +21,7 @@ import (
 
 type JudgeService interface {
 	// 答案提交
-	Submit(judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitResultDTO, *e.Error)
+	Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitResultDTO, *e.Error)
 	// 执行
 	Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.ExecuteResultDto, *e.Error)
 }
@@ -31,8 +33,14 @@ func NewJudgeService() JudgeService {
 	return &judgeService{}
 }
 
-func (j *judgeService) Submit(judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitResultDTO, *e.Error) {
+func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitResultDTO, *e.Error) {
 	uuid := utils.GetUUID()
+	// 提交结果对象
+	submission := &po.Submission{
+		Code:       judgeRequest.Code,
+		QuestionID: judgeRequest.ProblemID,
+		UserID:     ctx.Keys["user"].(*po.User).ID,
+	}
 	//读取题目到本地，并编译
 	problem, err := dao.GetProblemByProblemID(judgeRequest.ProblemID)
 	if err != nil {
@@ -70,6 +78,9 @@ func (j *judgeService) Submit(judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitR
 		localPath+"/main.c", executePath+"/code.c")
 	err = cmd.Run()
 	if err != nil {
+		submission.Status = constants.CompileError
+		submission.ErrorMessage = err.Error()
+		_ = dao.InsertSubmission(submission)
 		return &dto.SubmitResultDTO{
 			ProblemID:    problem.ID,
 			Status:       constants.CompileError,
@@ -80,7 +91,15 @@ func (j *judgeService) Submit(judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitR
 	// 运行
 	files, err2 := os.ReadDir(localPath)
 	if err2 != nil {
-		return nil, e.ErrExecuteFailed
+		submission.Status = constants.RuntimeError
+		submission.ErrorMessage = err2.Error()
+		_ = dao.InsertSubmission(submission)
+		return &dto.SubmitResultDTO{
+			ProblemID:    problem.ID,
+			Status:       constants.RuntimeError,
+			ErrorMessage: err2.Error(),
+			Timestamp:    nil,
+		}, nil
 	}
 	i := 0
 	for _, fileInfo := range files {
@@ -111,6 +130,8 @@ func (j *judgeService) Submit(judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitR
 			if bytes.Equal(cmd2.Stdout.(*bytes.Buffer).Bytes(), outFileContent) {
 				continue
 			} else {
+				submission.Status = constants.WrongAnswer
+				_ = dao.InsertSubmission(submission)
 				return &dto.SubmitResultDTO{
 					ProblemID:      problem.ID,
 					Status:         constants.WrongAnswer,
@@ -123,10 +144,9 @@ func (j *judgeService) Submit(judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitR
 			// 释放buffer
 			cmd2.Stdout.(*bytes.Buffer).Reset()
 		}
-		if i > 3 {
-			break
-		}
 	}
+	submission.Status = constants.Accepted
+	_ = dao.InsertSubmission(submission)
 	return &dto.SubmitResultDTO{
 		ProblemID:    problem.ID,
 		Status:       constants.Accepted,

@@ -34,7 +34,7 @@ func Run() {
 	r.GET("/ping", controllers.Ping)
 
 	SetupUserRoutes(r)
-	SetupQuestionRoutes(r)
+	SetupProblemRoutes(r)
 	SetupJudgeRoutes(r)
 
 	err := r.Run(":" + setting.Conf.Port)
