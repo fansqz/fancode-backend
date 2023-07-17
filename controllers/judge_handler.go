@@ -28,15 +28,15 @@ func NewJudgeController() JudgeController {
 
 func (j *judgeController) Execute(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	questionIDStr := ctx.PostForm("questionID")
-	questionID, err := strconv.Atoi(questionIDStr)
+	problemIDStr := ctx.PostForm("problemID")
+	problemID, err := strconv.Atoi(problemIDStr)
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
 	judgeRequest := &dto.JudgingRequestDTO{
-		Code:       ctx.PostForm("code"),
-		QuestionID: uint(questionID),
+		Code:      ctx.PostForm("code"),
+		ProblemID: uint(problemID),
 	}
 	// 读取题目id
 	response, err2 := j.judgeService.Execute(judgeRequest)

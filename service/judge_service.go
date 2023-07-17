@@ -113,7 +113,7 @@ func (j *judgeService) Submit(judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitR
 			} else {
 				return &dto.SubmitResultDTO{
 					ProblemID:      problem.ID,
-					Status:         constants.AnswerError,
+					Status:         constants.WrongAnswer,
 					ErrorMessage:   "",
 					ExpectedOutput: string(outFileContent),
 					UserOutput:     string(cmd2.Stdout.(*bytes.Buffer).Bytes()),
@@ -129,7 +129,7 @@ func (j *judgeService) Submit(judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitR
 	}
 	return &dto.SubmitResultDTO{
 		ProblemID:    problem.ID,
-		Status:       constants.ExecuteSuccess,
+		Status:       constants.Accepted,
 		ErrorMessage: "",
 		Timestamp:    nil,
 	}, nil
@@ -217,7 +217,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 			} else {
 				return &dto.ExecuteResultDto{
 					ProblemID:      problem.ID,
-					Status:         constants.AnswerError,
+					Status:         constants.WrongAnswer,
 					ErrorMessage:   "",
 					ExpectedOutput: string(outFileContent),
 					UserOutput:     string(cmd2.Stdout.(*bytes.Buffer).Bytes()),
@@ -233,7 +233,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 	}
 	return &dto.ExecuteResultDto{
 		ProblemID:    problem.ID,
-		Status:       constants.ExecuteSuccess,
+		Status:       constants.Accepted,
 		ErrorMessage: "",
 		Timestamp:    nil,
 	}, nil

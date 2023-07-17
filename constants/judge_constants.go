@@ -1,14 +1,11 @@
 package constants
 
 const (
-	// 结果出错
-	AnswerError = 500
+	Accepted = 200 + iota
+	WrongAnswer
+	TimeLimitExceeded
 	// 编译出错
-	CompileError = 600
+	CompileError
 	// 运行出错
-	RuntimeError = 700
-
-	SubmitSuccess = 800
-
-	ExecuteSuccess = 900
+	RuntimeError
 )
