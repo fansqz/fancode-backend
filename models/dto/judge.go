@@ -4,12 +4,12 @@ import "time"
 
 // 判题请请求需要的
 type JudgingRequestDTO struct {
-	QuestionID uint
-	Code       string
+	ProblemID uint
+	Code      string
 }
 
 type SubmitResultDTO struct {
-	QuestionID     uint
+	ProblemID      uint
 	Status         uint
 	ErrorMessage   string
 	ExpectedOutput string //预期输出
@@ -18,7 +18,7 @@ type SubmitResultDTO struct {
 }
 
 type ExecuteResultDto struct {
-	QuestionId     uint       `json:"question_id"`
+	ProblemID      uint       `json:"question_id"`
 	Status         uint       `json:"status"`
 	ErrorMessage   string     `json:"errorMessage"`
 	ExpectedOutput string     `json:"expectedOutput"` //预期输出

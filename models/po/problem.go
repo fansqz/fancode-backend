@@ -2,8 +2,8 @@ package po
 
 import "github.com/jinzhu/gorm"
 
-// question 结构
-type Question struct {
+// problem 结构
+type Problem struct {
 	gorm.Model
 	Name        string `gorm:"column:name" json:"name"`
 	Number      string `gorm:"column:number" json:"number"`

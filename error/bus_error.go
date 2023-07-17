@@ -37,21 +37,21 @@ var (
 
 /************Question错误**************/
 const (
-	CodeQuestionNumberIsExist = 11500 + iota //题目编号已存在
-	CodeQuestionUpdateFailed
-	CodeQuestionDeleteFailed
-	CodeQuestionListFailed
-	CodeQuestionNotExist
-	CodeQuestionFileUploadFailed
+	CodeProblemNumberIsExist = 11500 + iota //题目编号已存在
+	CodeProblemUpdateFailed
+	CodeProblemDeleteFailed
+	CodeProblemListFailed
+	CodeProblemNotExist
+	CodeProblemFileUploadFailed
 )
 
 var (
-	ErrQuestionNumberIsExist    = NewError(CodeQuestionNumberIsExist, "question number is exist", ErrTypeBus)
-	ErrQuestionUpdateFailed     = NewError(CodeQuestionUpdateFailed, "The question update failed", ErrTypeServer)
-	ErrQuestionDeleteFailed     = NewError(CodeQuestionDeleteFailed, "The question delete failed", ErrTypeServer)
-	ErrQuestionListFailed       = NewError(CodeQuestionListFailed, "Failed to get the question list", ErrTypeServer)
-	ErrQuestionFileUploadFailed = NewError(CodeQuestionFileUploadFailed, "The question file storage failed", ErrTypeServer)
-	ErrQuestionNotExist         = NewError(CodeQuestionNotExist, "The question does not exist", ErrTypeBus)
+	ErrProblemNumberIsExist    = NewError(CodeProblemNumberIsExist, "problem number is exist", ErrTypeBus)
+	ErrProblemUpdateFailed     = NewError(CodeProblemUpdateFailed, "The problem update failed", ErrTypeServer)
+	ErrProblemDeleteFailed     = NewError(CodeProblemDeleteFailed, "The problem delete failed", ErrTypeServer)
+	ErrProblemListFailed       = NewError(CodeProblemListFailed, "Failed to get the problem list", ErrTypeServer)
+	ErrProblemFileUploadFailed = NewError(CodeProblemFileUploadFailed, "The problem file storage failed", ErrTypeServer)
+	ErrProblemNotExist         = NewError(CodeProblemNotExist, "The problem does not exist", ErrTypeBus)
 )
 
 /************judge错误**************/

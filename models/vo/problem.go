@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type QuestionResponseForList struct {
+type ProblemResponseForList struct {
 	ID          uint       `json:"id"`
 	CreatedAt   time.Time  `json:"createdAt"`
 	UpdatedAt   time.Time  `json:"updatedAt"`
@@ -17,8 +17,8 @@ type QuestionResponseForList struct {
 	Path        string     `json:"path"`
 }
 
-func NewQuestionResponseForList(question *po.Question) *QuestionResponseForList {
-	response := &QuestionResponseForList{
+func NewProblemResponseForList(question *po.Problem) *ProblemResponseForList {
+	response := &ProblemResponseForList{
 		ID:          question.ID,
 		CreatedAt:   question.CreatedAt,
 		UpdatedAt:   question.UpdatedAt,

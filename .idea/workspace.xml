@@ -5,9 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/constants/language_constants.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/po/submission.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/judge_constants.go" beforeDir="false" afterPath="$PROJECT_DIR$/constants/judge_constants.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/judge_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/judge_service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -194,17 +193,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/service/judge_service.go</url>
-          <line>61</line>
-          <option name="timeStamp" value="46" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/service/judge_service.go</url>
-          <line>101</line>
-          <option name="timeStamp" value="48" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/service/judge_service.go</url>
-          <line>40</line>
+          <line>137</line>
           <option name="timeStamp" value="49" />
         </line-breakpoint>
       </breakpoints>
