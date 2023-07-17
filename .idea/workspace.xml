@@ -5,9 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/routers/judge_router.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/controllers/judge_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/judge_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/dto/judge.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/dto/judge.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/constants/language_constants.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/judge_constants.go" beforeDir="false" afterPath="$PROJECT_DIR$/constants/judge_constants.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/judge_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/judge_service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -29,31 +29,34 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectId" id="2SYOx8kN3zFXqXxsYAXb98wkfOB" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultGoTemplateProperty": "Go File",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.go.migrated.go.modules.settings": "true",
-    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "go.import.settings.migrated": "true",
-    "last_opened_file_path": "D:/MyProcedure/go/FanCode/error",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "settings.editor.selected.configurable": "preferences.keymap"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/MyProcedure/go/FanCode&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;go.vgo&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\MyProcedure\go\FanCode\error" />
@@ -63,17 +66,32 @@
       <recent name="D:\MyProcedure\go\FanCode\routers" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\MyProcedure\go\FanCode\constants" />
       <recent name="D:\MyProcedure\go\FanCode" />
       <recent name="D:\MyProcedure\go\FanCode\service" />
       <recent name="D:\MyProcedure\go\FanCode\models\vo" />
       <recent name="D:\MyProcedure\go\FanCode\models\po" />
-      <recent name="D:\MyProcedure\go\FanCode\utils" />
     </key>
   </component>
   <component name="RunManager" selected="Go Build.go build FanCode">
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="FanCode" />
+      <working_directory value="$PROJECT_DIR$" />
+      <envs>
+        <env name="PATH" value="C:/MinGW/bin" />
+      </envs>
+      <kind value="PACKAGE" />
+      <package value="FanCode" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
     <configuration name="go build FanCode" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
       <module name="FanCode" />
       <working_directory value="$PROJECT_DIR$" />
+      <envs>
+        <env name="PATH" value="C:/MinGW/bin" />
+      </envs>
       <kind value="PACKAGE" />
       <package value="FanCode" />
       <directory value="$PROJECT_DIR$" />
@@ -128,6 +146,15 @@
       <pattern value="^\QTestCOS_UploadFolder\E$" />
       <method v="2" />
     </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="FanCode" />
+      <working_directory value="$PROJECT_DIR$" />
+      <kind value="DIRECTORY" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
     <list>
       <item itemvalue="Go Build.go build FanCode" />
       <item itemvalue="Go Test.TestCOS_DeleteFolder in FanCode/store" />
@@ -150,6 +177,11 @@
     <option name="version" value="3" />
   </component>
   <component name="VgoProject">
+    <environment>
+      <map>
+        <entry key="gcc" value="C:\MinGW\bin" />
+      </map>
+    </environment>
     <settings-migrated>true</settings-migrated>
   </component>
   <component name="XDebuggerManager">
@@ -160,7 +192,27 @@
           <line>17</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/service/judge_service.go</url>
+          <line>61</line>
+          <option name="timeStamp" value="46" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/service/judge_service.go</url>
+          <line>101</line>
+          <option name="timeStamp" value="48" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/service/judge_service.go</url>
+          <line>40</line>
+          <option name="timeStamp" value="49" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="GoApplicationRunConfiguration">
+        <watch expression="executePath" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>

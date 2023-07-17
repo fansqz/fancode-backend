@@ -1,4 +1,4 @@
-package service
+package constants
 
 const (
 	// 结果出错

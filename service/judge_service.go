@@ -1,6 +1,7 @@
 package service
 
 import (
+	"FanCode/constants"
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/file_store"
@@ -12,6 +13,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -54,19 +56,30 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
-	err = os.WriteFile(executePath+"/user_code.c", []byte(judgeRequest.Code), 0644)
+	// 保存code文件
+	localPath := setting.Conf.FilePathConfig.QuestionFileDir + "/" + question.Path
+	var code []byte
+	code, err = os.ReadFile(localPath + "/code")
+	if err != nil {
+		log.Println(err)
+		return nil, e.ErrExecuteFailed
+	}
+	re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
+	code = re.ReplaceAll(code, []byte(judgeRequest.Code))
+	// 使用空格替换所有非单词字符
+	err = os.WriteFile(executePath+"/code.c", code, 0644)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
 	// 执行编译
-	localPath := setting.Conf.FilePathConfig.QuestionFileDir + "/" + question.Path
-	cmd := exec.Command("gcc", "-o", executePath+"/main", localPath+"/main.c", executePath+"/user_code.c")
+	cmd := exec.Command("gcc", "-o", executePath+"/main",
+		localPath+"/main.c", executePath+"/code.c")
 	err = cmd.Run()
 	if err != nil {
 		return &dto.ExecuteResultDto{
 			QuestionId:   question.ID,
-			Status:       CompileError,
+			Status:       constants.CompileError,
 			ErrorMessage: err.Error(),
 			Timestamp:    nil,
 		}, nil
@@ -94,26 +107,28 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 				log.Println(err)
 				return nil, e.ErrExecuteFailed
 			}
-			// 读取.in文件
-			inFilePath := localPath + "/" + strings.ReplaceAll(fileInfo.Name(), ".in", ".out")
-			inFileContent, err4 := os.ReadFile(inFilePath)
+			// 读取.out文件
+			outFilePath := localPath + "/" + strings.ReplaceAll(fileInfo.Name(), ".in", ".out")
+			outFileContent, err4 := os.ReadFile(outFilePath)
 			if err4 != nil {
 				log.Println(err4)
 				return nil, e.ErrExecuteFailed
 			}
-			// 将输出结果与.in文件对比
-			if bytes.Equal(cmd2.Stdout.(*bytes.Buffer).Bytes(), inFileContent) {
+			// 将输出结果与.out文件对比
+			if bytes.Equal(cmd2.Stdout.(*bytes.Buffer).Bytes(), outFileContent) {
 				continue
 			} else {
 				return &dto.ExecuteResultDto{
 					QuestionId:     question.ID,
-					Status:         AnswerError,
+					Status:         constants.AnswerError,
 					ErrorMessage:   "",
-					ExpectedOutput: string(inFileContent),
+					ExpectedOutput: string(outFileContent),
 					UserOutput:     string(cmd2.Stdout.(*bytes.Buffer).Bytes()),
 					Timestamp:      nil,
 				}, nil
 			}
+			// 释放buffer
+			cmd2.Stdout.(*bytes.Buffer).Reset()
 		}
 		if i > 3 {
 			break
@@ -121,7 +136,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 	}
 	return &dto.ExecuteResultDto{
 		QuestionId:   question.ID,
-		Status:       ExecuteSuccess,
+		Status:       constants.ExecuteSuccess,
 		ErrorMessage: "",
 		Timestamp:    nil,
 	}, nil
@@ -130,9 +145,14 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 func checkAndDownloadQuestionFile(questionPath string) error {
 	localPath := setting.Conf.FilePathConfig.QuestionFileDir + "/" + questionPath
 	if !checkFolderExists(localPath) {
-		//拉取文件
+		// 拉取文件
 		store := file_store.NewCOS()
 		err := store.DownloadFolder(questionPath, localPath)
+		if err != nil {
+			return err
+		}
+		// 将code.c改为code
+		err = os.Rename(localPath+"/code.c", localPath+"/code")
 		if err != nil {
 			return err
 		}
