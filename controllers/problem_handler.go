@@ -16,6 +16,7 @@ type ProblemController interface {
 	UpdateProblem(ctx *gin.Context)
 	DeleteProblem(ctx *gin.Context)
 	GetProblemList(ctx *gin.Context)
+	GetProblemByID(ctx *gin.Context)
 	UploadProblemFile(ctx *gin.Context)
 }
 
@@ -110,6 +111,22 @@ func (q *problemController) GetProblemList(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData(Problems)
+}
+
+func (q *problemController) GetProblemByID(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	ids := ctx.Param("id")
+	id, convertErr := strconv.Atoi(ids)
+	if convertErr != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	problem, err2 := q.ProblemService.GetProblemByID(uint(id))
+	if err2 != nil {
+		result.Error(err2)
+		return
+	}
+	result.SuccessData(problem)
 }
 
 func (q *problemController) UploadProblemFile(ctx *gin.Context) {

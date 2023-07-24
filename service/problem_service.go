@@ -4,8 +4,8 @@ import (
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/file_store"
+	"FanCode/models/dto"
 	"FanCode/models/po"
-	"FanCode/models/vo"
 	"FanCode/setting"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
@@ -16,10 +16,11 @@ import (
 )
 
 type ProblemService interface {
+	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
 	InsertProblem(Problem *po.Problem) *e.Error
 	UpdateProblem(Problem *po.Problem) *e.Error
 	DeleteProblem(id uint) *e.Error
-	GetProblemList(page int, pageSize int) ([]*vo.ProblemResponseForList, *e.Error)
+	GetProblemList(page int, pageSize int) ([]*dto.ProblemDtoForList, *e.Error)
 	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemNumber string) *e.Error
 }
 
@@ -28,6 +29,15 @@ type problemService struct {
 
 func NewProblemService() ProblemService {
 	return &problemService{}
+}
+
+func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error) {
+	problem, err := dao.GetProblemByProblemID(id)
+	if err != nil {
+		log.Println(err)
+		return nil, e.ErrProblemGetFailed
+	}
+	return dto.NewProblemDtoForGet(problem), nil
 }
 
 func (q *problemService) InsertProblem(Problem *po.Problem) *e.Error {
@@ -73,15 +83,15 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 }
 
 // 读取一个列表的题目
-func (q *problemService) GetProblemList(page int, pageSize int) ([]*vo.ProblemResponseForList, *e.Error) {
+func (q *problemService) GetProblemList(page int, pageSize int) ([]*dto.ProblemDtoForList, *e.Error) {
 
 	Problems, err := dao.GetProblemList(page, pageSize)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
-	newProblems := make([]*vo.ProblemResponseForList, len(Problems))
+	newProblems := make([]*dto.ProblemDtoForList, len(Problems))
 	for i := 0; i < len(Problems); i++ {
-		newProblems[i] = vo.NewProblemResponseForList(Problems[i])
+		newProblems[i] = dto.NewProblemDtoForList(Problems[i])
 	}
 	return newProblems, nil
 }

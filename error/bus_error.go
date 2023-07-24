@@ -38,6 +38,7 @@ var (
 /************Question错误**************/
 const (
 	CodeProblemNumberIsExist = 11500 + iota //题目编号已存在
+	CodeProblemGetFailed
 	CodeProblemUpdateFailed
 	CodeProblemDeleteFailed
 	CodeProblemListFailed
@@ -47,6 +48,7 @@ const (
 
 var (
 	ErrProblemNumberIsExist    = NewError(CodeProblemNumberIsExist, "problem number is exist", ErrTypeBus)
+	ErrProblemGetFailed        = NewError(CodeProblemGetFailed, "The problem get failed", ErrTypeServer)
 	ErrProblemUpdateFailed     = NewError(CodeProblemUpdateFailed, "The problem update failed", ErrTypeServer)
 	ErrProblemDeleteFailed     = NewError(CodeProblemDeleteFailed, "The problem delete failed", ErrTypeServer)
 	ErrProblemListFailed       = NewError(CodeProblemListFailed, "Failed to get the problem list", ErrTypeServer)
