@@ -5,7 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/models/dto/pageInfo.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controllers/problem_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/problem_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dao/problem_dao.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/problem_dao.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/dto/problem.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/dto/problem.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routers/problem_router.go" beforeDir="false" afterPath="$PROJECT_DIR$/routers/problem_router.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/problem_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/problem_service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -184,11 +190,6 @@
           <url>file://$PROJECT_DIR$/dao/user_dao.go</url>
           <line>17</line>
           <option name="timeStamp" value="50" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/controllers/user_handler.go</url>
-          <line>82</line>
-          <option name="timeStamp" value="51" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

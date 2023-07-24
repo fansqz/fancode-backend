@@ -13,7 +13,7 @@ func SetupProblemRoutes(r *gin.Engine) {
 		problem.POST("/insert", problemController.InsertProblem)
 		problem.PUT("/update", problemController.UpdateProblem)
 		problem.DELETE("/delete/:id", problemController.DeleteProblem)
-		problem.GET("/list", problemController.GetProblemList)
+		problem.GET("/list/:page/:pageSize", problemController.GetProblemList)
 		problem.POST("/upload/file", problemController.UploadProblemFile)
 	}
 }

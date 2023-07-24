@@ -20,7 +20,7 @@ type ProblemService interface {
 	InsertProblem(Problem *po.Problem) *e.Error
 	UpdateProblem(Problem *po.Problem) *e.Error
 	DeleteProblem(id uint) *e.Error
-	GetProblemList(page int, pageSize int) ([]*dto.ProblemDtoForList, *e.Error)
+	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
 	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemNumber string) *e.Error
 }
 
@@ -83,17 +83,28 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 }
 
 // 读取一个列表的题目
-func (q *problemService) GetProblemList(page int, pageSize int) ([]*dto.ProblemDtoForList, *e.Error) {
-
-	Problems, err := dao.GetProblemList(page, pageSize)
+func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error) {
+	// 获取题目列表
+	problems, err := dao.GetProblemList(page, pageSize)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
-	newProblems := make([]*dto.ProblemDtoForList, len(Problems))
-	for i := 0; i < len(Problems); i++ {
-		newProblems[i] = dto.NewProblemDtoForList(Problems[i])
+	newProblems := make([]*dto.ProblemDtoForList, len(problems))
+	for i := 0; i < len(problems); i++ {
+		newProblems[i] = dto.NewProblemDtoForList(problems[i])
 	}
-	return newProblems, nil
+	// 获取所有题目总数目
+	var count uint
+	count, err = dao.GetProblemCount()
+	if err != nil {
+		return nil, e.ErrProblemListFailed
+	}
+	pageInfo := &dto.PageInfo{
+		Total: count,
+		Size:  uint(len(problems)),
+		List:  problems,
+	}
+	return pageInfo, nil
 }
 
 func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemNumber string) *e.Error {

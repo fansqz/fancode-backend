@@ -90,8 +90,8 @@ func (q *problemController) DeleteProblem(ctx *gin.Context) {
 // 读取一个列表的题目
 func (q *problemController) GetProblemList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageStr := ctx.Query("page")
-	pageSizeStr := ctx.Query("pageSize")
+	pageStr := ctx.Param("page")
+	pageSizeStr := ctx.Param("pageSize")
 	var page int
 	var pageSize int
 	var convertErr error
@@ -105,12 +105,12 @@ func (q *problemController) GetProblemList(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	Problems, err := q.ProblemService.GetProblemList(page, pageSize)
+	pageInfo, err := q.ProblemService.GetProblemList(page, pageSize)
 	if err != nil {
 		result.Error(err)
 		return
 	}
-	result.SuccessData(Problems)
+	result.SuccessData(pageInfo)
 }
 
 func (q *problemController) GetProblemByID(ctx *gin.Context) {

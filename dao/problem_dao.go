@@ -68,3 +68,9 @@ func UpdatePathByNumber(path string, problemNumber string) error {
 func DeleteProblemByID(id uint) error {
 	return db.DB.Delete(&po.Problem{}, id).Error
 }
+
+func GetProblemCount() (uint, error) {
+	var count uint
+	err := db.DB.Model(&po.Problem{}).Count(&count).Error
+	return count, err
+}
