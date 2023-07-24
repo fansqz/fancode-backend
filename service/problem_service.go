@@ -101,8 +101,8 @@ func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, 
 	}
 	pageInfo := &dto.PageInfo{
 		Total: count,
-		Size:  uint(len(problems)),
-		List:  problems,
+		Size:  uint(len(newProblems)),
+		List:  newProblems,
 	}
 	return pageInfo, nil
 }

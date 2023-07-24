@@ -2,7 +2,7 @@ package dto
 
 import (
 	"FanCode/models/po"
-	"time"
+	"FanCode/utils"
 )
 
 // 获取题目详细信息
@@ -29,20 +29,20 @@ func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
 
 // 获取题目列表
 type ProblemDtoForList struct {
-	ID        uint      `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-	Name      string    `json:"name"`
-	Number    string    `json:"number"`
-	Title     string    `json:"title"`
-	Path      string    `json:"path"`
+	ID        uint       `json:"id"`
+	CreatedAt utils.Time `json:"createdAt"`
+	UpdatedAt utils.Time `json:"updatedAt"`
+	Name      string     `json:"name"`
+	Number    string     `json:"number"`
+	Title     string     `json:"title"`
+	Path      string     `json:"path"`
 }
 
 func NewProblemDtoForList(question *po.Problem) *ProblemDtoForList {
 	response := &ProblemDtoForList{
 		ID:        question.ID,
-		CreatedAt: question.CreatedAt,
-		UpdatedAt: question.UpdatedAt,
+		CreatedAt: utils.Time(question.CreatedAt),
+		UpdatedAt: utils.Time(question.UpdatedAt),
 		Name:      question.Name,
 		Number:    question.Number,
 		Title:     question.Title,
