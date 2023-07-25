@@ -38,7 +38,7 @@ func (q *problemController) CheckProblemNumber(ctx *gin.Context) {
 	if err != nil {
 		result.Error(err)
 	}
-	if b {
+	if !b {
 		result.Success("number重复，请更换其他number", b)
 	} else {
 		result.Success("number可用", b)
