@@ -17,7 +17,7 @@ import (
 
 type ProblemService interface {
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
-	InsertProblem(Problem *po.Problem) *e.Error
+	InsertProblem(problem *po.Problem) (uint, *e.Error)
 	UpdateProblem(Problem *po.Problem) *e.Error
 	DeleteProblem(id uint) *e.Error
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
@@ -40,7 +40,7 @@ func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Erro
 	return dto.NewProblemDtoForGet(problem), nil
 }
 
-func (q *problemService) InsertProblem(problem *po.Problem) *e.Error {
+func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 	if problem.Name == "" {
 		problem.Name = "未命名题目"
 	}
@@ -48,14 +48,23 @@ func (q *problemService) InsertProblem(problem *po.Problem) *e.Error {
 		problem.Title = "标题信息"
 	}
 	if problem.Description == "" {
-
+		problemDescription, err := os.ReadFile(setting.Conf.FilePathConfig.ProblemDescriptionTemplate)
+		if err != nil {
+			return 0, e.ErrProblemInsertFailed
+		}
+		problem.Description = string(problemDescription)
 	}
-	if dao.CheckProblemNumber(problem.Number) {
-		return e.ErrProblemNumberIsExist
+	if problem.Number == "" {
+		problem.Number = "未命名编号" + utils.GetGenerateUniqueNumber()
 	}
-	//插入
-	dao.InsertProblem(problem)
-	return nil
+	if problem.Number != "" && dao.CheckProblemNumber(problem.Number) {
+		return 0, e.ErrProblemNumberIsExist
+	}
+	err := dao.InsertProblem(problem)
+	if err != nil {
+		return 0, e.ErrProblemInsertFailed
+	}
+	return problem.ID, nil
 }
 
 func (q *problemService) UpdateProblem(problem *po.Problem) *e.Error {

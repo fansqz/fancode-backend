@@ -6,8 +6,8 @@ import (
 )
 
 // InsertProblem 添加题库
-func InsertProblem(problem *po.Problem) {
-	db.DB.Create(problem)
+func InsertProblem(problem *po.Problem) error {
+	return db.DB.Create(problem).Error
 }
 
 // GetProblemByProblemNumber

@@ -39,12 +39,12 @@ func (q *problemController) InsertProblem(ctx *gin.Context) {
 	Problem.Title = ctx.PostForm("title")
 	Problem.Path = ctx.PostForm("path")
 	//插入
-	err := q.ProblemService.InsertProblem(Problem)
+	pID, err := q.ProblemService.InsertProblem(Problem)
 	if err != nil {
 		result.Error(err)
 		return
 	}
-	result.SuccessMessage("题库添加成功")
+	result.Success("题库添加成功", pID)
 }
 
 func (q *problemController) UpdateProblem(ctx *gin.Context) {
@@ -55,15 +55,15 @@ func (q *problemController) UpdateProblem(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	Problem := &po.Problem{}
-	Problem.ID = uint(quesetionID)
-	Problem.Number = ctx.PostForm("number")
-	Problem.Name = ctx.PostForm("name")
-	Problem.Description = ctx.PostForm("description")
-	Problem.Title = ctx.PostForm("title")
-	Problem.Path = ctx.PostForm("path")
+	problem := &po.Problem{}
+	problem.ID = uint(quesetionID)
+	problem.Number = ctx.PostForm("number")
+	problem.Name = ctx.PostForm("name")
+	problem.Description = ctx.PostForm("description")
+	problem.Title = ctx.PostForm("title")
+	problem.Path = ctx.PostForm("path")
 
-	err2 := q.ProblemService.InsertProblem(Problem)
+	err2 := q.ProblemService.UpdateProblem(problem)
 	if err != nil {
 		result.Error(err2)
 		return
@@ -87,7 +87,7 @@ func (q *problemController) DeleteProblem(ctx *gin.Context) {
 	result.SuccessData("删除成功")
 }
 
-// 读取一个列表的题目
+// GetProblemList 读取一个列表的题目
 func (q *problemController) GetProblemList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	pageStr := ctx.Param("page")

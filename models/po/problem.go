@@ -6,7 +6,7 @@ import "github.com/jinzhu/gorm"
 type Problem struct {
 	gorm.Model
 	Name        string `gorm:"column:name" json:"name"`
-	Number      string `gorm:"column:number" json:"number"`
+	Number      string `gorm:"column:number;unique_index" json:"number"`
 	Description string `gorm:"column:description" json:"description"`
 	Title       string `gorm:"column:title" json:"title"`
 	// 存放题目内容的路径
