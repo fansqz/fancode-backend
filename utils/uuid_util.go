@@ -16,8 +16,8 @@ func GetUUID() string {
 	return u1.String()
 }
 
-// 通过时间搓 + 随机数生成的较短的随机number
-func GetGenerateUniqueNumber() string {
+// 通过时间搓 + 随机数生成的较短的随机code
+func GetGenerateUniqueCode() string {
 	timestamp := time.Now().Unix()
 	randomNum := rand.Intn(1000) // 生成一个0到999之间的随机数
 

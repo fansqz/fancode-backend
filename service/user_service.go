@@ -10,11 +10,11 @@ import (
 
 type UserService interface {
 	// Login 用户登录
-	Login(userNumber string, password string) (string, *e.Error)
+	Login(userCode string, password string) (string, *e.Error)
 	// Register 注册
 	Register(user *po.User) *e.Error
 	// ChangePassword 改密码
-	ChangePassword(userNumber, oldPassword, newPassword string) *e.Error
+	ChangePassword(userCode, oldPassword, newPassword string) *e.Error
 }
 
 type userService struct {
@@ -29,7 +29,7 @@ func (u *userService) Register(user *po.User) *e.Error {
 		user.Username = "fancoder"
 		return nil
 	}
-	if dao.CheckUserNumber(user.Number) {
+	if dao.CheckUserCode(user.Code) {
 		return e.ErrUserNameIsExist
 	}
 	if len(user.Password) < 6 {
@@ -52,14 +52,14 @@ func (u *userService) Register(user *po.User) *e.Error {
 	}
 }
 
-func (u *userService) Login(userNumber string, password string) (string, *e.Error) {
+func (u *userService) Login(userCode string, password string) (string, *e.Error) {
 
-	user, userErr := dao.GetUserByUserNumber(userNumber)
+	user, userErr := dao.GetUserByUserCode(userCode)
 	if userErr != nil {
 		log.Println(userErr)
 		return "", e.ErrUserUnknownError
 	}
-	if user == nil || user.Number == "" {
+	if user == nil || user.Code == "" {
 		return "", e.ErrUserNotExist
 	}
 	if user == nil || !utils.ComparePwd(user.Password, password) {
@@ -73,14 +73,14 @@ func (u *userService) Login(userNumber string, password string) (string, *e.Erro
 	return token, nil
 }
 
-func (u *userService) ChangePassword(userNumber, oldPassword, newPassword string) *e.Error {
+func (u *userService) ChangePassword(userCode, oldPassword, newPassword string) *e.Error {
 	//检验用户名
-	user, err := dao.GetUserByUserNumber(userNumber)
+	user, err := dao.GetUserByUserCode(userCode)
 	if err != nil {
 		log.Println(err)
 		return e.ErrUserUnknownError
 	}
-	if user == nil || user.Number == "" {
+	if user == nil || user.Code == "" {
 		return e.ErrUserNotExist
 	}
 	//检验旧密码

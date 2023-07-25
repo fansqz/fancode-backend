@@ -34,7 +34,7 @@ func NewUserController() UserController {
 func (u *userController) Register(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	user := &po.User{}
-	user.Number = ctx.PostForm("number")
+	user.Code = ctx.PostForm("code")
 	user.Password = ctx.PostForm("password")
 	user.Username = ctx.PostForm("username")
 	err := u.userService.Register(user)
@@ -48,13 +48,13 @@ func (u *userController) Register(ctx *gin.Context) {
 func (u *userController) Login(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	//获取并检验用户参数
-	userNumber := ctx.PostForm("number")
+	userCode := ctx.PostForm("code")
 	password := ctx.PostForm("password")
-	if userNumber == "" || password == "" {
+	if userCode == "" || password == "" {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	token, err := u.userService.Login(userNumber, password)
+	token, err := u.userService.Login(userCode, password)
 	if err != nil {
 		result.Error(err)
 	} else {
@@ -64,14 +64,14 @@ func (u *userController) Login(ctx *gin.Context) {
 
 func (u *userController) ChangePassword(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	userNumber := ctx.PostForm("number")
+	userCode := ctx.PostForm("code")
 	oldPassword := ctx.PostForm("oldPassword")
 	newPassword := ctx.PostForm("newPassword")
-	if userNumber == "" || oldPassword == "" {
+	if userCode == "" || oldPassword == "" {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err := u.userService.ChangePassword(userNumber, oldPassword, newPassword)
+	err := u.userService.ChangePassword(userCode, oldPassword, newPassword)
 	if err != nil {
 		result.Error(err)
 	} else {

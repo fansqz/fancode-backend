@@ -12,7 +12,7 @@ import (
 // ProblemController
 // @Description: 题目管理相关功能
 type ProblemController interface {
-	CheckProblemNumber(ctx *gin.Context)
+	CheckProblemCode(ctx *gin.Context)
 	InsertProblem(ctx *gin.Context)
 	UpdateProblem(ctx *gin.Context)
 	DeleteProblem(ctx *gin.Context)
@@ -31,24 +31,24 @@ func NewProblemController() ProblemController {
 	}
 }
 
-func (q *problemController) CheckProblemNumber(ctx *gin.Context) {
+func (q *problemController) CheckProblemCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	number := ctx.Param("number")
-	b, err := q.problemService.CheckProblemNumber(number)
+	code := ctx.Param("code")
+	b, err := q.problemService.CheckProblemCode(code)
 	if err != nil {
 		result.Error(err)
 	}
 	if !b {
-		result.Success("number重复，请更换其他number", b)
+		result.Success("编号重复，请更换其他编号", b)
 	} else {
-		result.Success("number可用", b)
+		result.Success("编号可用", b)
 	}
 }
 
 func (q *problemController) InsertProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	problem := &po.Problem{}
-	problem.Number = ctx.PostForm("number")
+	problem.Code = ctx.PostForm("code")
 	problem.Name = ctx.PostForm("name")
 	problem.Description = ctx.PostForm("description")
 	problem.Title = ctx.PostForm("title")
@@ -72,7 +72,7 @@ func (q *problemController) UpdateProblem(ctx *gin.Context) {
 	}
 	problem := &po.Problem{}
 	problem.ID = uint(problemID)
-	problem.Number = ctx.PostForm("number")
+	problem.Code = ctx.PostForm("code")
 	problem.Name = ctx.PostForm("name")
 	problem.Description = ctx.PostForm("description")
 	problem.Title = ctx.PostForm("title")
@@ -151,9 +151,9 @@ func (q *problemController) UploadProblemFile(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	problemNumber := ctx.PostForm("problemNumber")
+	problemCode := ctx.PostForm("problemCode")
 	// 保存文件到本地
-	uploadErr := q.problemService.UploadProblemFile(ctx, file, problemNumber)
+	uploadErr := q.problemService.UploadProblemFile(ctx, file, problemCode)
 	if uploadErr != nil {
 		result.Error(uploadErr)
 		return

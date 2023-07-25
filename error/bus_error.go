@@ -37,8 +37,8 @@ var (
 
 /************Question错误**************/
 const (
-	CodeProblemNumberIsExist = 11500 + iota //题目编号已存在
-	CodeProblemNumberCheckFailed
+	CodeProblemCodeIsExist = 11500 + iota //题目编号已存在
+	CodeProblemCodeCheckFailed
 	CodeProblemGetFailed
 	CodeProblemInsertFailed
 	CodeProblemUpdateFailed
@@ -49,15 +49,15 @@ const (
 )
 
 var (
-	ErrProblemNumberIsExist     = NewError(CodeProblemNumberIsExist, "problem number is exist", ErrTypeBus)
-	ErrProblemNumberCheckFailed = NewError(CodeProblemNumberCheckFailed, "The problem number check failed", ErrTypeServer)
-	ErrProblemGetFailed         = NewError(CodeProblemGetFailed, "The problem get failed", ErrTypeServer)
-	ErrProblemInsertFailed      = NewError(CodeProblemInsertFailed, "The problem insert failed", ErrTypeServer)
-	ErrProblemUpdateFailed      = NewError(CodeProblemUpdateFailed, "The problem update failed", ErrTypeServer)
-	ErrProblemDeleteFailed      = NewError(CodeProblemDeleteFailed, "The problem delete failed", ErrTypeServer)
-	ErrProblemListFailed        = NewError(CodeProblemListFailed, "Failed to get the problem list", ErrTypeServer)
-	ErrProblemFileUploadFailed  = NewError(CodeProblemFileUploadFailed, "The problem file storage failed", ErrTypeServer)
-	ErrProblemNotExist          = NewError(CodeProblemNotExist, "The problem does not exist", ErrTypeBus)
+	ErrProblemCodeIsExist      = NewError(CodeProblemCodeIsExist, "problem code is exist", ErrTypeBus)
+	ErrProblemCodeCheckFailed  = NewError(CodeProblemCodeCheckFailed, "The problem code check failed", ErrTypeServer)
+	ErrProblemGetFailed        = NewError(CodeProblemGetFailed, "The problem get failed", ErrTypeServer)
+	ErrProblemInsertFailed     = NewError(CodeProblemInsertFailed, "The problem insert failed", ErrTypeServer)
+	ErrProblemUpdateFailed     = NewError(CodeProblemUpdateFailed, "The problem update failed", ErrTypeServer)
+	ErrProblemDeleteFailed     = NewError(CodeProblemDeleteFailed, "The problem delete failed", ErrTypeServer)
+	ErrProblemListFailed       = NewError(CodeProblemListFailed, "Failed to get the problem list", ErrTypeServer)
+	ErrProblemFileUploadFailed = NewError(CodeProblemFileUploadFailed, "The problem file storage failed", ErrTypeServer)
+	ErrProblemNotExist         = NewError(CodeProblemNotExist, "The problem does not exist", ErrTypeBus)
 )
 
 /************judge错误**************/

@@ -16,13 +16,13 @@ import (
 )
 
 type ProblemService interface {
-	CheckProblemNumber(problemNumber string) (bool, *e.Error)
+	CheckProblemCode(problemCode string) (bool, *e.Error)
 	InsertProblem(problem *po.Problem) (uint, *e.Error)
 	UpdateProblem(Problem *po.Problem) *e.Error
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
 	DeleteProblem(id uint) *e.Error
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
-	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemNumber string) *e.Error
+	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemCode string) *e.Error
 }
 
 type problemService struct {
@@ -32,12 +32,12 @@ func NewProblemService() ProblemService {
 	return &problemService{}
 }
 
-func (q *problemService) CheckProblemNumber(problemNumber string) (bool, *e.Error) {
-	b, err := dao.CheckProblemNumber(problemNumber)
+func (q *problemService) CheckProblemCode(problemCode string) (bool, *e.Error) {
+	b, err := dao.CheckProblemCodeExists(problemCode)
 	if err != nil {
-		return b, e.ErrProblemNumberCheckFailed
+		return !b, e.ErrProblemCodeCheckFailed
 	}
-	return b, nil
+	return !b, nil
 }
 
 func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error) {
@@ -64,17 +64,17 @@ func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 		}
 		problem.Description = string(problemDescription)
 	}
-	if problem.Number == "" {
-		problem.Number = "未命名编号" + utils.GetGenerateUniqueNumber()
+	if problem.Code == "" {
+		problem.Code = "未命名编号" + utils.GetGenerateUniqueCode()
 	}
 	// 检测编号是否重复
-	if problem.Number != "" {
-		b, checkError := dao.CheckProblemNumber(problem.Number)
+	if problem.Code != "" {
+		b, checkError := dao.CheckProblemCodeExists(problem.Code)
 		if checkError != nil {
 			return 0, e.ErrProblemInsertFailed
 		}
 		if b {
-			return 0, e.ErrProblemNumberIsExist
+			return 0, e.ErrProblemCodeIsExist
 		}
 	}
 	// 添加
@@ -101,7 +101,7 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 		log.Println(err)
 		return e.ErrProblemDeleteFailed
 	}
-	if Problem == nil || Problem.Number == "" {
+	if Problem == nil || Problem.Code == "" {
 		return e.ErrProblemNotExist
 	}
 	// 删除题目文件
@@ -143,7 +143,7 @@ func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, 
 	return pageInfo, nil
 }
 
-func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemNumber string) *e.Error {
+func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, problemCode string) *e.Error {
 	filename := file.Filename
 	// 保存文件到本地
 	tempPath := setting.Conf.FilePathConfig.TempDir
@@ -154,18 +154,18 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 		return e.ErrProblemFileUploadFailed
 	}
 	//解压
-	err = utils.Extract(tempPath+"/"+filename, tempPath+"/"+ProblemNumber)
+	err = utils.Extract(tempPath+"/"+filename, tempPath+"/"+problemCode)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemFileUploadFailed
 	}
 	//检测文件内有一个文件夹，或者是多个文件
-	ProblemPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + ProblemNumber)
+	ProblemPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + problemCode)
 	s := file_store.NewCOS()
-	err = s.DeleteFolder(ProblemNumber)
-	s.UploadFolder(ProblemNumber, ProblemPathInLocal)
+	err = s.DeleteFolder(problemCode)
+	s.UploadFolder(problemCode, ProblemPathInLocal)
 	// 存储到数据库
-	updateError := dao.UpdatePathByNumber(ProblemNumber, ProblemNumber)
+	updateError := dao.UpdatePathByCode(problemCode, problemCode)
 	if updateError != nil {
 		return e.ErrProblemFileUploadFailed
 	}

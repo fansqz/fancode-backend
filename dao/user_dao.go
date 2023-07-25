@@ -10,11 +10,11 @@ func InsertUser(user *po.User) {
 	db.DB.Create(user)
 }
 
-// GetUserByUserNumber
-func GetUserByUserNumber(userID string) (*po.User, error) {
+// GetUserByUserCode
+func GetUserByUserCode(userID string) (*po.User, error) {
 	//写sql语句
-	sqlStr := `select id,username,password,email,sex,phone,number,role 
-	from users where number = ?`
+	sqlStr := `select id,username,password,email,sex,phone,code,role 
+	from users where code = ?`
 	//执行
 	row := db.DB.Raw(sqlStr, userID)
 	user := &po.User{}
@@ -30,11 +30,11 @@ func UpdateUser(user *po.User) error {
 	return nil
 }
 
-// CheckUserNumber检测用户number是否存在
-func CheckUserNumber(userNumber string) bool {
+// CheckUserCode检测用户code是否存在
+func CheckUserCode(userCode string) bool {
 	//执行
-	row := db.DB.Model(&po.User{}).Select("user_number").Where("user_number = ?", userNumber)
+	row := db.DB.Model(&po.User{}).Select("user_code").Where("code = ?", userCode)
 	user := &po.User{}
 	row.Scan(&user)
-	return user.Number != ""
+	return user.Code != ""
 }

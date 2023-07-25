@@ -11,5 +11,5 @@ type User struct {
 	Phone    string `gorm:"column:phone" json:"phone"`
 	Sex      int    `gorm:"column:sex" json:"sex"`
 	Role     int    `gorm:"column:role" json:"role"`
-	Number   string `gorm:"column:number" json:"number"`
+	Code     string `gorm:"column:code" json:"code"`
 }

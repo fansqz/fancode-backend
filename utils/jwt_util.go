@@ -14,7 +14,7 @@ const (
 type claims struct {
 	ID       uint   `json:"id"`
 	Username string `json:"username"`
-	Number   string `json:"number"`
+	Code     string `json:"code"`
 	Phone    string `json:"phone"`
 	Email    string `json:"email"`
 	Role     int    `json:"role"`
@@ -34,7 +34,7 @@ func GenerateToken(user *po.User) (string, error) {
 	claims := claims{
 		ID:       user.ID,
 		Username: user.Username,
-		Number:   user.Number,
+		Code:     user.Code,
 		Phone:    user.Phone,
 		Email:    user.Email,
 		Role:     user.Role,
@@ -68,7 +68,7 @@ func ParseToken(token string) (*po.User, error) {
 			user := &po.User{}
 			user.ID = claims.ID
 			user.Username = claims.Username
-			user.Number = claims.Number
+			user.Code = claims.Code
 			user.Phone = claims.Phone
 			user.Email = claims.Email
 			user.Role = claims.Role
