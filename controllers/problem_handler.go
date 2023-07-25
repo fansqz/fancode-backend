@@ -12,6 +12,7 @@ import (
 // ProblemController
 // @Description: 题目管理相关功能
 type ProblemController interface {
+	CheckProblemNumber(ctx *gin.Context)
 	InsertProblem(ctx *gin.Context)
 	UpdateProblem(ctx *gin.Context)
 	DeleteProblem(ctx *gin.Context)
@@ -27,6 +28,20 @@ type problemController struct {
 func NewProblemController() ProblemController {
 	return &problemController{
 		problemService: service.NewProblemService(),
+	}
+}
+
+func (q *problemController) CheckProblemNumber(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	number := ctx.Param("number")
+	b, err := q.problemService.CheckProblemNumber(number)
+	if err != nil {
+		result.Error(err)
+	}
+	if b {
+		result.Success("number重复，请更换其他number", b)
+	} else {
+		result.Success("number可用", b)
 	}
 }
 

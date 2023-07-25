@@ -16,9 +16,10 @@ import (
 )
 
 type ProblemService interface {
-	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
+	CheckProblemNumber(problemNumber string) (bool, *e.Error)
 	InsertProblem(problem *po.Problem) (uint, *e.Error)
 	UpdateProblem(Problem *po.Problem) *e.Error
+	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
 	DeleteProblem(id uint) *e.Error
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
 	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemNumber string) *e.Error
@@ -31,6 +32,14 @@ func NewProblemService() ProblemService {
 	return &problemService{}
 }
 
+func (q *problemService) CheckProblemNumber(problemNumber string) (bool, *e.Error) {
+	b, err := dao.CheckProblemNumber(problemNumber)
+	if err != nil {
+		return b, e.ErrProblemNumberCheckFailed
+	}
+	return b, nil
+}
+
 func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error) {
 	problem, err := dao.GetProblemByProblemID(id)
 	if err != nil {
@@ -41,6 +50,7 @@ func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Erro
 }
 
 func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
+	// 对设置值的数据设置默认值
 	if problem.Name == "" {
 		problem.Name = "未命名题目"
 	}
@@ -57,9 +67,17 @@ func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 	if problem.Number == "" {
 		problem.Number = "未命名编号" + utils.GetGenerateUniqueNumber()
 	}
-	if problem.Number != "" && dao.CheckProblemNumber(problem.Number) {
-		return 0, e.ErrProblemNumberIsExist
+	// 检测编号是否重复
+	if problem.Number != "" {
+		b, checkError := dao.CheckProblemNumber(problem.Number)
+		if checkError != nil {
+			return 0, e.ErrProblemInsertFailed
+		}
+		if b {
+			return 0, e.ErrProblemNumberIsExist
+		}
 	}
+	// 添加
 	err := dao.InsertProblem(problem)
 	if err != nil {
 		return 0, e.ErrProblemInsertFailed

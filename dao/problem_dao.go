@@ -43,12 +43,15 @@ func UpdateProblem(problem *po.Problem) error {
 }
 
 // CheckUserID检测用户ID是否存在
-func CheckProblemNumber(problemNumber string) bool {
+func CheckProblemNumber(problemNumber string) (bool, error) {
 	//执行
 	row := db.DB.Model(&po.User{}).Select("number").Where("number = ?", problemNumber)
+	if row.Error != nil {
+		return false, row.Error
+	}
 	problem := &po.Problem{}
 	row.Scan(&problem)
-	return problem.Number != ""
+	return problem.Number != "", nil
 }
 
 func GetProblemList(page int, pageSize int) ([]*po.Problem, error) {
