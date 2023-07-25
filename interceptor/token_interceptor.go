@@ -29,6 +29,7 @@ func TokenAuthorize() gin.HandlerFunc {
 		user, err := utils.ParseToken(token)
 		if err != nil || user == nil {
 			r.Error(e.ErrSessionInvalid)
+			c.Abort()
 			return
 		}
 		if c.Keys == nil {

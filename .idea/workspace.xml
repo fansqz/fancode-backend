@@ -5,9 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/setting/time.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/problem_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/problem_service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,11 +63,11 @@
       <recent name="D:\MyProcedure\go\FanCode\routers" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\MyProcedure\go\FanCode\utils" />
       <recent name="D:\MyProcedure\go\FanCode\constants" />
       <recent name="D:\MyProcedure\go\FanCode" />
       <recent name="D:\MyProcedure\go\FanCode\service" />
       <recent name="D:\MyProcedure\go\FanCode\models\vo" />
-      <recent name="D:\MyProcedure\go\FanCode\models\po" />
     </key>
   </component>
   <component name="RunManager" selected="Go Build.go build FanCode">
