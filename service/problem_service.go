@@ -60,6 +60,7 @@ func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 	if problem.Description == "" {
 		problemDescription, err := os.ReadFile(setting.Conf.FilePathConfig.ProblemDescriptionTemplate)
 		if err != nil {
+			log.Println(err)
 			return 0, e.ErrProblemInsertFailed
 		}
 		problem.Description = string(problemDescription)
