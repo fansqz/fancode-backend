@@ -42,8 +42,7 @@ func (q *problemController) CheckProblemCode(ctx *gin.Context) {
 		result.Success("编号重复，请更换其他编号", b)
 	} else {
 		result.Success("编号可用", b)
-	}
-}
+
 
 func (q *problemController) InsertProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
@@ -52,7 +51,6 @@ func (q *problemController) InsertProblem(ctx *gin.Context) {
 	problem.Name = ctx.PostForm("name")
 	problem.Description = ctx.PostForm("description")
 	problem.Title = ctx.PostForm("title")
-	problem.Path = ctx.PostForm("path")
 	//插入
 	pID, err := q.problemService.InsertProblem(problem)
 	if err != nil {
@@ -79,7 +77,7 @@ func (q *problemController) UpdateProblem(ctx *gin.Context) {
 	problem.Path = ctx.PostForm("path")
 
 	err2 := q.problemService.UpdateProblem(problem)
-	if err != nil {
+	if err2 != nil {
 		result.Error(err2)
 		return
 	}

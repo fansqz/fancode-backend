@@ -36,9 +36,9 @@ func GetProblemByProblemID(problemID uint) (*po.Problem, error) {
 
 // UpdateProblem 更新题目
 func UpdateProblem(problem *po.Problem) error {
-	sqlStr := "update `problems` set name = ?, code = ?, discriptioin = ?, title = ?, path = ? where id = ?"
+	sqlStr := "update `problems` set name = ?, code = ?, description = ?, title = ? where id = ?"
 	//执行
-	err := db.DB.Exec(sqlStr, problem.Name, problem.Code, problem.Description, problem.Title, problem.Path, problem.ID).Error
+	err := db.DB.Exec(sqlStr, problem.Name, problem.Code, problem.Description, problem.Title, problem.ID).Error
 	return err
 }
 
