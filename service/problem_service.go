@@ -40,17 +40,26 @@ func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Erro
 	return dto.NewProblemDtoForGet(problem), nil
 }
 
-func (q *problemService) InsertProblem(Problem *po.Problem) *e.Error {
-	if dao.CheckProblemNumber(Problem.Number) {
+func (q *problemService) InsertProblem(problem *po.Problem) *e.Error {
+	if problem.Name == "" {
+		problem.Name = "未命名题目"
+	}
+	if problem.Title == "" {
+		problem.Title = "标题信息"
+	}
+	if problem.Description == "" {
+
+	}
+	if dao.CheckProblemNumber(problem.Number) {
 		return e.ErrProblemNumberIsExist
 	}
 	//插入
-	dao.InsertProblem(Problem)
+	dao.InsertProblem(problem)
 	return nil
 }
 
-func (q *problemService) UpdateProblem(Problem *po.Problem) *e.Error {
-	err := dao.UpdateProblem(Problem)
+func (q *problemService) UpdateProblem(problem *po.Problem) *e.Error {
+	err := dao.UpdateProblem(problem)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemUpdateFailed

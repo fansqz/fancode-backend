@@ -58,7 +58,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 		return nil, e.ErrExecuteFailed
 	}
 	// 保存code文件
-	localPath := setting.Conf.FilePathConfig.QuestionFileDir + "/" + problem.Path
+	localPath := setting.Conf.FilePathConfig.ProblemFileDir + "/" + problem.Path
 	var code []byte
 	code, err = os.ReadFile(localPath + "/code")
 	if err != nil {
@@ -174,7 +174,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 		return nil, e.ErrExecuteFailed
 	}
 	// 保存code文件
-	localPath := setting.Conf.FilePathConfig.QuestionFileDir + "/" + problem.Path
+	localPath := setting.Conf.FilePathConfig.ProblemFileDir + "/" + problem.Path
 	var code []byte
 	code, err = os.ReadFile(localPath + "/code")
 	if err != nil {
@@ -260,7 +260,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 }
 
 func checkAndDownloadQuestionFile(questionPath string) error {
-	localPath := setting.Conf.FilePathConfig.QuestionFileDir + "/" + questionPath
+	localPath := setting.Conf.FilePathConfig.ProblemFileDir + "/" + questionPath
 	if !checkFolderExists(localPath) {
 		// 拉取文件
 		store := file_store.NewCOS()
