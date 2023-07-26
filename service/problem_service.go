@@ -29,7 +29,7 @@ type ProblemService interface {
 	// 根据id获取题目文件
 	GetProblemFileByID(id uint) ([]*dto.FileDto, *e.Error)
 	// 根据id获取用例文件
-	GetCaseFileByID(id uint, page int, pageSize int, fileType string) (*dto.PageInfo, *e.Error)
+	GetCaseFileByID(id uint, page int, pageSize int) (*dto.PageInfo, *e.Error)
 	// 更新一个字段
 	UpdateProblemField(id uint, field string, value string) *e.Error
 }
@@ -225,7 +225,7 @@ func (q *problemService) GetProblemFileByID(id uint) ([]*dto.FileDto, *e.Error) 
 	return fileDtoList, nil
 }
 
-func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int, fileType string) (*dto.PageInfo, *e.Error) {
+func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int) (*dto.PageInfo, *e.Error) {
 	// 获取题目文件
 	problem, err := dao.GetProblemByProblemID(id)
 	if err != nil {
@@ -243,7 +243,7 @@ func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int, fileTy
 	ioFileList := make([]string, 10)
 	files, _ := os.ReadDir(getCaseFolderByPath(problem.Path))
 	for _, fileInfo := range files {
-		if strings.HasSuffix(fileInfo.Name(), "."+fileType) {
+		if strings.HasSuffix(fileInfo.Name(), ".in") {
 			ioFileList = append(ioFileList, fileInfo.Name())
 		}
 	}

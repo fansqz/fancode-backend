@@ -49,6 +49,7 @@ const (
 	CodeProblemFileNotExist
 	CodeProblemFieldForbiddenUpdate
 	CodeProblemFieldUpdateFailed
+	CodeProblemFileInsertFailed
 )
 
 var (
@@ -64,6 +65,7 @@ var (
 	ErrProblemFileNotExist         = NewError(CodeProblemFileNotExist, "The problem file is not exist", ErrTypeBus)
 	ErrProblemFieldForbiddenUpdate = NewError(CodeProblemFieldForbiddenUpdate, "Updating illegal field", ErrTypeBus)
 	ErrProblemFieldUpdateFailed    = NewError(CodeProblemFieldUpdateFailed, "The problem field update failed", ErrTypeServer)
+	ErrProblemFileInsertFailed     = NewError(CodeProblemFileInsertFailed, "The problem file insert failed", ErrTypeServer)
 )
 
 /************judge错误**************/

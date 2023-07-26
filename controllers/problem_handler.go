@@ -21,7 +21,6 @@ type ProblemController interface {
 	UploadProblemFile(ctx *gin.Context)
 	// 这两个方法用于获取题目全部信息，题目元数据，题目文件列表
 	GetProblemByID(ctx *gin.Context)
-	GetProblemFile(ctx *gin.Context)
 }
 
 type problemController struct {
@@ -161,32 +160,4 @@ func (q *problemController) UploadProblemFile(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData("题目文件上传成功")
-}
-
-func (q *problemController) GetProblemFile(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	idStr := ctx.Param("problemId")
-	pageStr := ctx.Param("page")
-	pageSizeStr := ctx.Param("pageSize")
-	t := ctx.Param("type")
-	var id int
-	var page int
-	var pageSize int
-	var convertErr error
-	id, convertErr = strconv.Atoi(idStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	page, convertErr = strconv.Atoi(pageStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	pageSize, convertErr = strconv.Atoi(pageSizeStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-
 }
