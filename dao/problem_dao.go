@@ -77,3 +77,14 @@ func GetProblemCount() (uint, error) {
 	err := db.DB.Model(&po.Problem{}).Count(&count).Error
 	return count, err
 }
+
+// UpdateProblemField 根据字段进行更新
+func UpdateProblemField(id uint, field string, value string) error {
+	updateData := map[string]interface{}{
+		field: value,
+	}
+	if err := db.DB.Model(&po.Problem{}).Where("id = ?", id).Updates(updateData).Error; err != nil {
+		return err
+	}
+	return nil
+}

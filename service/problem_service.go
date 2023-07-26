@@ -30,6 +30,8 @@ type ProblemService interface {
 	GetProblemFileByID(id uint) ([]*dto.FileDto, *e.Error)
 	// 根据id获取用例文件
 	GetCaseFileByID(id uint, page int, pageSize int, fileType string) (*dto.PageInfo, *e.Error)
+	// 更新一个字段
+	UpdateProblemField(id uint, field string, value string) *e.Error
 }
 
 type problemService struct {
@@ -258,6 +260,18 @@ func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int, fileTy
 		List:  ioFileList2,
 	}
 	return ioFilePageInfo, nil
+}
+
+func (q *problemService) UpdateProblemField(id uint, field string, value string) *e.Error {
+	if field == "name" || field == "code" || field == "description" || field == "title" {
+		err := dao.UpdateProblemField(id, field, value)
+		if err != nil {
+			log.Println(err)
+			return e.ErrProblemFieldUpdateFailed
+		}
+		return nil
+	}
+	return e.ErrProblemFieldForbiddenUpdate
 }
 
 func getCaseFolderByPath(path string) string {

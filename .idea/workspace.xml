@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/models/dto/file.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/file_util.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/controllers/problem_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/problem_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dao/problem_dao.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/problem_dao.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/error/bus_error.go" beforeDir="false" afterPath="$PROJECT_DIR$/error/bus_error.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/dto/problem.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/dto/problem.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/judge_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/judge_service.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/problem_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/problem_service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -172,6 +168,10 @@
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat: 将获取题目的方法拆分为三个方法" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: 将获取题目的方法拆分为三个方法" />
   </component>
   <component name="VgoProject">
     <environment>
