@@ -50,3 +50,13 @@ func NewProblemDtoForList(question *po.Problem) *ProblemDtoForList {
 	}
 	return response
 }
+
+// 获取题目文件列表的dto
+type ProblemFileDto struct {
+	// 输入文件分页
+	Files []*FileDto
+	// 输入或输出文件
+	IOFileInfo PageInfo
+	// 输入输出文件类型
+	IOFileType string
+}

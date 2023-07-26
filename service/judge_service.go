@@ -10,7 +10,6 @@ import (
 	"FanCode/setting"
 	"FanCode/utils"
 	"bytes"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"os"
@@ -156,7 +155,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 }
 
 func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.ExecuteResultDto, *e.Error) {
-	uuid := utils.GetUUID()
+
 	//读取题目到本地，并编译
 	problem, err := dao.GetProblemByProblemID(judgeRequest.ProblemID)
 	if err != nil {
@@ -167,14 +166,14 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 		return nil, e.ErrExecuteFailed
 	}
 	// executePath
-	executePath := setting.Conf.FilePathConfig.TempDir + "/" + uuid
+	executePath := getExecutePath()
 	err = os.MkdirAll(executePath, os.ModePerm)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
 	// 保存code文件
-	localPath := setting.Conf.FilePathConfig.ProblemFileDir + "/" + problem.Path
+	localPath := getLocalPathByPath(problem.Path)
 	var code []byte
 	code, err = os.ReadFile(localPath + "/code")
 	if err != nil {
@@ -261,7 +260,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 
 func checkAndDownloadQuestionFile(questionPath string) error {
 	localPath := setting.Conf.FilePathConfig.ProblemFileDir + "/" + questionPath
-	if !checkFolderExists(localPath) {
+	if !utils.CheckFolderExists(localPath) {
 		// 拉取文件
 		store := file_store.NewCOS()
 		err := store.DownloadFolder(questionPath, localPath)
@@ -277,14 +276,12 @@ func checkAndDownloadQuestionFile(questionPath string) error {
 	return nil
 }
 
-func checkFolderExists(folderPath string) bool {
-	fileInfo, err := os.Stat(folderPath)
-	if err == nil && fileInfo.IsDir() {
-		return true
-	} else if os.IsNotExist(err) {
-		return false
-	} else {
-		fmt.Println("发生错误:", err)
-		return false
-	}
+func getLocalPathByPath(path string) string {
+	return setting.Conf.FilePathConfig.ProblemFileDir + "/" + path
+}
+
+func getExecutePath() string {
+	uuid := utils.GetUUID()
+	executePath := setting.Conf.FilePathConfig.TempDir + "/" + uuid
+	return executePath
 }

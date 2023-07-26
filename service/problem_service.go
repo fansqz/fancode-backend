@@ -13,16 +13,23 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type ProblemService interface {
 	CheckProblemCode(problemCode string) (bool, *e.Error)
 	InsertProblem(problem *po.Problem) (uint, *e.Error)
 	UpdateProblem(Problem *po.Problem) *e.Error
-	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
 	DeleteProblem(id uint) *e.Error
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
 	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemCode string) *e.Error
+
+	// 根据io获取题目
+	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
+	// 根据id获取题目文件
+	GetProblemFileByID(id uint) ([]*dto.FileDto, *e.Error)
+	// 根据id获取用例文件
+	GetCaseFileByID(id uint, page int, pageSize int, fileType string) (*dto.PageInfo, *e.Error)
 }
 
 type problemService struct {
@@ -38,15 +45,6 @@ func (q *problemService) CheckProblemCode(problemCode string) (bool, *e.Error) {
 		return !b, e.ErrProblemCodeCheckFailed
 	}
 	return !b, nil
-}
-
-func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error) {
-	problem, err := dao.GetProblemByProblemID(id)
-	if err != nil {
-		log.Println(err)
-		return nil, e.ErrProblemGetFailed
-	}
-	return dto.NewProblemDtoForGet(problem), nil
 }
 
 func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
@@ -119,7 +117,6 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 	return nil
 }
 
-// 读取一个列表的题目
 func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error) {
 	// 获取题目列表
 	problems, err := dao.GetProblemList(page, pageSize)
@@ -176,6 +173,96 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 		log.Println(err)
 	}
 	return nil
+}
+
+func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error) {
+	problem, err := dao.GetProblemByProblemID(id)
+	if err != nil {
+		log.Println(err)
+		return nil, e.ErrProblemGetFailed
+	}
+	return dto.NewProblemDtoForGet(problem), nil
+}
+
+func (q *problemService) GetProblemFileByID(id uint) ([]*dto.FileDto, *e.Error) {
+	// 获取题目文件
+	problem, err := dao.GetProblemByProblemID(id)
+	if err != nil {
+		return nil, e.ErrProblemGetFailed
+	}
+	if problem.Path == "" {
+		return nil, e.ErrProblemFileNotExist
+	}
+	// 下载文件到本地
+	err = checkAndDownloadQuestionFile(problem.Path)
+	if err != nil {
+		return nil, e.ErrProblemGetFailed
+	}
+	// 读取文件,仅会读取一个层级的文件
+	localPath := getLocalPathByPath(problem.Path)
+	files, err2 := os.ReadDir(localPath)
+	if err2 != nil {
+		return nil, e.ErrExecuteFailed
+	}
+	fileDtoList := make([]*dto.FileDto, 10)
+	for _, fileInfo := range files {
+		if fileInfo.IsDir() {
+			continue
+		}
+		var content []byte
+		content, err = os.ReadFile(localPath + "/" + fileInfo.Name())
+		if err != nil {
+			continue
+		}
+		fileDto := &dto.FileDto{
+			Name:    fileInfo.Name(),
+			Content: string(content),
+		}
+		fileDtoList = append(fileDtoList, fileDto)
+	}
+	return fileDtoList, nil
+}
+
+func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int, fileType string) (*dto.PageInfo, *e.Error) {
+	// 获取题目文件
+	problem, err := dao.GetProblemByProblemID(id)
+	if err != nil {
+		return nil, e.ErrProblemGetFailed
+	}
+	if problem.Path == "" {
+		return nil, e.ErrProblemFileNotExist
+	}
+	// 下载文件到本地
+	err = checkAndDownloadQuestionFile(problem.Path)
+	if err != nil {
+		return nil, e.ErrProblemGetFailed
+	}
+	//根据输入类型获取输入文件列表
+	ioFileList := make([]string, 10)
+	files, _ := os.ReadDir(getCaseFolderByPath(problem.Path))
+	for _, fileInfo := range files {
+		if strings.HasSuffix(fileInfo.Name(), "."+fileType) {
+			ioFileList = append(ioFileList, fileInfo.Name())
+		}
+	}
+	// 分页查询
+	index1 := (page - 1) * pageSize
+	index2 := index1 + pageSize
+	if index2 > len(ioFileList) {
+		index2 = len(ioFileList)
+	}
+	ioFileList2 := ioFileList[index1:index2]
+	ioFilePageInfo := &dto.PageInfo{
+		Total: uint(len(ioFileList)),
+		Size:  uint(len(ioFileList2)),
+		List:  ioFileList2,
+	}
+	return ioFilePageInfo, nil
+}
+
+func getCaseFolderByPath(path string) string {
+	localpath := getLocalPathByPath(path)
+	return localpath + "/io"
 }
 
 // 如果文件夹内有且仅有一个文件夹，返回内部文件夹路径

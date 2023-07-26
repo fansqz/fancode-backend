@@ -46,6 +46,7 @@ const (
 	CodeProblemListFailed
 	CodeProblemNotExist
 	CodeProblemFileUploadFailed
+	CodeProblemFileNotExist
 )
 
 var (
@@ -58,6 +59,7 @@ var (
 	ErrProblemListFailed       = NewError(CodeProblemListFailed, "Failed to get the problem list", ErrTypeServer)
 	ErrProblemFileUploadFailed = NewError(CodeProblemFileUploadFailed, "The problem file storage failed", ErrTypeServer)
 	ErrProblemNotExist         = NewError(CodeProblemNotExist, "The problem does not exist", ErrTypeBus)
+	ErrProblemFileNotExist     = NewError(CodeProblemFileNotExist, "The problem file is not exist", ErrTypeBus)
 )
 
 /************judge错误**************/
