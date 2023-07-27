@@ -112,19 +112,28 @@ func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, fi
 // todo: 这里有事务相关的问题
 func (q *problemService) DeleteProblem(id uint) *e.Error {
 	// 读取Problem
-	Problem, err := dao.GetProblemByProblemID(db.DB, id)
+	problem, err := dao.GetProblemByProblemID(db.DB, id)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemDeleteFailed
 	}
-	if Problem == nil || Problem.Code == "" {
+	if problem == nil || problem.Code == "" {
 		return e.ErrProblemNotExist
 	}
-	// 删除题目文件
-	s := file_store.NewCOS()
-	err = s.DeleteFolder(Problem.Path)
-	if err != nil {
-		return e.ErrProblemDeleteFailed
+	if problem.Path != "" {
+		// 删除题目文件
+		s := file_store.NewCOS()
+		err = s.DeleteFolder(problem.Path)
+		if err != nil {
+			return e.ErrProblemDeleteFailed
+		}
+		// 删除本地文件
+		localPath := getLocalPathByPath(problem.Path)
+		err = utils.CheckAndDeletePath(localPath)
+		if err != nil {
+			log.Println(err)
+			return e.ErrProblemDeleteFailed
+		}
 	}
 	// 删除题目
 	err = dao.DeleteProblemByID(db.DB, id)
