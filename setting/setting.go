@@ -22,6 +22,7 @@ type AppConfig struct {
 	*ReleasePathConfig
 	*COSConfig
 	*FilePathConfig
+	*CasbinConfig
 }
 
 type ReleasePathConfig struct {
@@ -48,5 +49,6 @@ func Init(file string) error {
 	Conf.MySqlConfig = NewMySqlConfig(cfg)
 	Conf.COSConfig = NewCOSConfig(cfg)
 	Conf.FilePathConfig = NewFilePathConfig(cfg)
+	Conf.CasbinConfig = NewCasbinConfig(cfg)
 	return nil
 }
