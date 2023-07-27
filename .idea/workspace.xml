@@ -6,10 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/controllers/problem_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/problem_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/error/bus_error.go" beforeDir="false" afterPath="$PROJECT_DIR$/error/bus_error.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dao/problem_dao.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/problem_dao.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/file_store/cos.go" beforeDir="false" afterPath="$PROJECT_DIR$/file_store/cos.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/file_store/store.go" beforeDir="false" afterPath="$PROJECT_DIR$/file_store/store.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routers/problem_router.go" beforeDir="false" afterPath="$PROJECT_DIR$/routers/problem_router.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/service/problem_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/problem_service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -175,7 +174,8 @@
     <MESSAGE value="feat: 将获取题目的方法拆分为三个方法" />
     <MESSAGE value="feat: 添加更新单个字段" />
     <MESSAGE value="feat: 更新一次代码" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: 更新一次代码" />
+    <MESSAGE value="feat: 实现文件下载接口" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: 实现文件下载接口" />
   </component>
   <component name="VgoProject">
     <environment>
@@ -197,6 +197,11 @@
           <url>file://$PROJECT_DIR$/controllers/problem_handler.go</url>
           <line>83</line>
           <option name="timeStamp" value="65" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/service/problem_service.go</url>
+          <line>378</line>
+          <option name="timeStamp" value="75" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

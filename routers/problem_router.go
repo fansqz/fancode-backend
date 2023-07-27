@@ -17,5 +17,6 @@ func SetupProblemRoutes(r *gin.Engine) {
 		problem.GET("/list/:page/:pageSize", problemController.GetProblemList)
 		problem.GET("/get/:id", problemController.GetProblemByID)
 		problem.POST("/upload/file", problemController.UploadProblemFile)
+		problem.GET("/file/download/:id", problemController.DownloadProblemFile)
 	}
 }

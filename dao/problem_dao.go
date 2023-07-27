@@ -98,10 +98,11 @@ func UpdateProblemField(id uint, field string, value string) error {
 
 // GetProblemFilePathByID 根据题目id获取题目文件的path
 func GetProblemFilePathByID(id uint) (string, error) {
-	var problem *po.Problem
-	err := db.DB.Select("path").First(problem, id).Error
-	if err != nil {
-		return "", err
+	row := db.DB.Model(&po.Problem{}).Select("path").Where("id = ?", id)
+	if row.Error != nil {
+		return "", row.Error
 	}
+	problem := &po.Problem{}
+	row.Scan(&problem)
 	return problem.Path, nil
 }

@@ -117,10 +117,15 @@ func (c *cosStore) DownloadAndCompressFolder(storePath, localPath, zipPath strin
 	}
 
 	// 创建压缩文件
-	zipfile, err := os.Create(zipPath)
+	err = os.MkdirAll(filepath.Dir(zipPath), 0755)
 	if err != nil {
 		fmt.Println("Failed to create zip file:", err)
 		return err
+	}
+	zipfile, err2 := os.Create(zipPath)
+	if err2 != nil {
+		fmt.Println("Failed to create zip file:", err)
+		return err2
 	}
 	defer zipfile.Close()
 

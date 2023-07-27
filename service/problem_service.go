@@ -9,7 +9,6 @@ import (
 	r "FanCode/models/vo"
 	"FanCode/setting"
 	"FanCode/utils"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"mime/multipart"
@@ -376,9 +375,8 @@ func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint
 	}
 	ctx.Writer.WriteHeader(http.StatusOK)
 	ctx.Header("Content-Disposition", "attachment; filename="+strconv.Itoa(int(problemID))+".zip")
-	ctx.Header("Content-Type", "application/text/plain")
-	ctx.Header("Accept-Length", fmt.Sprintf("%d", len(content)))
-	ctx.Writer.Write([]byte(content))
+	ctx.Header("Content-Type", "application/zip")
+	ctx.Writer.Write(content)
 }
 
 // getTempDir 获取一个随机的临时文件夹
