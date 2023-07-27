@@ -6,11 +6,14 @@ import (
 	"FanCode/file_store"
 	"FanCode/models/dto"
 	"FanCode/models/po"
+	r "FanCode/models/vo"
 	"FanCode/setting"
 	"FanCode/utils"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -24,14 +27,12 @@ type ProblemService interface {
 	DeleteProblem(id uint) *e.Error
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
 	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemCode string) *e.Error
-
-	// 根据io获取题目
+	DownloadProblemZipFile(ctx *gin.Context, problemID uint)
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
-	// 根据id获取题目文件
-	GetProblemFileByID(id uint) ([]*dto.FileDto, *e.Error)
-	// 根据id获取用例文件
+
+	// todo: 支持线上编辑题目
+	GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error)
 	GetCaseFileByID(id uint, page int, pageSize int) (*dto.PageInfo, *e.Error)
-	// 更新一个字段
 	UpdateProblemField(id uint, field string, value string) *e.Error
 }
 
@@ -102,6 +103,7 @@ func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, fi
 	return nil
 }
 
+// todo: 这里有事务相关的问题
 func (q *problemService) DeleteProblem(id uint) *e.Error {
 	// 读取Problem
 	Problem, err := dao.GetProblemByProblemID(id)
@@ -234,7 +236,7 @@ func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Erro
 	return dto.NewProblemDtoForGet(problem), nil
 }
 
-func (q *problemService) GetProblemFileByID(id uint) ([]*dto.FileDto, *e.Error) {
+func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error) {
 	// 获取题目文件
 	problem, err := dao.GetProblemByProblemID(id)
 	if err != nil {
@@ -340,4 +342,48 @@ func getSingleDirectoryPath(path string) (string, error) {
 	}
 
 	return filepath.Join(path, dirEntries[0].Name()), nil
+}
+
+func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint) {
+	result := r.NewResult(ctx)
+	path, err := dao.GetProblemFilePathByID(problemID)
+	if err != nil {
+		result.Error(e.ErrProblemZipFileDownloadFailed)
+		return
+	}
+	temp := getTempDir()
+	// 最后删除临时文件夹
+	defer func() {
+		// 删除临时文件夹和压缩包
+		err = os.RemoveAll(temp)
+		if err != nil {
+			os.RemoveAll(temp)
+		}
+	}()
+	localPath := temp + "/" + strconv.Itoa(int(problemID))
+	zipPath := localPath + ".zip"
+	store := file_store.NewCOS()
+	err = store.DownloadAndCompressFolder(path, localPath, zipPath)
+	if err != nil {
+		result.Error(e.ErrProblemZipFileDownloadFailed)
+		return
+	}
+	var content []byte
+	content, err = os.ReadFile(zipPath)
+	if err != nil {
+		result.Error(e.ErrProblemZipFileDownloadFailed)
+		return
+	}
+	ctx.Writer.WriteHeader(http.StatusOK)
+	ctx.Header("Content-Disposition", "attachment; filename="+strconv.Itoa(int(problemID))+".zip")
+	ctx.Header("Content-Type", "application/text/plain")
+	ctx.Header("Accept-Length", fmt.Sprintf("%d", len(content)))
+	ctx.Writer.Write([]byte(content))
+}
+
+// getTempDir 获取一个随机的临时文件夹
+func getTempDir() string {
+	uuid := utils.GetUUID()
+	executePath := setting.Conf.FilePathConfig.TempDir + "/" + uuid
+	return executePath
 }

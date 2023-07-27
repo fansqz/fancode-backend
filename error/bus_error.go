@@ -49,23 +49,23 @@ const (
 	CodeProblemFileNotExist
 	CodeProblemFieldForbiddenUpdate
 	CodeProblemFieldUpdateFailed
-	CodeProblemFileInsertFailed
+	CodeProblemZipFileDownloadFailed
 )
 
 var (
-	ErrProblemCodeIsExist          = NewError(CodeProblemCodeIsExist, "problem code is exist", ErrTypeBus)
-	ErrProblemCodeCheckFailed      = NewError(CodeProblemCodeCheckFailed, "The problem code check failed", ErrTypeServer)
-	ErrProblemGetFailed            = NewError(CodeProblemGetFailed, "The problem get failed", ErrTypeServer)
-	ErrProblemInsertFailed         = NewError(CodeProblemInsertFailed, "The problem insert failed", ErrTypeServer)
-	ErrProblemUpdateFailed         = NewError(CodeProblemUpdateFailed, "The problem update failed", ErrTypeServer)
-	ErrProblemDeleteFailed         = NewError(CodeProblemDeleteFailed, "The problem delete failed", ErrTypeServer)
-	ErrProblemListFailed           = NewError(CodeProblemListFailed, "Failed to get the problem list", ErrTypeServer)
-	ErrProblemFileUploadFailed     = NewError(CodeProblemFileUploadFailed, "The problem file storage failed", ErrTypeServer)
-	ErrProblemNotExist             = NewError(CodeProblemNotExist, "The problem does not exist", ErrTypeBus)
-	ErrProblemFileNotExist         = NewError(CodeProblemFileNotExist, "The problem file is not exist", ErrTypeBus)
-	ErrProblemFieldForbiddenUpdate = NewError(CodeProblemFieldForbiddenUpdate, "Updating illegal field", ErrTypeBus)
-	ErrProblemFieldUpdateFailed    = NewError(CodeProblemFieldUpdateFailed, "The problem field update failed", ErrTypeServer)
-	ErrProblemFileInsertFailed     = NewError(CodeProblemFileInsertFailed, "The problem file insert failed", ErrTypeServer)
+	ErrProblemCodeIsExist           = NewError(CodeProblemCodeIsExist, "problem code is exist", ErrTypeBus)
+	ErrProblemCodeCheckFailed       = NewError(CodeProblemCodeCheckFailed, "The problem code check failed", ErrTypeServer)
+	ErrProblemGetFailed             = NewError(CodeProblemGetFailed, "The problem get failed", ErrTypeServer)
+	ErrProblemInsertFailed          = NewError(CodeProblemInsertFailed, "The problem insert failed", ErrTypeServer)
+	ErrProblemUpdateFailed          = NewError(CodeProblemUpdateFailed, "The problem update failed", ErrTypeServer)
+	ErrProblemDeleteFailed          = NewError(CodeProblemDeleteFailed, "The problem delete failed", ErrTypeServer)
+	ErrProblemListFailed            = NewError(CodeProblemListFailed, "Failed to get the problem list", ErrTypeServer)
+	ErrProblemFileUploadFailed      = NewError(CodeProblemFileUploadFailed, "The problem file storage failed", ErrTypeServer)
+	ErrProblemNotExist              = NewError(CodeProblemNotExist, "The problem does not exist", ErrTypeBus)
+	ErrProblemFileNotExist          = NewError(CodeProblemFileNotExist, "The problem file is not exist", ErrTypeBus)
+	ErrProblemFieldForbiddenUpdate  = NewError(CodeProblemFieldForbiddenUpdate, "Updating illegal field", ErrTypeBus)
+	ErrProblemFieldUpdateFailed     = NewError(CodeProblemFieldUpdateFailed, "The problem field update failed", ErrTypeServer)
+	ErrProblemZipFileDownloadFailed = NewError(CodeProblemZipFileDownloadFailed, "The problem zipfile download failed", ErrTypeServer)
 )
 
 /************judge错误**************/

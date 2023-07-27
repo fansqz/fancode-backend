@@ -14,13 +14,15 @@ import (
 type ProblemController interface {
 	CheckProblemCode(ctx *gin.Context)
 	InsertProblem(ctx *gin.Context)
-	UpdateProblem(ctx *gin.Context)
 	DeleteProblem(ctx *gin.Context)
 	GetProblemList(ctx *gin.Context)
 	// 上传题目文件
 	UploadProblemFile(ctx *gin.Context)
-	// 这两个方法用于获取题目全部信息，题目元数据，题目文件列表
+
+	// 文件修改需要访问的接口
 	GetProblemByID(ctx *gin.Context)
+	UpdateProblem(ctx *gin.Context)
+	DownloadProblemFile(ctx *gin.Context)
 }
 
 type problemController struct {
@@ -160,4 +162,15 @@ func (q *problemController) UploadProblemFile(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData("题目文件上传成功")
+}
+
+func (q *problemController) DownloadProblemFile(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	pidstr := ctx.Param("id")
+	pid, err := strconv.Atoi(pidstr)
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	q.problemService.DownloadProblemZipFile(ctx, uint(pid))
 }

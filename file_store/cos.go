@@ -2,6 +2,7 @@ package file_store
 
 import (
 	"FanCode/setting"
+	"archive/zip"
 	"context"
 	"fmt"
 	"github.com/tencentyun/cos-go-sdk-v5"
@@ -100,6 +101,87 @@ func (c *cosStore) DownloadFolder(storePath, localPath string) error {
 
 		fmt.Println("File downloaded:", localPath)
 	}
+	return nil
+}
+
+func (c *cosStore) DownloadAndCompressFolder(storePath, localPath, zipPath string) error {
+	// 列出文件夹下的对象
+	// 获取指定前缀下的文件列表
+	options := &cos.BucketGetOptions{
+		Prefix: storePath,
+	}
+	res, _, err := c.client.Bucket.Get(context.Background(), options)
+	if err != nil {
+		fmt.Println("Failed to get bucket:", err)
+		return err
+	}
+
+	// 创建压缩文件
+	zipfile, err := os.Create(zipPath)
+	if err != nil {
+		fmt.Println("Failed to create zip file:", err)
+		return err
+	}
+	defer zipfile.Close()
+
+	// 创建zip.Writer
+	zipWriter := zip.NewWriter(zipfile)
+	defer zipWriter.Close()
+
+	// 遍历文件列表并下载每个文件
+	for _, object := range res.Contents {
+		// 构建文件下载的本地路径
+		filePathInCos := object.Key
+
+		// 下载文件
+		resp, err := c.client.Object.Get(context.Background(), object.Key, nil)
+		if err != nil {
+			fmt.Println("Failed to download file:", err)
+			return err
+		}
+		defer resp.Body.Close()
+
+		// 读取文件内容
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Failed to read file:", err)
+			return err
+		}
+
+		// 创建文件夹
+		filePathInLocal := strings.Replace(filePathInCos, storePath, localPath, 1)
+		err = os.MkdirAll(filepath.Dir(filePathInLocal), 0755)
+		if err != nil {
+			fmt.Println("Failed to save file:", err)
+			return err
+		}
+
+		// 将文件内容写入本地文件
+		err = ioutil.WriteFile(filePathInLocal, data, 0644)
+		if err != nil {
+			fmt.Println("Failed to save file:", err)
+			return err
+		}
+
+		// 压缩文件到zip中
+		relPath, err := filepath.Rel(localPath, filePathInLocal)
+		if err != nil {
+			fmt.Println("Failed to get relative path:", err)
+			return err
+		}
+		zipFileInZip, err := zipWriter.Create(relPath)
+		if err != nil {
+			fmt.Println("Failed to create file in zip:", err)
+			return err
+		}
+		_, err = zipFileInZip.Write(data)
+		if err != nil {
+			fmt.Println("Failed to write file to zip:", err)
+			return err
+		}
+	}
+
+	fmt.Println("Folder downloaded and compressed:", zipPath)
 	return nil
 }
 
