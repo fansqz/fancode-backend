@@ -13,6 +13,8 @@ type ProblemDtoForGet struct {
 	Description string `json:"description"`
 	Title       string `json:"title"`
 	Path        string `json:"path"`
+	Difficulty  int    `json:"difficulty"`
+	Enable      bool   `json:"enable"`
 }
 
 func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
@@ -23,30 +25,36 @@ func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
 		Description: problem.Description,
 		Title:       problem.Title,
 		Path:        problem.Path,
+		Difficulty:  problem.Difficulty,
+		Enable:      problem.Enable,
 	}
 	return response
 }
 
 // 获取题目列表
 type ProblemDtoForList struct {
-	ID        uint       `json:"id"`
-	CreatedAt utils.Time `json:"createdAt"`
-	UpdatedAt utils.Time `json:"updatedAt"`
-	Name      string     `json:"name"`
-	Code      string     `json:"code"`
-	Title     string     `json:"title"`
-	Path      string     `json:"path"`
+	ID         uint       `json:"id"`
+	CreatedAt  utils.Time `json:"createdAt"`
+	UpdatedAt  utils.Time `json:"updatedAt"`
+	Name       string     `json:"name"`
+	Code       string     `json:"code"`
+	Title      string     `json:"title"`
+	Path       string     `json:"path"`
+	Difficulty int        `json:"difficulty"`
+	Enable     bool       `json:"enable"`
 }
 
-func NewProblemDtoForList(question *po.Problem) *ProblemDtoForList {
+func NewProblemDtoForList(problem *po.Problem) *ProblemDtoForList {
 	response := &ProblemDtoForList{
-		ID:        question.ID,
-		CreatedAt: utils.Time(question.CreatedAt),
-		UpdatedAt: utils.Time(question.UpdatedAt),
-		Name:      question.Name,
-		Code:      question.Code,
-		Title:     question.Title,
-		Path:      question.Path,
+		ID:         problem.ID,
+		CreatedAt:  utils.Time(problem.CreatedAt),
+		UpdatedAt:  utils.Time(problem.UpdatedAt),
+		Name:       problem.Name,
+		Code:       problem.Code,
+		Title:      problem.Title,
+		Path:       problem.Path,
+		Difficulty: problem.Difficulty,
+		Enable:     problem.Enable,
 	}
 	return response
 }

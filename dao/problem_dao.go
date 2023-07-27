@@ -12,34 +12,21 @@ func InsertProblem(problem *po.Problem) error {
 
 // GetProblemByProblemCode
 func GetProblemByProblemCode(problemCode string) (*po.Problem, error) {
-	//写sql语句
-	sqlStr := `select id,name,code,description,title,path
-	from problems where code = ?`
-	//执行
-	row := db.DB.Raw(sqlStr, problemCode)
-	problem := &po.Problem{}
-	row.Scan(&problem)
-	return problem, nil
+	question := &po.Problem{}
+	err := db.DB.Where("code = ?", problemCode).First(&question).Error
+	return question, err
 }
 
 // GetProblemByProblemID
 func GetProblemByProblemID(problemID uint) (*po.Problem, error) {
-	//写sql语句
-	sqlStr := `select id,name,code,description,title,path
-	from problems where id = ?`
-	//执行
-	row := db.DB.Raw(sqlStr, problemID)
 	question := &po.Problem{}
-	row.Scan(&question)
-	return question, nil
+	err := db.DB.First(&question, problemID).Error
+	return question, err
 }
 
 // UpdateProblem 更新题目
 func UpdateProblem(problem *po.Problem) error {
-	sqlStr := "update `problems` set name = ?, code = ?, description = ?, title = ? where id = ?"
-	//执行
-	err := db.DB.Exec(sqlStr, problem.Name, problem.Code, problem.Description, problem.Title, problem.ID).Error
-	return err
+	return db.DB.Save(&problem).Error
 }
 
 // CheckUserID检测用户ID是否存在
@@ -62,17 +49,13 @@ func GetProblemList(page int, pageSize int) ([]*po.Problem, error) {
 }
 
 func UpdatePathByCode(path string, problemCode string) error {
-	sqlStr := "update `problems` set path = ? where code = ?"
-	//执行
-	err := db.DB.Exec(sqlStr, path, problemCode).Error
-	return err
+	return db.DB.Model(&po.Problem{}).
+		Where("code = ?", problemCode).Update("path", path).Error
 }
 
 func UpdatePathByID(path string, id uint) error {
-	sqlStr := "update `problems` set path = ? where id = ?"
-	//执行
-	err := db.DB.Exec(sqlStr, path, id).Error
-	return err
+	return db.DB.Model(&po.Problem{}).
+		Where("id = ?", id).Update("path", path).Error
 }
 
 func DeleteProblemByID(id uint) error {

@@ -80,6 +80,10 @@ func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 			return 0, e.ErrProblemCodeIsExist
 		}
 	}
+	// 题目难度不在范围，那么都设置为1
+	if problem.Difficulty > 5 || problem.Difficulty < 1 {
+		problem.Difficulty = 1
+	}
 	// 添加
 	err := dao.InsertProblem(problem)
 	if err != nil {

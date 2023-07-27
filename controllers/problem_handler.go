@@ -57,10 +57,26 @@ func (q *problemController) InsertProblem(ctx *gin.Context) {
 	problem.Name = ctx.PostForm("name")
 	problem.Description = ctx.PostForm("description")
 	problem.Title = ctx.PostForm("title")
-	//插入
-	pID, err := q.problemService.InsertProblem(problem)
+	difficultyStr := ctx.PostForm("difficulty")
+	var err error
+	if difficultyStr == "" {
+		// 题目难度默认为1
+		problem.Difficulty = 1
+	} else {
+		problem.Difficulty, err = strconv.Atoi(difficultyStr)
+	}
 	if err != nil {
-		result.Error(err)
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	if problem.Difficulty > 5 || problem.Difficulty < 1 {
+		result.SimpleErrorMessage("题目难度必须在1-5之间")
+		return
+	}
+	//插入
+	pID, err2 := q.problemService.InsertProblem(problem)
+	if err2 != nil {
+		result.Error(err2)
 		return
 	}
 	result.Success("题库添加成功", pID)
@@ -81,7 +97,23 @@ func (q *problemController) UpdateProblem(ctx *gin.Context) {
 	problem.Description = ctx.PostForm("description")
 	problem.Title = ctx.PostForm("title")
 	problem.Path = ctx.PostForm("path")
+	difficultyStr := ctx.PostForm("difficulty")
+	problem.Difficulty, err = strconv.Atoi(difficultyStr)
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	if problem.Difficulty > 5 || problem.Difficulty < 1 {
+		result.SimpleErrorMessage("题目难度必须在1-5之间")
+		return
+	}
+	enableStr := ctx.PostForm("enable")
+	problem.Enable = enableStr == "true"
 	file, _ := ctx.FormFile("file")
+	if problem.Enable && (problem.Path == "" && file == nil) {
+		result.SimpleErrorMessage("题目启用必须需要携带编程文件")
+		return
+	}
 	err2 := q.problemService.UpdateProblem(problem, ctx, file)
 	if err2 != nil {
 		result.Error(err2)
@@ -146,23 +178,6 @@ func (q *problemController) GetProblemByID(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData(problem)
-}
-
-func (q *problemController) UploadProblemFile(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	file, err := ctx.FormFile("problemFile")
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	problemCode := ctx.PostForm("problemCode")
-	// 保存文件到本地
-	uploadErr := q.problemService.UploadProblemFile(ctx, file, problemCode)
-	if uploadErr != nil {
-		result.Error(uploadErr)
-		return
-	}
-	result.SuccessData("题目文件上传成功")
 }
 
 func (q *problemController) DownloadProblemFile(ctx *gin.Context) {

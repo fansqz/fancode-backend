@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/resources/编程文件模板.zip" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/controllers/problem_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/problem_handler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routers/problem_router.go" beforeDir="false" afterPath="$PROJECT_DIR$/routers/problem_router.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/problem_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/problem_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setting/file_path_config.go" beforeDir="false" afterPath="$PROJECT_DIR$/setting/file_path_config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dao/problem_dao.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/problem_dao.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/dto/problem.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/dto/problem.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/po/problem.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/po/problem.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
