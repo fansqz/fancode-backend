@@ -2,6 +2,7 @@ package service
 
 import (
 	"FanCode/dao"
+	"FanCode/db"
 	e "FanCode/error"
 	"FanCode/models/po"
 	"FanCode/utils"
@@ -29,7 +30,7 @@ func (u *userService) Register(user *po.User) *e.Error {
 		user.Username = "fancoder"
 		return nil
 	}
-	if dao.CheckUserCode(user.Code) {
+	if dao.CheckUserCode(db.DB, user.Code) {
 		return e.ErrUserNameIsExist
 	}
 	if len(user.Password) < 6 {
@@ -42,7 +43,7 @@ func (u *userService) Register(user *po.User) *e.Error {
 	}
 	user.Password = string(newPassword)
 	//插入
-	dao.InsertUser(user)
+	dao.InsertUser(db.DB, user)
 
 	if err != nil {
 		log.Println(err)
@@ -54,7 +55,7 @@ func (u *userService) Register(user *po.User) *e.Error {
 
 func (u *userService) Login(userCode string, password string) (string, *e.Error) {
 
-	user, userErr := dao.GetUserByUserCode(userCode)
+	user, userErr := dao.GetUserByUserCode(db.DB, userCode)
 	if userErr != nil {
 		log.Println(userErr)
 		return "", e.ErrUserUnknownError
@@ -75,7 +76,7 @@ func (u *userService) Login(userCode string, password string) (string, *e.Error)
 
 func (u *userService) ChangePassword(userCode, oldPassword, newPassword string) *e.Error {
 	//检验用户名
-	user, err := dao.GetUserByUserCode(userCode)
+	user, err := dao.GetUserByUserCode(db.DB, userCode)
 	if err != nil {
 		log.Println(err)
 		return e.ErrUserUnknownError
@@ -93,7 +94,7 @@ func (u *userService) ChangePassword(userCode, oldPassword, newPassword string) 
 		return e.ErrPasswordEncodeFailed
 	}
 	user.Password = string(password)
-	err = dao.UpdateUser(user)
+	err = dao.UpdateUser(db.DB, user)
 	if err != nil {
 		return e.ErrUserUnknownError
 	}
