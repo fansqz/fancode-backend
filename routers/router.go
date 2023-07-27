@@ -6,8 +6,8 @@ package routers
 
 import (
 	"FanCode/controllers"
+	"FanCode/initialize/setting"
 	"FanCode/interceptor"
-	"FanCode/setting"
 	"github.com/gin-gonic/gin"
 )
 

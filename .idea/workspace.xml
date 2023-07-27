@@ -5,11 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/conf/model.conf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/casbin/custom_adapter.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/controllers/role_manage_handler.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/controllers/user_manager_handler.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/po/access_control_policy.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/po/grouping_policy.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/service/role_manage_service.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interceptor/casbin.go" beforeDir="false" afterPath="$PROJECT_DIR$/interceptor/casbin.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interceptor/casbin.go" beforeDir="false" afterPath="$PROJECT_DIR$/casbin/casbin.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,11 +72,11 @@
       <recent name="D:\MyProcedure\go\FanCode\routers" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\MyProcedure\go\FanCode\models\po" />
+      <recent name="D:\MyProcedure\go\FanCode\casbin" />
+      <recent name="D:\MyProcedure\go\FanCode" />
       <recent name="D:\MyProcedure\go\FanCode\resources" />
       <recent name="D:\MyProcedure\go\FanCode\utils" />
-      <recent name="D:\MyProcedure\go\FanCode\constants" />
-      <recent name="D:\MyProcedure\go\FanCode" />
-      <recent name="D:\MyProcedure\go\FanCode\service" />
     </key>
   </component>
   <component name="RunManager" selected="Go Build.go build FanCode">

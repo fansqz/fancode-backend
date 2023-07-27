@@ -1,4 +1,4 @@
-package interceptor
+package initialize
 
 import (
 	"github.com/casbin/casbin/v2"
@@ -7,7 +7,9 @@ import (
 	"log"
 )
 
-func Casbin() *casbin.Enforcer {
+var CasEnforcer *casbin.Enforcer
+
+func Init() {
 	a, _ := gormadapter.NewAdapter("mysql", "root:miconvert*.*@tcp(49.234.56:3306)/") // Your driver and data source.
 	e, err := casbin.NewEnforcer("./model.conf", a)
 	if err != nil {
@@ -15,5 +17,5 @@ func Casbin() *casbin.Enforcer {
 	}
 
 	e.LoadPolicy() // 从数据库载入配置
-	return e
+	CasEnforcer = e
 }

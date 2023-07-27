@@ -2,10 +2,10 @@
 // @Author: fzw
 // @Create: 2023/7/4
 // @Description: 数据库开启关闭等
-package db
+package initialize
 
 import (
-	"FanCode/setting"
+	"FanCode/initialize/setting"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"

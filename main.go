@@ -1,10 +1,10 @@
 package main
 
 import (
-	"FanCode/db"
+	"FanCode/initialize"
+	"FanCode/initialize/setting"
 	"FanCode/models/po"
 	"FanCode/routers"
-	"FanCode/setting"
 	"fmt"
 	"os"
 	"strings"
@@ -23,15 +23,15 @@ func main() {
 	}
 
 	//连接数据库
-	if err := db.InitMysql(setting.Conf.MySqlConfig); err != nil {
+	if err := initialize.InitMysql(setting.Conf.MySqlConfig); err != nil {
 		fmt.Println("数据库连接失败")
 	}
 
 	// 模型绑定
-	db.DB.AutoMigrate(&po.User{})
-	db.DB.AutoMigrate(&po.Problem{})
-	db.DB.AutoMigrate(&po.Submission{})
-	defer db.CloseMysql()
+	initialize.DB.AutoMigrate(&po.User{})
+	initialize.DB.AutoMigrate(&po.Problem{})
+	initialize.DB.AutoMigrate(&po.Submission{})
+	defer initialize.CloseMysql()
 
 	//注册路由
 	routers.Run()

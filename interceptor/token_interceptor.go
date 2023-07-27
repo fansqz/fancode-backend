@@ -2,8 +2,8 @@ package interceptor
 
 import (
 	e "FanCode/error"
+	"FanCode/initialize/setting"
 	result2 "FanCode/models/vo"
-	"FanCode/setting"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"strings"

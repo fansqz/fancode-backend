@@ -1,7 +1,7 @@
 package file_store
 
 import (
-	"FanCode/setting"
+	"FanCode/initialize/setting"
 	"os"
 	"strings"
 	"testing"
