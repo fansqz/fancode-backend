@@ -5,13 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/constants/rule_constans.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/interceptor/casbin.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/setting/casbin_config.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/conf/model.conf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conf/config.ini" beforeDir="false" afterPath="$PROJECT_DIR$/conf/config.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/interceptor/casbin.go" beforeDir="false" afterPath="$PROJECT_DIR$/interceptor/casbin.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
