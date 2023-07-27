@@ -13,13 +13,14 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
 type ProblemService interface {
 	CheckProblemCode(problemCode string) (bool, *e.Error)
 	InsertProblem(problem *po.Problem) (uint, *e.Error)
-	UpdateProblem(Problem *po.Problem) *e.Error
+	UpdateProblem(Problem *po.Problem, ctx *gin.Context, file *multipart.FileHeader) *e.Error
 	DeleteProblem(id uint) *e.Error
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
 	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemCode string) *e.Error
@@ -86,9 +87,15 @@ func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 	return problem.ID, nil
 }
 
-func (q *problemService) UpdateProblem(problem *po.Problem) *e.Error {
-	err := dao.UpdateProblem(problem)
+func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, file *multipart.FileHeader) *e.Error {
+	// 更新文件
+	err := q.UploadProblemFile2(ctx, file, problem.ID)
 	if err != nil {
+		return err
+	}
+	// 更新题目
+	err2 := dao.UpdateProblem(problem)
+	if err2 != nil {
 		log.Println(err)
 		return e.ErrProblemUpdateFailed
 	}
@@ -173,6 +180,47 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 	err = os.RemoveAll(tempPath)
 	if err != nil {
 		log.Println(err)
+	}
+	return nil
+}
+
+func (q *problemService) UploadProblemFile2(ctx *gin.Context, file *multipart.FileHeader, problemID uint) *e.Error {
+	path := strconv.Itoa(int(problemID))
+	filename := file.Filename
+	// 保存文件到本地
+	tempPath := setting.Conf.FilePathConfig.TempDir
+	tempPath = tempPath + "/" + utils.GetUUID()
+	err := ctx.SaveUploadedFile(file, tempPath+"/"+filename)
+	if err != nil {
+		log.Println(err)
+		return e.ErrProblemFileUploadFailed
+	}
+	//解压
+	err = utils.Extract(tempPath+"/"+filename, tempPath+"/"+path)
+	if err != nil {
+		log.Println(err)
+		return e.ErrProblemFileUploadFailed
+	}
+	//检测文件内有一个文件夹，或者是多个文件
+	ProblemPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + path)
+	s := file_store.NewCOS()
+	err = s.DeleteFolder(strconv.Itoa(int(problemID)))
+	s.UploadFolder(path, ProblemPathInLocal)
+	// 存储到数据库
+	updateError := dao.UpdatePathByID(path, problemID)
+	if updateError != nil {
+		return e.ErrProblemFileUploadFailed
+	}
+	// 删除temp中所有文件
+	err = os.RemoveAll(tempPath)
+	if err != nil {
+		log.Println(err)
+	}
+	// 删除本地题目的文件
+	localPath := getLocalPathByPath(path)
+	err = utils.CheckAndDeletePath(localPath)
+	if err != nil {
+		_ = utils.CheckAndDeletePath(localPath)
 	}
 	return nil
 }

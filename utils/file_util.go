@@ -61,3 +61,19 @@ func CheckFolderExists(folderPath string) bool {
 		return false
 	}
 }
+
+// CheckAndDeletePath 检测一个文件或文件夹是否存在，如果存在则删除
+func CheckAndDeletePath(filename string) error {
+	// 检查文件是否存在
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return fmt.Errorf("文件 %s 不存在", filename)
+	}
+
+	// 存在则删除文件
+	err := os.Remove(filename)
+	if err != nil {
+		return fmt.Errorf("删除文件失败: %v", err)
+	}
+
+	return nil
+}

@@ -78,8 +78,8 @@ func (q *problemController) UpdateProblem(ctx *gin.Context) {
 	problem.Description = ctx.PostForm("description")
 	problem.Title = ctx.PostForm("title")
 	problem.Path = ctx.PostForm("path")
-
-	err2 := q.problemService.UpdateProblem(problem)
+	file, _ := ctx.FormFile("file")
+	err2 := q.problemService.UpdateProblem(problem, ctx, file)
 	if err2 != nil {
 		result.Error(err2)
 		return

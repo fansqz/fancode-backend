@@ -68,6 +68,13 @@ func UpdatePathByCode(path string, problemCode string) error {
 	return err
 }
 
+func UpdatePathByID(path string, id uint) error {
+	sqlStr := "update `problems` set path = ? where id = ?"
+	//执行
+	err := db.DB.Exec(sqlStr, path, id).Error
+	return err
+}
+
 func DeleteProblemByID(id uint) error {
 	return db.DB.Delete(&po.Problem{}, id).Error
 }
