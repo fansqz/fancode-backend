@@ -1,38 +1,38 @@
 package dao
 
 import (
-	"FanCode/db"
 	"FanCode/models/po"
+	"github.com/jinzhu/gorm"
 )
 
 // InsertProblem 添加题库
-func InsertProblem(problem *po.Problem) error {
-	return db.DB.Create(problem).Error
+func InsertProblem(db *gorm.DB, problem *po.Problem) error {
+	return db.Create(problem).Error
 }
 
 // GetProblemByProblemCode
-func GetProblemByProblemCode(problemCode string) (*po.Problem, error) {
+func GetProblemByProblemCode(db *gorm.DB, problemCode string) (*po.Problem, error) {
 	question := &po.Problem{}
-	err := db.DB.Where("code = ?", problemCode).First(&question).Error
+	err := db.Where("code = ?", problemCode).First(&question).Error
 	return question, err
 }
 
 // GetProblemByProblemID
-func GetProblemByProblemID(problemID uint) (*po.Problem, error) {
+func GetProblemByProblemID(db *gorm.DB, problemID uint) (*po.Problem, error) {
 	question := &po.Problem{}
-	err := db.DB.First(&question, problemID).Error
+	err := db.First(&question, problemID).Error
 	return question, err
 }
 
 // UpdateProblem 更新题目
-func UpdateProblem(problem *po.Problem) error {
-	return db.DB.Save(&problem).Error
+func UpdateProblem(db *gorm.DB, problem *po.Problem) error {
+	return db.Save(&problem).Error
 }
 
 // CheckProblemCodeExists 检测用户ID是否存在
-func CheckProblemCodeExists(problemCode string) (bool, error) {
+func CheckProblemCodeExists(db *gorm.DB, problemCode string) (bool, error) {
 	//执行
-	row := db.DB.Model(&po.Problem{}).Select("code").Where("code = ?", problemCode)
+	row := db.Model(&po.Problem{}).Select("code").Where("code = ?", problemCode)
 	if row.Error != nil {
 		return false, row.Error
 	}
@@ -42,51 +42,51 @@ func CheckProblemCodeExists(problemCode string) (bool, error) {
 }
 
 // SetProblemEnable 让一个题目可用
-func SetProblemEnable(id uint, enable bool) error {
-	return db.DB.Model(&po.Problem{}).Where("id = ?", id).Update("enable", enable).Error
+func SetProblemEnable(db *gorm.DB, id uint, enable bool) error {
+	return db.Model(&po.Problem{}).Where("id = ?", id).Update("enable", enable).Error
 }
 
-func GetProblemList(page int, pageSize int) ([]*po.Problem, error) {
+func GetProblemList(db *gorm.DB, page int, pageSize int) ([]*po.Problem, error) {
 	offset := (page - 1) * pageSize
 	var problems []*po.Problem
-	err := db.DB.Limit(pageSize).Offset(offset).Find(&problems).Error
+	err := db.Limit(pageSize).Offset(offset).Find(&problems).Error
 	return problems, err
 }
 
-func UpdatePathByCode(path string, problemCode string) error {
-	return db.DB.Model(&po.Problem{}).
+func UpdatePathByCode(db *gorm.DB, path string, problemCode string) error {
+	return db.Model(&po.Problem{}).
 		Where("code = ?", problemCode).Update("path", path).Error
 }
 
-func UpdatePathByID(path string, id uint) error {
-	return db.DB.Model(&po.Problem{}).
+func UpdatePathByID(db *gorm.DB, path string, id uint) error {
+	return db.Model(&po.Problem{}).
 		Where("id = ?", id).Update("path", path).Error
 }
 
-func DeleteProblemByID(id uint) error {
-	return db.DB.Delete(&po.Problem{}, id).Error
+func DeleteProblemByID(db *gorm.DB, id uint) error {
+	return db.Delete(&po.Problem{}, id).Error
 }
 
-func GetProblemCount() (uint, error) {
+func GetProblemCount(db *gorm.DB) (uint, error) {
 	var count uint
-	err := db.DB.Model(&po.Problem{}).Count(&count).Error
+	err := db.Model(&po.Problem{}).Count(&count).Error
 	return count, err
 }
 
 // UpdateProblemField 根据字段进行更新
-func UpdateProblemField(id uint, field string, value string) error {
+func UpdateProblemField(db *gorm.DB, id uint, field string, value string) error {
 	updateData := map[string]interface{}{
 		field: value,
 	}
-	if err := db.DB.Model(&po.Problem{}).Where("id = ?", id).Updates(updateData).Error; err != nil {
+	if err := db.Model(&po.Problem{}).Where("id = ?", id).Updates(updateData).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
 // GetProblemFilePathByID 根据题目id获取题目文件的path
-func GetProblemFilePathByID(id uint) (string, error) {
-	row := db.DB.Model(&po.Problem{}).Select("path").Where("id = ?", id)
+func GetProblemFilePathByID(db *gorm.DB, id uint) (string, error) {
+	row := db.Model(&po.Problem{}).Select("path").Where("id = ?", id)
 	if row.Error != nil {
 		return "", row.Error
 	}

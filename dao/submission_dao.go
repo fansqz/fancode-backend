@@ -1,16 +1,16 @@
 package dao
 
 import (
-	"FanCode/db"
 	"FanCode/models/po"
+	"github.com/jinzhu/gorm"
 )
 
-func InsertSubmission(submission *po.Submission) error {
-	return db.DB.Create(submission).Error
+func InsertSubmission(db *gorm.DB, submission *po.Submission) error {
+	return db.Create(submission).Error
 }
 
-func GetSubmissionListByUserIDAndProblemID(userID uint, problemID uint) ([]*po.Submission, error) {
+func GetSubmissionListByUserIDAndProblemID(db *gorm.DB, userID uint, problemID uint) ([]*po.Submission, error) {
 	var submissions []*po.Submission
-	err := db.DB.Where(`user_id = ? and problem_id = ?`, userID, problemID).Find(&submissions).Error
+	err := db.Where(`user_id = ? and problem_id = ?`, userID, problemID).Find(&submissions).Error
 	return submissions, err
 }

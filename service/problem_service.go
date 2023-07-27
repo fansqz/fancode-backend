@@ -2,6 +2,7 @@ package service
 
 import (
 	"FanCode/dao"
+	"FanCode/db"
 	e "FanCode/error"
 	"FanCode/file_store"
 	"FanCode/models/dto"
@@ -45,7 +46,7 @@ func NewProblemService() ProblemService {
 }
 
 func (q *problemService) CheckProblemCode(problemCode string) (bool, *e.Error) {
-	b, err := dao.CheckProblemCodeExists(problemCode)
+	b, err := dao.CheckProblemCodeExists(db.DB, problemCode)
 	if err != nil {
 		return !b, e.ErrProblemCodeCheckFailed
 	}
@@ -73,7 +74,7 @@ func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 	}
 	// 检测编号是否重复
 	if problem.Code != "" {
-		b, checkError := dao.CheckProblemCodeExists(problem.Code)
+		b, checkError := dao.CheckProblemCodeExists(db.DB, problem.Code)
 		if checkError != nil {
 			return 0, e.ErrProblemInsertFailed
 		}
@@ -86,7 +87,7 @@ func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 		problem.Difficulty = 1
 	}
 	// 添加
-	err := dao.InsertProblem(problem)
+	err := dao.InsertProblem(db.DB, problem)
 	if err != nil {
 		return 0, e.ErrProblemInsertFailed
 	}
@@ -100,7 +101,7 @@ func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, fi
 		return err
 	}
 	// 更新题目
-	err2 := dao.UpdateProblem(problem)
+	err2 := dao.UpdateProblem(db.DB, problem)
 	if err2 != nil {
 		log.Println(err)
 		return e.ErrProblemUpdateFailed
@@ -111,7 +112,7 @@ func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, fi
 // todo: 这里有事务相关的问题
 func (q *problemService) DeleteProblem(id uint) *e.Error {
 	// 读取Problem
-	Problem, err := dao.GetProblemByProblemID(id)
+	Problem, err := dao.GetProblemByProblemID(db.DB, id)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemDeleteFailed
@@ -126,7 +127,7 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 		return e.ErrProblemDeleteFailed
 	}
 	// 删除题目
-	err = dao.DeleteProblemByID(id)
+	err = dao.DeleteProblemByID(db.DB, id)
 	if err != nil {
 		return e.ErrProblemDeleteFailed
 	}
@@ -135,7 +136,7 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 
 func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error) {
 	// 获取题目列表
-	problems, err := dao.GetProblemList(page, pageSize)
+	problems, err := dao.GetProblemList(db.DB, page, pageSize)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
@@ -145,7 +146,7 @@ func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, 
 	}
 	// 获取所有题目总数目
 	var count uint
-	count, err = dao.GetProblemCount()
+	count, err = dao.GetProblemCount(db.DB)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
@@ -179,7 +180,7 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 	err = s.DeleteFolder(problemCode)
 	s.UploadFolder(problemCode, ProblemPathInLocal)
 	// 存储到数据库
-	updateError := dao.UpdatePathByCode(problemCode, problemCode)
+	updateError := dao.UpdatePathByCode(db.DB, problemCode, problemCode)
 	if updateError != nil {
 		return e.ErrProblemFileUploadFailed
 	}
@@ -214,7 +215,7 @@ func (q *problemService) UploadProblemFile2(ctx *gin.Context, file *multipart.Fi
 	err = s.DeleteFolder(strconv.Itoa(int(problemID)))
 	s.UploadFolder(path, ProblemPathInLocal)
 	// 存储到数据库
-	updateError := dao.UpdatePathByID(path, problemID)
+	updateError := dao.UpdatePathByID(db.DB, path, problemID)
 	if updateError != nil {
 		return e.ErrProblemFileUploadFailed
 	}
@@ -233,7 +234,7 @@ func (q *problemService) UploadProblemFile2(ctx *gin.Context, file *multipart.Fi
 }
 
 func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error) {
-	problem, err := dao.GetProblemByProblemID(id)
+	problem, err := dao.GetProblemByProblemID(db.DB, id)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrProblemGetFailed
@@ -243,7 +244,7 @@ func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Erro
 
 func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error) {
 	// 获取题目文件
-	problem, err := dao.GetProblemByProblemID(id)
+	problem, err := dao.GetProblemByProblemID(db.DB, id)
 	if err != nil {
 		return nil, e.ErrProblemGetFailed
 	}
@@ -282,7 +283,7 @@ func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Err
 
 func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int) (*dto.PageInfo, *e.Error) {
 	// 获取题目文件
-	problem, err := dao.GetProblemByProblemID(id)
+	problem, err := dao.GetProblemByProblemID(db.DB, id)
 	if err != nil {
 		return nil, e.ErrProblemGetFailed
 	}
@@ -319,7 +320,7 @@ func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int) (*dto.
 
 func (q *problemService) UpdateProblemField(id uint, field string, value string) *e.Error {
 	if field == "name" || field == "code" || field == "description" || field == "title" {
-		err := dao.UpdateProblemField(id, field, value)
+		err := dao.UpdateProblemField(db.DB, id, field, value)
 		if err != nil {
 			log.Println(err)
 			return e.ErrProblemUpdateFailed
@@ -351,7 +352,7 @@ func getSingleDirectoryPath(path string) (string, error) {
 
 func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint) {
 	result := r.NewResult(ctx)
-	path, err := dao.GetProblemFilePathByID(problemID)
+	path, err := dao.GetProblemFilePathByID(db.DB, problemID)
 	if err != nil {
 		result.Error(e.ErrProblemZipFileDownloadFailed)
 		return
@@ -402,7 +403,7 @@ func (q *problemService) DownloadProblemTemplateFile(ctx *gin.Context) {
 // todo: 是否要加事务
 func (q *problemService) UpdateProblemEnable(id uint, enable bool) *e.Error {
 	//检测题目文件是否存在
-	problem, err := dao.GetProblemByProblemID(id)
+	problem, err := dao.GetProblemByProblemID(db.DB, id)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemUpdateFailed
@@ -410,7 +411,7 @@ func (q *problemService) UpdateProblemEnable(id uint, enable bool) *e.Error {
 	if problem.Path == "" {
 		return e.ErrProblemFilePathNotExist
 	}
-	err = dao.SetProblemEnable(id, enable)
+	err = dao.SetProblemEnable(db.DB, id, enable)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemUpdateFailed
