@@ -29,6 +29,7 @@ type ProblemService interface {
 	DownloadProblemZipFile(ctx *gin.Context, problemID uint)
 	DownloadProblemTemplateFile(ctx *gin.Context)
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
+	UpdateProblemEnable(id uint, enable bool) *e.Error
 
 	// todo: 支持线上编辑题目
 	GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error)
@@ -321,11 +322,11 @@ func (q *problemService) UpdateProblemField(id uint, field string, value string)
 		err := dao.UpdateProblemField(id, field, value)
 		if err != nil {
 			log.Println(err)
-			return e.ErrProblemFieldUpdateFailed
+			return e.ErrProblemUpdateFailed
 		}
 		return nil
 	}
-	return e.ErrProblemFieldForbiddenUpdate
+	return e.ErrProblemUpdateFailed
 }
 
 func getCaseFolderByPath(path string) string {
@@ -396,6 +397,25 @@ func (q *problemService) DownloadProblemTemplateFile(ctx *gin.Context) {
 	ctx.Header("Content-Disposition", "attachment; filename="+"编程文件模板.zip")
 	ctx.Header("Content-Type", "application/zip")
 	ctx.Writer.Write(content)
+}
+
+// todo: 是否要加事务
+func (q *problemService) UpdateProblemEnable(id uint, enable bool) *e.Error {
+	//检测题目文件是否存在
+	problem, err := dao.GetProblemByProblemID(id)
+	if err != nil {
+		log.Println(err)
+		return e.ErrProblemUpdateFailed
+	}
+	if problem.Path == "" {
+		return e.ErrProblemFilePathNotExist
+	}
+	err = dao.SetProblemEnable(id, enable)
+	if err != nil {
+		log.Println(err)
+		return e.ErrProblemUpdateFailed
+	}
+	return nil
 }
 
 // getTempDir 获取一个随机的临时文件夹

@@ -24,6 +24,8 @@ type ProblemController interface {
 	DownloadProblemFile(ctx *gin.Context)
 	// DownloadProblemTemplateFile 下载题目的编程文件的模板文件
 	DownloadProblemTemplateFile(ctx *gin.Context)
+	// UpdateProblemEnable 设置题目可用
+	UpdateProblemEnable(ctx *gin.Context)
 }
 
 type problemController struct {
@@ -193,4 +195,22 @@ func (q *problemController) DownloadProblemFile(ctx *gin.Context) {
 
 func (q *problemController) DownloadProblemTemplateFile(ctx *gin.Context) {
 	q.problemService.DownloadProblemTemplateFile(ctx)
+}
+
+func (q *problemController) UpdateProblemEnable(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	problemIDStr := ctx.PostForm("problemID")
+	problemID, err := strconv.Atoi(problemIDStr)
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	enableStr := ctx.PostForm("enable")
+	enable := enableStr == "true"
+	err2 := q.problemService.UpdateProblemEnable(uint(problemID), enable)
+	if err2 != nil {
+		result.Error(err2)
+		return
+	}
+	result.SuccessMessage("操作成功")
 }

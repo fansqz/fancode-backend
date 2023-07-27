@@ -37,19 +37,18 @@ var (
 
 /************Question错误**************/
 const (
-	CodeProblemCodeIsExist = 11500 + iota //题目编号已存在
-	CodeProblemCodeCheckFailed
-	CodeProblemGetFailed
-	CodeProblemInsertFailed
-	CodeProblemUpdateFailed
-	CodeProblemDeleteFailed
-	CodeProblemListFailed
-	CodeProblemNotExist
-	CodeProblemFileUploadFailed
-	CodeProblemFileNotExist
-	CodeProblemFieldForbiddenUpdate
-	CodeProblemFieldUpdateFailed
-	CodeProblemZipFileDownloadFailed
+	CodeProblemCodeIsExist           = 11500 + iota //题目编号已存在
+	CodeProblemCodeCheckFailed                      // 题目编号检测失败
+	CodeProblemGetFailed                            // 获取题目失败
+	CodeProblemInsertFailed                         // 添加题目失败
+	CodeProblemUpdateFailed                         // 题目更新失败
+	CodeProblemDeleteFailed                         // 题目删除失败
+	CodeProblemListFailed                           // 获取题目列表失败
+	CodeProblemNotExist                             // 题目不存在
+	CodeProblemFileUploadFailed                     // 题目文件更新失败
+	CodeProblemFileNotExist                         // 题目文件不存在
+	CodeProblemZipFileDownloadFailed                //题目压缩包文件下载失败
+	CodeProblemFilePathNotExist                     // 题目文件路径不存在
 )
 
 var (
@@ -63,9 +62,8 @@ var (
 	ErrProblemFileUploadFailed      = NewError(CodeProblemFileUploadFailed, "The problem file storage failed", ErrTypeServer)
 	ErrProblemNotExist              = NewError(CodeProblemNotExist, "The problem does not exist", ErrTypeBus)
 	ErrProblemFileNotExist          = NewError(CodeProblemFileNotExist, "The problem file is not exist", ErrTypeBus)
-	ErrProblemFieldForbiddenUpdate  = NewError(CodeProblemFieldForbiddenUpdate, "Updating illegal field", ErrTypeBus)
-	ErrProblemFieldUpdateFailed     = NewError(CodeProblemFieldUpdateFailed, "The problem field update failed", ErrTypeServer)
 	ErrProblemZipFileDownloadFailed = NewError(CodeProblemZipFileDownloadFailed, "The problem zipfile download failed", ErrTypeServer)
+	ErrProblemFilePathNotExist      = NewError(CodeProblemFilePathNotExist, "The problem file is not exist", ErrTypeBus)
 )
 
 /************judge错误**************/

@@ -29,7 +29,7 @@ func UpdateProblem(problem *po.Problem) error {
 	return db.DB.Save(&problem).Error
 }
 
-// CheckUserID检测用户ID是否存在
+// CheckProblemCodeExists 检测用户ID是否存在
 func CheckProblemCodeExists(problemCode string) (bool, error) {
 	//执行
 	row := db.DB.Model(&po.Problem{}).Select("code").Where("code = ?", problemCode)
@@ -39,6 +39,11 @@ func CheckProblemCodeExists(problemCode string) (bool, error) {
 	problem := &po.Problem{}
 	row.Scan(&problem)
 	return problem.Code != "", nil
+}
+
+// SetProblemEnable 让一个题目可用
+func SetProblemEnable(id uint, enable bool) error {
+	return db.DB.Model(&po.Problem{}).Where("id = ?", id).Update("enable", enable).Error
 }
 
 func GetProblemList(page int, pageSize int) ([]*po.Problem, error) {
