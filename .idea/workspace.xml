@@ -5,7 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/service/user_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/user_service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/controllers/problem_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/problem_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dao/problem_dao.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/problem_dao.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/error/bus_error.go" beforeDir="false" afterPath="$PROJECT_DIR$/error/bus_error.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/problem_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/problem_service.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -172,7 +176,8 @@
     <MESSAGE value="feat: 更新一次代码" />
     <MESSAGE value="feat: 实现文件下载接口" />
     <MESSAGE value="fix: 删除上传文件的接口" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: 删除上传文件的接口" />
+    <MESSAGE value="fix: 删除题目时删除本地文件" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: 删除题目时删除本地文件" />
   </component>
   <component name="VgoProject">
     <environment>
@@ -189,6 +194,11 @@
           <url>file://$PROJECT_DIR$/dao/user_dao.go</url>
           <line>17</line>
           <option name="timeStamp" value="50" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/controllers/problem_handler.go</url>
+          <line>114</line>
+          <option name="timeStamp" value="83" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

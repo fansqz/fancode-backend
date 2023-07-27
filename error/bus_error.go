@@ -47,7 +47,7 @@ const (
 	CodeProblemNotExist                             // 题目不存在
 	CodeProblemFileUploadFailed                     // 题目文件更新失败
 	CodeProblemFileNotExist                         // 题目文件不存在
-	CodeProblemZipFileDownloadFailed                //题目压缩包文件下载失败
+	CodeProblemZipFileDownloadFailed                // 题目压缩包文件下载失败
 	CodeProblemFilePathNotExist                     // 题目文件路径不存在
 )
 
@@ -63,7 +63,7 @@ var (
 	ErrProblemNotExist              = NewError(CodeProblemNotExist, "The problem does not exist", ErrTypeBus)
 	ErrProblemFileNotExist          = NewError(CodeProblemFileNotExist, "The problem file is not exist", ErrTypeBus)
 	ErrProblemZipFileDownloadFailed = NewError(CodeProblemZipFileDownloadFailed, "The problem zipfile download failed", ErrTypeServer)
-	ErrProblemFilePathNotExist      = NewError(CodeProblemFilePathNotExist, "The problem file is not exist", ErrTypeBus)
+	ErrProblemFilePathNotExist      = NewError(CodeProblemFilePathNotExist, "题目编程文件不存在，需要上传编程文件", ErrTypeBus)
 )
 
 /************judge错误**************/

@@ -25,8 +25,16 @@ func GetProblemByProblemID(db *gorm.DB, problemID uint) (*po.Problem, error) {
 }
 
 // UpdateProblem 更新题目
+// 不修改path
 func UpdateProblem(db *gorm.DB, problem *po.Problem) error {
-	return db.Save(&problem).Error
+	return db.Model(&po.Problem{}).Where("id = ?", problem.ID).Updates(map[string]interface{}{
+		"code":        problem.Code,
+		"name":        problem.Name,
+		"description": problem.Description,
+		"difficulty":  problem.Difficulty,
+		"title":       problem.Title,
+		"enable":      problem.Enable,
+	}).Error
 }
 
 // CheckProblemCodeExists 检测用户ID是否存在

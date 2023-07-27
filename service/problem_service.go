@@ -95,15 +95,24 @@ func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 }
 
 func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, file *multipart.FileHeader) *e.Error {
-	// 更新文件
-	err := q.UploadProblemFile2(ctx, file, problem.ID)
+	path, err := dao.GetProblemFilePathByID(db.DB, problem.ID)
 	if err != nil {
-		return err
+		log.Println(err)
+		return e.ErrProblemUpdateFailed
 	}
+	if problem.Enable && (path == "" && file == nil) {
+		return e.NewCustomMsg("该题目没有上传编程文件，不可启动")
+	}
+	if file != nil {
+		// 更新文件
+		err2 := q.UploadProblemFile2(ctx, file, problem.ID)
+		return err2
+	}
+
 	// 更新题目
 	err2 := dao.UpdateProblem(db.DB, problem)
 	if err2 != nil {
-		log.Println(err)
+		log.Println(err2)
 		return e.ErrProblemUpdateFailed
 	}
 	return nil

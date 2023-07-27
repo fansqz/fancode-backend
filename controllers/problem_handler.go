@@ -112,10 +112,6 @@ func (q *problemController) UpdateProblem(ctx *gin.Context) {
 	enableStr := ctx.PostForm("enable")
 	problem.Enable = enableStr == "true"
 	file, _ := ctx.FormFile("file")
-	if problem.Enable && (problem.Path == "" && file == nil) {
-		result.SimpleErrorMessage("题目启用必须需要携带编程文件")
-		return
-	}
 	err2 := q.problemService.UpdateProblem(problem, ctx, file)
 	if err2 != nil {
 		result.Error(err2)
