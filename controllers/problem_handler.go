@@ -18,8 +18,12 @@ type ProblemController interface {
 	GetProblemList(ctx *gin.Context)
 	// 文件修改需要访问的接口
 	GetProblemByID(ctx *gin.Context)
+	// UpdateProblem 更新题目
 	UpdateProblem(ctx *gin.Context)
+	// DownloadProblemFile 下载题目的编程文件
 	DownloadProblemFile(ctx *gin.Context)
+	// DownloadProblemTemplateFile 下载题目的编程文件的模板文件
+	DownloadProblemTemplateFile(ctx *gin.Context)
 }
 
 type problemController struct {
@@ -170,4 +174,8 @@ func (q *problemController) DownloadProblemFile(ctx *gin.Context) {
 		return
 	}
 	q.problemService.DownloadProblemZipFile(ctx, uint(pid))
+}
+
+func (q *problemController) DownloadProblemTemplateFile(ctx *gin.Context) {
+	q.problemService.DownloadProblemTemplateFile(ctx)
 }

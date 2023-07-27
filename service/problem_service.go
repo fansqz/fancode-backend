@@ -27,6 +27,7 @@ type ProblemService interface {
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
 	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemCode string) *e.Error
 	DownloadProblemZipFile(ctx *gin.Context, problemID uint)
+	DownloadProblemTemplateFile(ctx *gin.Context)
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
 
 	// todo: 支持线上编辑题目
@@ -375,6 +376,20 @@ func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint
 	}
 	ctx.Writer.WriteHeader(http.StatusOK)
 	ctx.Header("Content-Disposition", "attachment; filename="+strconv.Itoa(int(problemID))+".zip")
+	ctx.Header("Content-Type", "application/zip")
+	ctx.Writer.Write(content)
+}
+
+func (q *problemService) DownloadProblemTemplateFile(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	path := setting.Conf.FilePathConfig.ProblemFileTemplate
+	content, err := os.ReadFile(path)
+	if err != nil {
+		result.Error(e.ErrProblemZipFileDownloadFailed)
+		return
+	}
+	ctx.Writer.WriteHeader(http.StatusOK)
+	ctx.Header("Content-Disposition", "attachment; filename="+"编程文件模板.zip")
 	ctx.Header("Content-Type", "application/zip")
 	ctx.Writer.Write(content)
 }
