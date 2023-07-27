@@ -3,7 +3,7 @@ package service
 import (
 	"FanCode/dao"
 	e "FanCode/error"
-	"FanCode/initialize"
+	"FanCode/global"
 	"FanCode/models/po"
 	"FanCode/utils"
 	"log"
@@ -30,7 +30,7 @@ func (u *userService) Register(user *po.User) *e.Error {
 		user.Username = "fancoder"
 		return nil
 	}
-	if dao.CheckUserCode(initialize.DB, user.Code) {
+	if dao.CheckUserCode(global.Mysql, user.Code) {
 		return e.ErrUserNameIsExist
 	}
 	if len(user.Password) < 6 {
@@ -43,7 +43,7 @@ func (u *userService) Register(user *po.User) *e.Error {
 	}
 	user.Password = string(newPassword)
 	//插入
-	dao.InsertUser(initialize.DB, user)
+	dao.InsertUser(global.Mysql, user)
 
 	if err != nil {
 		log.Println(err)
@@ -55,7 +55,7 @@ func (u *userService) Register(user *po.User) *e.Error {
 
 func (u *userService) Login(userCode string, password string) (string, *e.Error) {
 
-	user, userErr := dao.GetUserByUserCode(initialize.DB, userCode)
+	user, userErr := dao.GetUserByUserCode(global.Mysql, userCode)
 	if userErr != nil {
 		log.Println(userErr)
 		return "", e.ErrUserUnknownError
@@ -76,7 +76,7 @@ func (u *userService) Login(userCode string, password string) (string, *e.Error)
 
 func (u *userService) ChangePassword(userCode, oldPassword, newPassword string) *e.Error {
 	//检验用户名
-	user, err := dao.GetUserByUserCode(initialize.DB, userCode)
+	user, err := dao.GetUserByUserCode(global.Mysql, userCode)
 	if err != nil {
 		log.Println(err)
 		return e.ErrUserUnknownError
@@ -94,7 +94,7 @@ func (u *userService) ChangePassword(userCode, oldPassword, newPassword string) 
 		return e.ErrPasswordEncodeFailed
 	}
 	user.Password = string(password)
-	err = dao.UpdateUser(initialize.DB, user)
+	err = dao.UpdateUser(global.Mysql, user)
 	if err != nil {
 		return e.ErrUserUnknownError
 	}

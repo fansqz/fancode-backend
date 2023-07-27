@@ -1,7 +1,7 @@
 package file_store
 
 import (
-	"FanCode/initialize/setting"
+	"FanCode/global"
 	"archive/zip"
 	"context"
 	"fmt"
@@ -20,7 +20,7 @@ type cosStore struct {
 }
 
 func NewCOS() Store {
-	storeConfig := setting.Conf.COSConfig
+	storeConfig := global.Conf.COSConfig
 	u, _ := url.Parse(fmt.Sprintf("http://%s-%s.cos.%s.myqcloud.com",
 		storeConfig.BucketName, storeConfig.AppID, storeConfig.Region))
 	b := &cos.BaseURL{BucketURL: u}

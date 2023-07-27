@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"FanCode/global"
 	"github.com/casbin/casbin/v2"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
 	_ "github.com/go-sql-driver/mysql"
@@ -9,7 +10,7 @@ import (
 
 var CasEnforcer *casbin.Enforcer
 
-func Init() {
+func InitCasbin() {
 	a, _ := gormadapter.NewAdapter("mysql", "root:miconvert*.*@tcp(49.234.56:3306)/") // Your driver and data source.
 	e, err := casbin.NewEnforcer("./model.conf", a)
 	if err != nil {
@@ -17,5 +18,5 @@ func Init() {
 	}
 
 	e.LoadPolicy() // 从数据库载入配置
-	CasEnforcer = e
+	global.CasbinEnforcer = e
 }

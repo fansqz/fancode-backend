@@ -5,8 +5,7 @@ import (
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/file_store"
-	"FanCode/initialize"
-	"FanCode/initialize/setting"
+	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
 	"FanCode/utils"
@@ -42,7 +41,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 		UserID:    ctx.Keys["user"].(*po.User).ID,
 	}
 	//读取题目到本地，并编译
-	problem, err := dao.GetProblemByProblemID(initialize.DB, judgeRequest.ProblemID)
+	problem, err := dao.GetProblemByProblemID(global.Mysql, judgeRequest.ProblemID)
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
@@ -51,14 +50,14 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 		return nil, e.ErrExecuteFailed
 	}
 	// executePath
-	executePath := setting.Conf.FilePathConfig.TempDir + "/" + uuid
+	executePath := global.Conf.FilePathConfig.TempDir + "/" + uuid
 	err = os.MkdirAll(executePath, os.ModePerm)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
 	// 保存code文件
-	localPath := setting.Conf.FilePathConfig.ProblemFileDir + "/" + problem.Path
+	localPath := global.Conf.FilePathConfig.ProblemFileDir + "/" + problem.Path
 	var code []byte
 	code, err = os.ReadFile(localPath + "/code")
 	if err != nil {
@@ -80,7 +79,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 	if err != nil {
 		submission.Status = constants.CompileError
 		submission.ErrorMessage = err.Error()
-		_ = dao.InsertSubmission(initialize.DB, submission)
+		_ = dao.InsertSubmission(global.Mysql, submission)
 		return &dto.SubmitResultDTO{
 			ProblemID:    problem.ID,
 			Status:       constants.CompileError,
@@ -93,7 +92,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 	if err2 != nil {
 		submission.Status = constants.RuntimeError
 		submission.ErrorMessage = err2.Error()
-		_ = dao.InsertSubmission(initialize.DB, submission)
+		_ = dao.InsertSubmission(global.Mysql, submission)
 		return &dto.SubmitResultDTO{
 			ProblemID:    problem.ID,
 			Status:       constants.RuntimeError,
@@ -131,7 +130,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 				continue
 			} else {
 				submission.Status = constants.WrongAnswer
-				_ = dao.InsertSubmission(initialize.DB, submission)
+				_ = dao.InsertSubmission(global.Mysql, submission)
 				return &dto.SubmitResultDTO{
 					ProblemID:      problem.ID,
 					Status:         constants.WrongAnswer,
@@ -146,7 +145,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 		}
 	}
 	submission.Status = constants.Accepted
-	_ = dao.InsertSubmission(initialize.DB, submission)
+	_ = dao.InsertSubmission(global.Mysql, submission)
 	return &dto.SubmitResultDTO{
 		ProblemID:    problem.ID,
 		Status:       constants.Accepted,
@@ -158,7 +157,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.ExecuteResultDto, *e.Error) {
 
 	//读取题目到本地，并编译
-	problem, err := dao.GetProblemByProblemID(initialize.DB, judgeRequest.ProblemID)
+	problem, err := dao.GetProblemByProblemID(global.Mysql, judgeRequest.ProblemID)
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
@@ -260,7 +259,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 }
 
 func checkAndDownloadQuestionFile(questionPath string) error {
-	localPath := setting.Conf.FilePathConfig.ProblemFileDir + "/" + questionPath
+	localPath := global.Conf.FilePathConfig.ProblemFileDir + "/" + questionPath
 	if !utils.CheckFolderExists(localPath) {
 		// 拉取文件
 		store := file_store.NewCOS()
@@ -278,11 +277,11 @@ func checkAndDownloadQuestionFile(questionPath string) error {
 }
 
 func getLocalPathByPath(path string) string {
-	return setting.Conf.FilePathConfig.ProblemFileDir + "/" + path
+	return global.Conf.FilePathConfig.ProblemFileDir + "/" + path
 }
 
 func getExecutePath() string {
 	uuid := utils.GetUUID()
-	executePath := setting.Conf.FilePathConfig.TempDir + "/" + uuid
+	executePath := global.Conf.FilePathConfig.TempDir + "/" + uuid
 	return executePath
 }

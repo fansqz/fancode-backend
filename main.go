@@ -1,8 +1,8 @@
 package main
 
 import (
+	"FanCode/global"
 	"FanCode/initialize"
-	"FanCode/initialize/setting"
 	"FanCode/models/po"
 	"FanCode/routers"
 	"fmt"
@@ -17,20 +17,20 @@ func main() {
 	path = path + "/conf/config.ini"
 
 	//加载配置
-	if err := setting.Init(path); err != nil {
+	if err := initialize.InitSetting(path); err != nil {
 		fmt.Println("加载配置文件出错")
 		return
 	}
 
 	//连接数据库
-	if err := initialize.InitMysql(setting.Conf.MySqlConfig); err != nil {
+	if err := initialize.InitMysql(global.Conf.MySqlConfig); err != nil {
 		fmt.Println("数据库连接失败")
 	}
 
 	// 模型绑定
-	initialize.DB.AutoMigrate(&po.User{})
-	initialize.DB.AutoMigrate(&po.Problem{})
-	initialize.DB.AutoMigrate(&po.Submission{})
+	global.Mysql.AutoMigrate(&po.User{})
+	global.Mysql.AutoMigrate(&po.Problem{})
+	global.Mysql.AutoMigrate(&po.Submission{})
 	defer initialize.CloseMysql()
 
 	//注册路由

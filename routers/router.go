@@ -6,7 +6,7 @@ package routers
 
 import (
 	"FanCode/controllers"
-	"FanCode/initialize/setting"
+	"FanCode/global"
 	"FanCode/interceptor"
 	"github.com/gin-gonic/gin"
 )
@@ -15,7 +15,7 @@ import (
 //
 //	@Description: 启动路由
 func Run() {
-	if setting.Conf.Release {
+	if global.Conf.Release {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -37,7 +37,7 @@ func Run() {
 	SetupProblemRoutes(r)
 	SetupJudgeRoutes(r)
 
-	err := r.Run(":" + setting.Conf.Port)
+	err := r.Run(":" + global.Conf.Port)
 	if err != nil {
 		return
 	}

@@ -2,7 +2,7 @@ package interceptor
 
 import (
 	e "FanCode/error"
-	"FanCode/initialize/setting"
+	"FanCode/global"
 	result2 "FanCode/models/vo"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
@@ -17,7 +17,7 @@ func TokenAuthorize() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 检验是否在放行名单
 		path := c.Request.URL.Path
-		for _, releaseStartPath := range setting.Conf.ReleasePathConfig.StartWith {
+		for _, releaseStartPath := range global.Conf.ReleasePathConfig.StartWith {
 			if strings.HasPrefix(path, releaseStartPath) {
 				c.Next()
 				return

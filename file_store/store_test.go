@@ -1,7 +1,7 @@
 package file_store
 
 import (
-	"FanCode/initialize/setting"
+	"FanCode/initialize"
 	"os"
 	"strings"
 	"testing"
@@ -11,7 +11,7 @@ func InitConfig() {
 	path, _ := os.Getwd()
 	path = strings.ReplaceAll(path, "\\", "/")
 	path = strings.ReplaceAll(path, "file_store", "conf/config.ini")
-	setting.Init(path)
+	initialize.Init(path)
 }
 
 func TestCOS_SaveFile(t *testing.T) {
