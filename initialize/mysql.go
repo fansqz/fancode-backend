@@ -15,12 +15,11 @@ var (
 	DB *gorm.DB
 )
 
-//
 // InitMysql
-//  @Description: 初始化mysql
-//  @param cfg
-//  @return error
 //
+//	@Description: 初始化mysql
+//	@param cfg
+//	@return error
 func InitMysql(cfg *setting.MySqlConfig) error {
 	dsn := fmt.Sprintf("%s:%s@(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DB)
@@ -33,10 +32,9 @@ func InitMysql(cfg *setting.MySqlConfig) error {
 	return DB.DB().Ping()
 }
 
-//
 // CloseMysql
-//  @Description: 关闭mysql
 //
+//	@Description: 关闭mysql
 func CloseMysql() {
 	err := DB.Close()
 	if err != nil {
