@@ -16,9 +16,6 @@ type ProblemController interface {
 	InsertProblem(ctx *gin.Context)
 	DeleteProblem(ctx *gin.Context)
 	GetProblemList(ctx *gin.Context)
-	// 上传题目文件
-	UploadProblemFile(ctx *gin.Context)
-
 	// 文件修改需要访问的接口
 	GetProblemByID(ctx *gin.Context)
 	UpdateProblem(ctx *gin.Context)
