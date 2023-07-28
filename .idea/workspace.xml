@@ -5,25 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/global/config/app_config.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/global/global.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/initialize/setting.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/po/permission.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/po/sysMenu.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/po/sysOrg.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/po/sys_api.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/po/sys_role.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/models/po/sys_user.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/file_store/cos.go" beforeDir="false" afterPath="$PROJECT_DIR$/file_store/cos.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/file_store/store_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/file_store/store_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/initialize/casbin.go" beforeDir="false" afterPath="$PROJECT_DIR$/initialize/casbin.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/initialize/mysql.go" beforeDir="false" afterPath="$PROJECT_DIR$/initialize/mysql.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/initialize/setting/casbin_config.go" beforeDir="false" afterPath="$PROJECT_DIR$/global/config/casbin_config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/initialize/setting/file_path_config.go" beforeDir="false" afterPath="$PROJECT_DIR$/global/config/file_path_config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/initialize/setting/mysql_config.go" beforeDir="false" afterPath="$PROJECT_DIR$/global/config/mysql_config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/initialize/setting/setting.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/initialize/setting/store_config.go" beforeDir="false" afterPath="$PROJECT_DIR$/global/config/store_config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interceptor/token_interceptor.go" beforeDir="false" afterPath="$PROJECT_DIR$/interceptor/token_interceptor.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/routers/router.go" beforeDir="false" afterPath="$PROJECT_DIR$/routers/router.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/judge_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/judge_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/problem_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/problem_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/service/user_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/user_service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/po/access_control_policy.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/po/grouping_policy.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/po/user.go" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +53,7 @@
     "WebServerToolWindowFactoryState": "false",
     "git-widget-placeholder": "master",
     "go.import.settings.migrated": "true",
-    "last_opened_file_path": "D:/MyProcedure/go/gin-web",
+    "last_opened_file_path": "D:/MyProcedure/go/go-admin",
     "node.js.detected.package.eslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
@@ -76,11 +67,11 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\MyProcedure\go\FanCode\models\po" />
       <recent name="D:\MyProcedure\go\FanCode\error" />
       <recent name="D:\MyProcedure\go\FanCode\interceptor" />
       <recent name="D:\MyProcedure\go\FanCode\models" />
       <recent name="D:\MyProcedure\go\FanCode\controllers" />
-      <recent name="D:\MyProcedure\go\FanCode\routers" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\MyProcedure\go\FanCode\initialize" />
