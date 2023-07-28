@@ -17,8 +17,8 @@ func GetApiByID(db *gorm.DB, id uint) (*po.SysApi, error) {
 	return &api, err
 }
 
-// GetSysApiListByParentID 通过父id找到其所有子api
-func GetSysApiListByParentID(db *gorm.DB, parentID int32) ([]*po.SysApi, error) {
+// GetApiListByParentID 通过父id找到其所有子api
+func GetApiListByParentID(db *gorm.DB, parentID int32) ([]*po.SysApi, error) {
 	var sysApis []*po.SysApi
 	err := db.Where("parent_api_id = ?", parentID).Find(&sysApis).Error
 	if err != nil {
@@ -34,8 +34,8 @@ func GetApiCount(db *gorm.DB) (uint, error) {
 	return count, err
 }
 
-// GetSysApiListByPathKeyword 模糊查询api
-func GetSysApiListByPathKeyword(db *gorm.DB, keyword string, page int, pageSize int) ([]*po.SysApi, error) {
+// GetApiListByPathKeyword 模糊查询api
+func GetApiListByPathKeyword(db *gorm.DB, keyword string, page int, pageSize int) ([]*po.SysApi, error) {
 	var sysApis []*po.SysApi
 	err := db.Where("path LIKE ?", "%"+keyword+"%").Offset((page - 1) * pageSize).Limit(pageSize).Find(&sysApis).Error
 	if err != nil {
@@ -52,4 +52,20 @@ func DeleteApiByID(db *gorm.DB, id uint) error {
 // UpdateApi 修改api
 func UpdateApi(db *gorm.DB, api *po.SysApi) error {
 	return db.Save(api).Error
+}
+
+// GetChildApisByParentID 根据父API的ID获取所有子API
+func GetChildApisByParentID(db *gorm.DB, parentID uint) ([]*po.SysApi, error) {
+	var childApis []*po.SysApi
+	if err := db.Where("parent_api_id = ?", parentID).Find(&childApis).Error; err != nil {
+		return nil, err
+	}
+	return childApis, nil
+}
+
+// GetAllApi 获取所有api
+func GetAllApi(db *gorm.DB) ([]*po.SysApi, error) {
+	var apiList []*po.SysApi
+	err := db.Find(&apiList).Error
+	return apiList, err
 }

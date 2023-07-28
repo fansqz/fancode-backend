@@ -38,7 +38,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 	submission := &po.Submission{
 		Code:      judgeRequest.Code,
 		ProblemID: judgeRequest.ProblemID,
-		UserID:    ctx.Keys["user"].(*po.User).ID,
+		UserID:    ctx.Keys["user"].(*po.SysUser).ID,
 	}
 	//读取题目到本地，并编译
 	problem, err := dao.GetProblemByProblemID(global.Mysql, judgeRequest.ProblemID)

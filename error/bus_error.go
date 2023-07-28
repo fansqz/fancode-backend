@@ -78,3 +78,14 @@ var (
 	ErrExecuteFailed = NewError(CodeExecuteFailed, "Execute error", ErrTypeServer)
 	ErrCompileFailed = NewError(CodeCompileFailed, "Compilation error", ErrTypeBus)
 )
+
+/************api相关错误**************/
+const (
+	CodeApiUnknownError = 12500 + iota //题目编号已存在
+	CodeApiNotExist
+)
+
+var (
+	ErrApiUnknownError = NewError(CodeApiUnknownError, "Unknown error", ErrTypeServer)
+	ErrApiNotExist     = NewError(CodeApiNotExist, "The api is not exist", ErrTypeBus)
+)
