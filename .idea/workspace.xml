@@ -5,16 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e2bbb69b-98ab-4437-aea7-1a331a853992" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/models/po/permission.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/po/sysMenu.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/po/sysOrg.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/po/sys_api.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/po/sys_role.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/models/po/sys_user.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dao/sys_api_dao.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dao/sys_role_dao.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/dao/sys_user_dao.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/po/access_control_policy.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/po/grouping_policy.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/po/user.go" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -182,7 +176,8 @@
     <MESSAGE value="feat: 实现文件下载接口" />
     <MESSAGE value="fix: 删除上传文件的接口" />
     <MESSAGE value="fix: 删除题目时删除本地文件" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: 删除题目时删除本地文件" />
+    <MESSAGE value="feat: 添加权限管理相关的表" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: 添加权限管理相关的表" />
   </component>
   <component name="VgoProject">
     <environment>
