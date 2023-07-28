@@ -8,36 +8,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// UserController
+// AuthController
 // @Description: 用户账号相关功能
-type UserController interface {
+type AuthController interface {
 	// Login 用户登录
 	Login(ctx *gin.Context)
 	// Register 注册
 	Register(ctx *gin.Context)
-	// 根据token获取用户信息
+	// GetUserInfo 根据token获取用户信息
 	GetUserInfo(ctx *gin.Context)
 	// ChangePassword 改密码
 	ChangePassword(ctx *gin.Context)
 }
 
-type userController struct {
-	userService service.UserService
+type authController struct {
+	authService service.AuthService
 }
 
-func NewUserController() UserController {
-	return &userController{
-		userService: service.NewUserService(),
+func NewAuthController() AuthController {
+	return &authController{
+		authService: service.NewAuthService(),
 	}
 }
 
-func (u *userController) Register(ctx *gin.Context) {
+func (u *authController) Register(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	user := &po.User{}
-	user.Code = ctx.PostForm("code")
+	user := &po.SysUser{}
+	user.LoginName = ctx.PostForm("loginName")
 	user.Password = ctx.PostForm("password")
 	user.Username = ctx.PostForm("username")
-	err := u.userService.Register(user)
+	err := u.authService.Register(user)
 	if err == nil {
 		result.Error(err)
 	} else {
@@ -45,7 +45,7 @@ func (u *userController) Register(ctx *gin.Context) {
 	}
 }
 
-func (u *userController) Login(ctx *gin.Context) {
+func (u *authController) Login(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	//获取并检验用户参数
 	userCode := ctx.PostForm("code")
@@ -54,7 +54,7 @@ func (u *userController) Login(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	token, err := u.userService.Login(userCode, password)
+	token, err := u.authService.Login(userCode, password)
 	if err != nil {
 		result.Error(err)
 	} else {
@@ -62,16 +62,16 @@ func (u *userController) Login(ctx *gin.Context) {
 	}
 }
 
-func (u *userController) ChangePassword(ctx *gin.Context) {
+func (u *authController) ChangePassword(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	userCode := ctx.PostForm("code")
+	loginName := ctx.PostForm("loginName")
 	oldPassword := ctx.PostForm("oldPassword")
 	newPassword := ctx.PostForm("newPassword")
-	if userCode == "" || oldPassword == "" {
+	if loginName == "" || oldPassword == "" {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err := u.userService.ChangePassword(userCode, oldPassword, newPassword)
+	err := u.authService.ChangePassword(loginName, oldPassword, newPassword)
 	if err != nil {
 		result.Error(err)
 	} else {
@@ -79,8 +79,8 @@ func (u *userController) ChangePassword(ctx *gin.Context) {
 	}
 }
 
-func (u *userController) GetUserInfo(ctx *gin.Context) {
+func (u *authController) GetUserInfo(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	user := ctx.Keys["user"].(*po.User)
+	user := ctx.Keys["user"].(*po.SysUser)
 	result.SuccessData(user)
 }

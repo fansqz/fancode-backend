@@ -9,28 +9,32 @@ import (
 	"log"
 )
 
-type UserService interface {
+type AuthService interface {
 	// Login 用户登录
-	Login(userCode string, password string) (string, *e.Error)
+	Login(loginName string, password string) (string, *e.Error)
 	// Register 注册
-	Register(user *po.User) *e.Error
+	Register(user *po.SysUser) *e.Error
 	// ChangePassword 改密码
-	ChangePassword(userCode, oldPassword, newPassword string) *e.Error
+	ChangePassword(loginName, oldPassword, newPassword string) *e.Error
 }
 
-type userService struct {
+type authService struct {
 }
 
-func NewUserService() UserService {
-	return &userService{}
+func NewAuthService() AuthService {
+	return &authService{}
 }
 
-func (u *userService) Register(user *po.User) *e.Error {
+func (u *authService) Register(user *po.SysUser) *e.Error {
 	if user.Username == "" {
 		user.Username = "fancoder"
 		return nil
 	}
-	if dao.CheckUserCode(global.Mysql, user.Code) {
+	b, err := dao.CheckLoginName(global.Mysql, user.LoginName)
+	if err != nil {
+		return e.ErrUserUnknownError
+	}
+	if b {
 		return e.ErrUserNameIsExist
 	}
 	if len(user.Password) < 6 {
@@ -42,9 +46,10 @@ func (u *userService) Register(user *po.User) *e.Error {
 		return e.ErrPasswordEncodeFailed
 	}
 	user.Password = string(newPassword)
+	// 设置enable
+	user.Enable = true
 	//插入
-	dao.InsertUser(global.Mysql, user)
-
+	err = dao.InsertUser(global.Mysql, user)
 	if err != nil {
 		log.Println(err)
 		return e.ErrUserCreationFailed
@@ -53,14 +58,14 @@ func (u *userService) Register(user *po.User) *e.Error {
 	}
 }
 
-func (u *userService) Login(userCode string, password string) (string, *e.Error) {
+func (u *authService) Login(userLoginName string, password string) (string, *e.Error) {
 
-	user, userErr := dao.GetUserByUserCode(global.Mysql, userCode)
+	user, userErr := dao.GetUserByLoginName(global.Mysql, userLoginName)
 	if userErr != nil {
 		log.Println(userErr)
 		return "", e.ErrUserUnknownError
 	}
-	if user == nil || user.Code == "" {
+	if user == nil || user.LoginName == "" {
 		return "", e.ErrUserNotExist
 	}
 	if user == nil || !utils.ComparePwd(user.Password, password) {
@@ -74,14 +79,14 @@ func (u *userService) Login(userCode string, password string) (string, *e.Error)
 	return token, nil
 }
 
-func (u *userService) ChangePassword(userCode, oldPassword, newPassword string) *e.Error {
+func (u *authService) ChangePassword(userLoginName, oldPassword, newPassword string) *e.Error {
 	//检验用户名
-	user, err := dao.GetUserByUserCode(global.Mysql, userCode)
+	user, err := dao.GetUserByLoginName(global.Mysql, userLoginName)
 	if err != nil {
 		log.Println(err)
 		return e.ErrUserUnknownError
 	}
-	if user == nil || user.Code == "" {
+	if user == nil || user.LoginName == "" {
 		return e.ErrUserNotExist
 	}
 	//检验旧密码

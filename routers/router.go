@@ -33,7 +33,7 @@ func Run() {
 	//ping
 	r.GET("/ping", controllers.Ping)
 
-	SetupUserRoutes(r)
+	SetupAuthRoutes(r)
 	SetupProblemRoutes(r)
 	SetupJudgeRoutes(r)
 
