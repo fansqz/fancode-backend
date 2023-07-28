@@ -5,8 +5,8 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-// CreateApi 创建角色
-func CreateApi(db *gorm.DB, api *po.SysApi) error {
+// InsertApi 创建角色
+func InsertApi(db *gorm.DB, api *po.SysApi) error {
 	return db.Create(api).Error
 }
 
@@ -46,19 +46,10 @@ func GetSysApiListByPathKeyword(db *gorm.DB, keyword string, page int, pageSize 
 
 // DeleteApiByID 根据api的id进行删除
 func DeleteApiByID(db *gorm.DB, id uint) error {
-	var api []*po.SysApi
-	err := db.First(&api, id).Error
-	if err != nil {
-		return err
-	}
-	err = db.Delete(&api).Error
-	if err != nil {
-		return err
-	}
-	return nil
+	return db.Delete(&po.SysApi{}, id).Error
 }
 
-// UpdateApiByID 修改api
-func UpdateApiByID(db *gorm.DB, api *po.SysApi) error {
-	return db.Model(&po.SysApi{}).Where("id = ?", api.ID).Update(api).Error
+// UpdateApi 修改api
+func UpdateApi(db *gorm.DB, api *po.SysApi) error {
+	return db.Save(api).Error
 }

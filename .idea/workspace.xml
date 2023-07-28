@@ -8,6 +8,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dao/sys_api_dao.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/sys_api_dao.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dao/sys_role_dao.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/sys_role_dao.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dao/sys_user_dao.go" beforeDir="false" afterPath="$PROJECT_DIR$/dao/sys_user_dao.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

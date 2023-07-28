@@ -5,8 +5,8 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-// CreateRole 创建角色
-func CreateRole(db *gorm.DB, role *po.SysRole) error {
+// InsertRole 创建角色
+func InsertRole(db *gorm.DB, role *po.SysRole) error {
 	return db.Create(role).Error
 }
 
@@ -15,9 +15,9 @@ func UpdateRole(db *gorm.DB, role *po.SysRole) error {
 	return db.Save(role).Error
 }
 
-// DeleteRole 删除角色
-func DeleteRole(db *gorm.DB, role *po.SysRole) error {
-	return db.Delete(role).Error
+// DeleteRoleByID 删除角色
+func DeleteRoleByID(db *gorm.DB, id uint) error {
+	return db.Delete(&po.SysRole{}, id).Error
 }
 
 // GetRoleByID 通过角色id获取角色
