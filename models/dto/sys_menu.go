@@ -1,6 +1,9 @@
 package dto
 
-import "FanCode/models/po"
+import (
+	"FanCode/models/po"
+	"FanCode/utils"
+)
 
 type SysMenuTreeDto struct {
 	ID           uint              `json:"id"`
@@ -8,6 +11,7 @@ type SysMenuTreeDto struct {
 	Code         string            `json:"code"`        // 请求路径
 	Name         string            `json:"name"`        // 请求名称
 	Description  string            `json:"description"` // 描述
+	UpdatedAt    utils.Time        `json:"updatedAt"`   // 更新时间
 	Children     []*SysMenuTreeDto `json:"children"`    //子menu
 }
 
@@ -18,5 +22,6 @@ func NewSysMenuTreeDto(sysMenu *po.SysMenu) *SysMenuTreeDto {
 		Code:         sysMenu.Code,
 		Name:         sysMenu.Name,
 		Description:  sysMenu.Description,
+		UpdatedAt:    utils.Time(sysMenu.UpdatedAt),
 	}
 }
