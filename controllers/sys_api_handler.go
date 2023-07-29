@@ -79,13 +79,6 @@ func (s *sysApiController) UpdateApi(ctx *gin.Context) {
 	method := ctx.Param("method")
 	name := ctx.Param("name")
 	description := ctx.Param("description")
-	sortStr := ctx.Param("sort")
-	var sort int
-	sort, err = strconv.Atoi(sortStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
 	api := &po.SysApi{
 		ParentApiID: uint(parentID),
 		Path:        path,
@@ -139,13 +132,6 @@ func (s *sysApiController) InsertApi(ctx *gin.Context) {
 	method := ctx.Param("method")
 	name := ctx.Param("name")
 	description := ctx.Param("description")
-	sortStr := ctx.Param("sort")
-	var sort int
-	sort, err = strconv.Atoi(sortStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
 	api := &po.SysApi{
 		ParentApiID: uint(parentID),
 		Path:        path,
