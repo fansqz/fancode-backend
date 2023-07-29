@@ -23,7 +23,7 @@ type SysApiService interface {
 	// GetApiTree 获取api树
 	GetApiTree() ([]*dto.SysApiTreeDto, *e.Error)
 	// InsertApi 添加api
-	InsertApi(api *po.SysApi) *e.Error
+	InsertApi(api *po.SysApi) (uint, *e.Error)
 }
 
 type sysApiService struct {
@@ -123,10 +123,10 @@ func (s *sysApiService) GetApiTree() ([]*dto.SysApiTreeDto, *e.Error) {
 	return rootApis, nil
 }
 
-func (s *sysApiService) InsertApi(api *po.SysApi) *e.Error {
+func (s *sysApiService) InsertApi(api *po.SysApi) (uint, *e.Error) {
 	err := dao.InsertApi(global.Mysql, api)
 	if err != nil {
-		return e.ErrApiUnknownError
+		return 0, e.ErrApiUnknownError
 	}
-	return nil
+	return api.ID, nil
 }

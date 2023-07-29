@@ -4,6 +4,7 @@ import "FanCode/models/po"
 
 type SysApiTreeDto struct {
 	ID          uint             `json:"id"`
+	ParentApiID uint             `json:"parentApiID"`
 	Path        string           `json:"path"`        // 请求路径
 	Method      string           `json:"method"`      // 请求方法
 	Name        string           `json:"name"`        // 请求名称
@@ -15,6 +16,7 @@ type SysApiTreeDto struct {
 func NewSysApiTreeDto(sysApi *po.SysApi) *SysApiTreeDto {
 	return &SysApiTreeDto{
 		ID:          sysApi.ID,
+		ParentApiID: sysApi.ParentApiID,
 		Path:        sysApi.Path,
 		Method:      sysApi.Method,
 		Name:        sysApi.Name,

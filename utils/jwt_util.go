@@ -12,12 +12,12 @@ const (
 )
 
 type claims struct {
-	ID       uint   `json:"id"`
-	Username string `json:"username"`
-	Code     string `json:"code"`
-	Phone    string `json:"phone"`
-	Email    string `json:"email"`
-	Role     int    `json:"role"`
+	ID        uint   `json:"id"`
+	Username  string `json:"username"`
+	LoginName string `json:"loginName"`
+	Phone     string `json:"phone"`
+	Email     string `json:"email"`
+	Role      int    `json:"role"`
 	jwt.StandardClaims
 }
 
@@ -28,16 +28,15 @@ type claims struct {
 //	@param user    用户
 //	@return string 生成的token
 //	@return error
-func GenerateToken(user *po.User) (string, error) {
+func GenerateToken(user *po.SysUser) (string, error) {
 	nowTime := time.Now()
 	expiredTime := nowTime.Add(expiredTime)
 	claims := claims{
-		ID:       user.ID,
-		Username: user.Username,
-		Code:     user.Code,
-		Phone:    user.Phone,
-		Email:    user.Email,
-		Role:     user.Role,
+		ID:        user.ID,
+		Username:  user.Username,
+		LoginName: user.LoginName,
+		Phone:     user.Phone,
+		Email:     user.Email,
 		StandardClaims: jwt.StandardClaims{
 			//过期时间
 			ExpiresAt: expiredTime.Unix(),
@@ -57,7 +56,7 @@ func GenerateToken(user *po.User) (string, error) {
 //	@Description: 解析token，返回user
 //	@param token
 //	@return user
-func ParseToken(token string) (*po.User, error) {
+func ParseToken(token string) (*po.SysUser, error) {
 	//获取到token对象
 	tokenClaims, err := jwt.ParseWithClaims(token, &claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(key), nil
@@ -65,13 +64,12 @@ func ParseToken(token string) (*po.User, error) {
 	//通过断言获取到claim
 	if tokenClaims != nil {
 		if claims, ok := tokenClaims.Claims.(*claims); ok && tokenClaims.Valid {
-			user := &po.User{}
+			user := &po.SysUser{}
 			user.ID = claims.ID
 			user.Username = claims.Username
-			user.Code = claims.Code
+			user.LoginName = claims.LoginName
 			user.Phone = claims.Phone
 			user.Email = claims.Email
-			user.Role = claims.Role
 			return user, nil
 		}
 	}
