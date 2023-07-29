@@ -13,6 +13,6 @@ func SetupSysRoleRoutes(r *gin.Engine) {
 		role.POST("", roleController.InsertSysRole)
 		role.PUT("", roleController.UpdateSysRole)
 		role.DELETE("/:id", roleController.DeleteSysRole)
-		role.GET("/list/:page/:pageSize", roleController.GetSysRoleList)
+		role.GET("/list", roleController.GetSysRoleList)
 	}
 }

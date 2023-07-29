@@ -31,10 +31,10 @@ func GetRoleByID(db *gorm.DB, roleID uint) (*po.SysRole, error) {
 }
 
 // GetRoleList 获取角色列表
-func GetRoleList(db *gorm.DB, page int, pageSize int) ([]*po.SysRole, error) {
+func GetRoleList(db *gorm.DB, roleName string, page int, pageSize int) ([]*po.SysRole, error) {
 	offset := (page - 1) * pageSize
 	var roles []*po.SysRole
-	err := db.Limit(pageSize).Offset(offset).Find(&roles).Error
+	err := db.Where("name LIKE ?", "%"+roleName+"%").Limit(pageSize).Offset(offset).Find(&roles).Error
 	return roles, err
 }
 

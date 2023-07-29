@@ -16,7 +16,7 @@ type SysRoleService interface {
 	// DeleteSysRole 删除角色
 	DeleteSysRole(id uint) *e.Error
 	// GetSysRoleList 获取角色列表
-	GetSysRoleList(page int, pageSize int) (*dto.PageInfo, *e.Error)
+	GetSysRoleList(roleName string, page int, pageSize int) (*dto.PageInfo, *e.Error)
 }
 
 type sysRoleService struct {
@@ -61,9 +61,9 @@ func (r *sysRoleService) DeleteSysRole(id uint) *e.Error {
 	return nil
 }
 
-func (r *sysRoleService) GetSysRoleList(page int, pageSize int) (*dto.PageInfo, *e.Error) {
+func (r *sysRoleService) GetSysRoleList(roleName string, page int, pageSize int) (*dto.PageInfo, *e.Error) {
 	// 获取角色列表
-	sysSysRoles, err := dao.GetRoleList(global.Mysql, page, pageSize)
+	sysSysRoles, err := dao.GetRoleList(global.Mysql, roleName, page, pageSize)
 	if err != nil {
 		return nil, e.ErrRoleUnknownError
 	}

@@ -84,8 +84,8 @@ func (q *sysRoleController) DeleteSysRole(ctx *gin.Context) {
 // GetSysRoleList 读取一个列表的角色
 func (q *sysRoleController) GetSysRoleList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageStr := ctx.Param("page")
-	pageSizeStr := ctx.Param("pageSize")
+	pageStr := ctx.Query("page")
+	pageSizeStr := ctx.Query("pageSize")
 	var page int
 	var pageSize int
 	var convertErr error
@@ -99,7 +99,8 @@ func (q *sysRoleController) GetSysRoleList(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	pageInfo, err := q.sysRoleService.GetSysRoleList(page, pageSize)
+	roleName := ctx.Query("roleName")
+	pageInfo, err := q.sysRoleService.GetSysRoleList(roleName, page, pageSize)
 	if err != nil {
 		result.Error(err)
 		return
