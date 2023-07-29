@@ -30,6 +30,7 @@ func main() {
 	// 模型绑定
 	global.Mysql.AutoMigrate(&po.SysUser{})
 	global.Mysql.AutoMigrate(&po.SysApi{})
+	global.Mysql.AutoMigrate(&po.SysMenu{})
 	global.Mysql.AutoMigrate(&po.SysRole{})
 	global.Mysql.AutoMigrate(&po.SysUser{})
 	global.Mysql.AutoMigrate(&po.Problem{})

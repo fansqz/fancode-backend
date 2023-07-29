@@ -89,3 +89,14 @@ var (
 	ErrApiUnknownError = NewError(CodeApiUnknownError, "Unknown error", ErrTypeServer)
 	ErrApiNotExist     = NewError(CodeApiNotExist, "The api is not exist", ErrTypeBus)
 )
+
+/************菜单管理**************/
+const (
+	CodeMenuUnknownError = 12500 + iota //题目编号已存在
+	CodeMenuNotExist
+)
+
+var (
+	ErrMenuUnknownError = NewError(CodeMenuUnknownError, "Unknown error", ErrTypeServer)
+	ErrMenuNotExist     = NewError(CodeMenuNotExist, "The Menu is not exist", ErrTypeBus)
+)

@@ -37,6 +37,7 @@ func Run() {
 	SetupProblemRoutes(r)
 	SetupJudgeRoutes(r)
 	SetupSysApiRoutes(r)
+	SetupSysMenuRoutes(r)
 
 	err := r.Run(":" + global.Conf.Port)
 	if err != nil {
