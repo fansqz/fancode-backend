@@ -92,11 +92,20 @@ var (
 
 /************菜单管理**************/
 const (
-	CodeMenuUnknownError = 12500 + iota //题目编号已存在
+	CodeMenuUnknownError = 13000 + iota //题目编号已存在
 	CodeMenuNotExist
 )
 
 var (
 	ErrMenuUnknownError = NewError(CodeMenuUnknownError, "Unknown error", ErrTypeServer)
 	ErrMenuNotExist     = NewError(CodeMenuNotExist, "The Menu is not exist", ErrTypeBus)
+)
+
+/************菜单管理**************/
+const (
+	CodeRoleUnknownError = 13500 + iota //题目编号已存在
+)
+
+var (
+	ErrRoleUnknownError = NewError(CodeRoleUnknownError, "Unknown error", ErrTypeServer)
 )

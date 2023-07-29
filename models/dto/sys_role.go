@@ -13,7 +13,7 @@ type SysRoleDtoForList struct {
 	Description string     `json:"description"`
 }
 
-func NewRoleDtoForList(role *po.SysRole) *SysRoleDtoForList {
+func NewSysRoleDtoForList(role *po.SysRole) *SysRoleDtoForList {
 	response := &SysRoleDtoForList{
 		ID:          role.ID,
 		UpdatedAt:   utils.Time(role.UpdatedAt),
