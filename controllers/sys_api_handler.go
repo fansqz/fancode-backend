@@ -63,22 +63,22 @@ func (s *sysApiController) DeleteApiByID(ctx *gin.Context) {
 func (s *sysApiController) UpdateApi(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 
-	idStr := ctx.Param("id")
+	idStr := ctx.PostForm("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	parentIDStr := ctx.Param("parentApiID")
+	parentIDStr := ctx.PostForm("parentApiID")
 	parentID, err := strconv.Atoi(parentIDStr)
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	path := ctx.Param("path")
-	method := ctx.Param("method")
-	name := ctx.Param("name")
-	description := ctx.Param("description")
+	path := ctx.PostForm("path")
+	method := ctx.PostForm("method")
+	name := ctx.PostForm("name")
+	description := ctx.PostForm("description")
 	api := &po.SysApi{
 		ParentApiID: uint(parentID),
 		Path:        path,
@@ -122,16 +122,16 @@ func (s *sysApiController) GetApiTree(ctx *gin.Context) {
 
 func (s *sysApiController) InsertApi(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	parentIDStr := ctx.Param("parentApiID")
+	parentIDStr := ctx.PostForm("parentApiID")
 	parentID, err := strconv.Atoi(parentIDStr)
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	path := ctx.Param("path")
-	method := ctx.Param("method")
-	name := ctx.Param("name")
-	description := ctx.Param("description")
+	path := ctx.PostForm("path")
+	method := ctx.PostForm("method")
+	name := ctx.PostForm("name")
+	description := ctx.PostForm("description")
 	api := &po.SysApi{
 		ParentApiID: uint(parentID),
 		Path:        path,

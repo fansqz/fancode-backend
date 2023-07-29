@@ -11,8 +11,8 @@ func SetupSysApiRoutes(r *gin.Engine) {
 	{
 		apiController := controllers.NewSysApiController()
 		api.GET("/:id", apiController.GetApiByID)
-		api.POST("/", apiController.InsertApi)
-		api.PUT("/", apiController.UpdateApi)
+		api.POST("", apiController.InsertApi)
+		api.PUT("", apiController.UpdateApi)
 		api.DELETE("/:id", apiController.DeleteApiByID)
 		api.GET("/tree", apiController.GetApiTree)
 	}
