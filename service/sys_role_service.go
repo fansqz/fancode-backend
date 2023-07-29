@@ -8,7 +8,7 @@ import (
 	"FanCode/models/po"
 )
 
-type SysSysRoleService interface {
+type SysRoleService interface {
 	// InsertSysRole 添加角色
 	InsertSysRole(sysSysRole *po.SysRole) (uint, *e.Error)
 	// UpdateSysRole 更新角色
@@ -19,14 +19,14 @@ type SysSysRoleService interface {
 	GetSysRoleList(page int, pageSize int) (*dto.PageInfo, *e.Error)
 }
 
-type sysSysRoleService struct {
+type sysRoleService struct {
 }
 
-func NewSysSysRoleService() SysSysRoleService {
-	return &sysSysRoleService{}
+func NewSysRoleService() SysRoleService {
+	return &sysRoleService{}
 }
 
-func (r *sysSysRoleService) InsertSysRole(sysSysRole *po.SysRole) (uint, *e.Error) {
+func (r *sysRoleService) InsertSysRole(sysSysRole *po.SysRole) (uint, *e.Error) {
 	// 对设置值的数据设置默认值
 	if sysSysRole.Name == "" {
 		sysSysRole.Name = "未命名角色"
@@ -39,7 +39,7 @@ func (r *sysSysRoleService) InsertSysRole(sysSysRole *po.SysRole) (uint, *e.Erro
 	return sysSysRole.ID, nil
 }
 
-func (q *sysSysRoleService) UpdateSysRole(sysSysRole *po.SysRole) *e.Error {
+func (r *sysRoleService) UpdateSysRole(sysSysRole *po.SysRole) *e.Error {
 	// 对设置值的数据设置默认值
 	if sysSysRole.Name == "" {
 		sysSysRole.Name = "未命名角色"
@@ -52,7 +52,7 @@ func (q *sysSysRoleService) UpdateSysRole(sysSysRole *po.SysRole) *e.Error {
 	return nil
 }
 
-func (q *sysSysRoleService) DeleteSysRole(id uint) *e.Error {
+func (r *sysRoleService) DeleteSysRole(id uint) *e.Error {
 	// 删除删除角色
 	err := dao.DeleteRoleByID(global.Mysql, id)
 	if err != nil {
@@ -61,7 +61,7 @@ func (q *sysSysRoleService) DeleteSysRole(id uint) *e.Error {
 	return nil
 }
 
-func (q *sysSysRoleService) GetSysRoleList(page int, pageSize int) (*dto.PageInfo, *e.Error) {
+func (r *sysRoleService) GetSysRoleList(page int, pageSize int) (*dto.PageInfo, *e.Error) {
 	// 获取角色列表
 	sysSysRoles, err := dao.GetRoleList(global.Mysql, page, pageSize)
 	if err != nil {
