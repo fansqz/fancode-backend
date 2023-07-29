@@ -48,7 +48,7 @@ func (u *authController) Register(ctx *gin.Context) {
 func (u *authController) Login(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	//获取并检验用户参数
-	userCode := ctx.PostForm("code")
+	userCode := ctx.PostForm("loginName")
 	password := ctx.PostForm("password")
 	if userCode == "" || password == "" {
 		result.Error(e.ErrBadRequest)
