@@ -94,7 +94,8 @@ func (s *sysApiService) GetApiByID(id uint) (*po.SysApi, *e.Error) {
 
 func (s *sysApiService) GetApiTree() ([]*dto.SysApiTreeDto, *e.Error) {
 	var apiList []*po.SysApi
-	if err := s.db.Find(&apiList).Error; err != nil {
+	var err error
+	if apiList, err = dao.GetAllApi(global.Mysql); err != nil {
 		log.Println(err)
 		return nil, e.ErrApiUnknownError
 	}

@@ -92,7 +92,6 @@ func (s *sysApiController) UpdateApi(ctx *gin.Context) {
 		Method:      method,
 		Name:        name,
 		Description: description,
-		Sort:        sort,
 	}
 	api.ID = uint(id)
 	err2 := s.sysApiService.UpdateApi(api)
@@ -153,7 +152,6 @@ func (s *sysApiController) InsertApi(ctx *gin.Context) {
 		Method:      method,
 		Name:        name,
 		Description: description,
-		Sort:        sort,
 	}
 	id, err2 := s.sysApiService.InsertApi(api)
 	if err2 != nil {

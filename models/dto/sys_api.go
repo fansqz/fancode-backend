@@ -9,7 +9,6 @@ type SysApiTreeDto struct {
 	Method      string           `json:"method"`      // 请求方法
 	Name        string           `json:"name"`        // 请求名称
 	Description string           `json:"description"` // 描述
-	Sort        int              `json:"sort"`        // 排序
 	Children    []*SysApiTreeDto `json:"children"`    //子api
 }
 
@@ -21,6 +20,5 @@ func NewSysApiTreeDto(sysApi *po.SysApi) *SysApiTreeDto {
 		Method:      sysApi.Method,
 		Name:        sysApi.Name,
 		Description: sysApi.Description,
-		Sort:        sysApi.Sort,
 	}
 }

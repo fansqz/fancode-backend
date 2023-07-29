@@ -11,5 +11,4 @@ type SysApi struct {
 	Method      string `gorm:"column:method" json:"method"`             // 请求方法
 	Name        string `gorm:"column:name" json:"name"`                 // 请求名称
 	Description string `gorm:"column:description" json:"description"`   // 描述
-	Sort        int    `gorm:"column:sort" json:"sort"`                 // 同级目录下的排序
 }
