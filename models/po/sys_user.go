@@ -13,6 +13,5 @@ type SysUser struct {
 	Phone     string    `gorm:"column:phone" json:"phone"`
 	Avatar    string    `gorm:"column:avatar" json:"avatar"`
 	Remark    string    `gorm:"column:remark" json:"remark"`
-	Enable    bool      `gorm:"column:enable" json:"enable"`
 	Roles     []SysRole `gorm:"many2many:user_roles;" json:"roles"`
 }
