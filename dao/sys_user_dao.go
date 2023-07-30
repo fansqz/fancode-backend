@@ -79,6 +79,16 @@ func DeleteUserRoleByUserID(db *gorm.DB, userID uint) error {
 	return nil
 }
 
+// GetRolesByUserID 获取用户关联的所有role的名称
+func GetRolesByUserID(db *gorm.DB, userID uint) ([]po.SysRole, error) {
+	user := po.SysUser{}
+	user.ID = userID
+	if err := db.Model(&user).Association("Roles").Find(&user.Roles).Error; err != nil {
+		return nil, err
+	}
+	return user.Roles, nil
+}
+
 // GetRoleIDsByUserID 获取用户关联的所有role的id
 func GetRoleIDsByUserID(db *gorm.DB, userID uint) ([]uint, error) {
 	user := po.SysUser{}

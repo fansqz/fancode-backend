@@ -109,3 +109,12 @@ const (
 var (
 	ErrRoleUnknownError = NewError(CodeRoleUnknownError, "Unknown error", ErrTypeServer)
 )
+
+/************用户管理**************/
+const (
+	CodeSysUserUnknownError = 13500 + iota //题目编号已存在
+)
+
+var (
+	ErrSysUserUnknownError = NewError(CodeSysUserUnknownError, "Unknown error", ErrTypeServer)
+)
