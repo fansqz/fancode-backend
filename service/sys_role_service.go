@@ -108,6 +108,7 @@ func (r *sysRoleService) UpdateRoleApis(roleID uint, apiIDs []uint) *e.Error {
 	tx.Commit()
 	return nil
 }
+
 func (r *sysRoleService) UpdateRoleMenus(roleID uint, menuIDs []uint) *e.Error {
 	tx := global.Mysql.Begin()
 	err := dao.DeleteRoleMenusByRoleID(tx, roleID)
