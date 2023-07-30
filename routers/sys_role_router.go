@@ -16,7 +16,7 @@ func SetupSysRoleRoutes(r *gin.Engine) {
 		role.GET("/list", roleController.GetSysRoleList)
 		role.GET("/api/:id", roleController.GetApiIDsByRoleID)
 		role.GET("/menu/:id", roleController.GetMenuIDsByRoleID)
-		role.POST("/api", roleController.InsertApisToRole)
-		role.POST("/menu", roleController.InsertMenusToRole)
+		role.PUT("/api", roleController.UpdateRoleApis)
+		role.PUT("/menu", roleController.UpdateRoleMenus)
 	}
 }
