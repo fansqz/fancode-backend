@@ -74,12 +74,12 @@ func DeleteRoleMenusByRoleID(db *gorm.DB, roleID uint) error {
 // GetMenuIDsByRoleID 获取用户关联的所有menu的id
 func GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	var role po.SysRole
-	if err := db.Model(&po.SysRole{}).Select("id").Preload("Menus", "id").
-		First(&role, roleID).Error; err != nil {
+	role.ID = roleID
+	if err := db.Model(&role).Association("Menus").Find(&role.Menus).Error; err != nil {
 		return nil, err
 	}
 	menuIDs := make([]uint, len(role.Menus))
-	for i, api := range role.Menus {
+	for i, api := range role.Apis {
 		menuIDs[i] = api.ID
 	}
 	return menuIDs, nil
@@ -114,8 +114,8 @@ func DeleteRoleAPIsByRoleID(db *gorm.DB, roleID uint) error {
 // GetApiIDsByRoleID 获取用户关联的所有api的id
 func GetApiIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	var role po.SysRole
-	if err := db.Model(&po.SysRole{}).Select("id").Preload("Apis", "id").
-		First(&role, roleID).Error; err != nil {
+	role.ID = roleID
+	if err := db.Model(&role).Association("Apis").Find(&role.Apis).Error; err != nil {
 		return nil, err
 	}
 	apiIDs := make([]uint, len(role.Apis))
