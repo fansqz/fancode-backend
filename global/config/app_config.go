@@ -7,11 +7,11 @@ type AppConfig struct {
 	Port             string `ini:"port"`    //端口
 	ReleaseStartPath string `ini:"releaseStartPath"`
 	ProUrl           string `ini:"proUrl"`
+	DefaultPassword  string `ini:"defaultPassword"`
 	*MySqlConfig
 	*ReleasePathConfig
 	*COSConfig
 	*FilePathConfig
-	*CasbinConfig
 }
 
 type ReleasePathConfig struct {

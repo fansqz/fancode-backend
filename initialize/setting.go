@@ -31,6 +31,5 @@ func InitSetting(file string) error {
 	global.Conf.MySqlConfig = config.NewMySqlConfig(cfg)
 	global.Conf.COSConfig = config.NewCOSConfig(cfg)
 	global.Conf.FilePathConfig = config.NewFilePathConfig(cfg)
-	global.Conf.CasbinConfig = config.NewCasbinConfig(cfg)
 	return nil
 }
