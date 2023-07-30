@@ -44,3 +44,61 @@ func GetRoleCount(db *gorm.DB) (uint, error) {
 	err := db.Model(&po.SysRole{}).Count(&count).Error
 	return count, err
 }
+
+// InsertMenusToRole 给角色添加menu
+func InsertMenusToRole(db *gorm.DB, roleID uint, menus []uint) error {
+	role := &po.SysRole{}
+	role.ID = roleID
+	for _, menuID := range menus {
+		menu := &po.SysMenu{}
+		menu.ID = menuID
+		err := db.Model(role).Association("Menus").Append(menu).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetRoleMenuIDs 获取用户关联的所有menu的id
+func GetRoleMenuIDs(db *gorm.DB, roleID uint) ([]uint, error) {
+	var role *po.SysRole
+	if err := db.Model(&po.SysRole{}).Select("id").Preload("Menus", "id").
+		First(&role, roleID).Error; err != nil {
+		return nil, err
+	}
+	menuIDs := make([]uint, len(role.Menus))
+	for i, api := range role.Menus {
+		menuIDs[i] = api.ID
+	}
+	return menuIDs, nil
+}
+
+// InsertApisToRole 给角色添加api
+func InsertApisToRole(db *gorm.DB, roleID uint, apis []uint) error {
+	role := &po.SysRole{}
+	role.ID = roleID
+	for _, apiID := range apis {
+		api := &po.SysApi{}
+		api.ID = apiID
+		err := db.Model(role).Association("Apis").Append(api).Error
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetRoleApiIDs 获取用户关联的所有api的id
+func GetRoleApiIDs(db *gorm.DB, roleID uint) ([]uint, error) {
+	var role *po.SysRole
+	if err := db.Model(&po.SysRole{}).Select("id").Preload("Apis", "id").
+		First(&role, roleID).Error; err != nil {
+		return nil, err
+	}
+	apiIDs := make([]uint, len(role.Apis))
+	for i, api := range role.Apis {
+		apiIDs[i] = api.ID
+	}
+	return apiIDs, nil
+}
