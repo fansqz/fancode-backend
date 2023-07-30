@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-type SysUserHandler interface {
+type SysUserController interface {
 	// InsertSysUser 添加用户
 	InsertSysUser(ctx *gin.Context)
 	// UpdateSysUser 更新用户，但是不更新密码
@@ -24,11 +24,17 @@ type SysUserHandler interface {
 	GetRoleIDsByUserID(ctx *gin.Context)
 }
 
-type sysUserHandler struct {
+type sysUserController struct {
 	sysUserService service.SysUserService
 }
 
-func (s *sysUserHandler) InsertSysUser(ctx *gin.Context) {
+func NewSysUserController() SysUserController {
+	return &sysUserController{
+		sysUserService: service.NewSysUserService(),
+	}
+}
+
+func (s *sysUserController) InsertSysUser(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	loginName := ctx.PostForm("loginName")
 	username := ctx.PostForm("username")
@@ -49,7 +55,7 @@ func (s *sysUserHandler) InsertSysUser(ctx *gin.Context) {
 	result.SuccessData(id)
 }
 
-func (s *sysUserHandler) UpdateSysUser(ctx *gin.Context) {
+func (s *sysUserController) UpdateSysUser(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	idStr := ctx.PostForm("id")
 	id, err := strconv.Atoi(idStr)
@@ -77,7 +83,7 @@ func (s *sysUserHandler) UpdateSysUser(ctx *gin.Context) {
 	result.SuccessMessage("更新成功")
 }
 
-func (s *sysUserHandler) DeleteSysUser(ctx *gin.Context) {
+func (s *sysUserController) DeleteSysUser(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -93,7 +99,7 @@ func (s *sysUserHandler) DeleteSysUser(ctx *gin.Context) {
 	result.SuccessMessage("删除成功")
 }
 
-func (s *sysUserHandler) GetSysUserList(ctx *gin.Context) {
+func (s *sysUserController) GetSysUserList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	username := ctx.Query("username")
 	pageStr := ctx.Query("page")
@@ -122,7 +128,7 @@ type updateUserRolesRequest struct {
 	RoleIDs []uint `json:"roleIDs"`
 }
 
-func (s *sysUserHandler) UpdateUserRoles(ctx *gin.Context) {
+func (s *sysUserController) UpdateUserRoles(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var request updateUserRolesRequest
 	err := ctx.BindJSON(&request)
@@ -138,7 +144,7 @@ func (s *sysUserHandler) UpdateUserRoles(ctx *gin.Context) {
 	result.SuccessMessage("更新成功")
 }
 
-func (s *sysUserHandler) GetRoleIDsByUserID(ctx *gin.Context) {
+func (s *sysUserController) GetRoleIDsByUserID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
