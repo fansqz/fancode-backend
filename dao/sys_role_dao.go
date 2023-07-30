@@ -60,6 +60,17 @@ func InsertMenusToRole(db *gorm.DB, roleID uint, menus []uint) error {
 	return nil
 }
 
+// DeleteRoleMenusByRoleID 清除所有与roleID关联的roleID-menuID数据
+func DeleteRoleMenusByRoleID(db *gorm.DB, roleID uint) error {
+	role := po.SysRole{}
+	role.ID = roleID
+	if err := db.Model(&role).Association("Menus").Clear().Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetMenuIDsByRoleID 获取用户关联的所有menu的id
 func GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	var role *po.SysRole
@@ -86,6 +97,17 @@ func InsertApisToRole(db *gorm.DB, roleID uint, apis []uint) error {
 			return err
 		}
 	}
+	return nil
+}
+
+// DeleteRoleAPIsByRoleID 清除所有与roleID关联的roleID-apiID数据
+func DeleteRoleAPIsByRoleID(db *gorm.DB, roleID uint) error {
+	role := po.SysRole{}
+	role.ID = roleID
+	if err := db.Model(&role).Association("Apis").Clear().Error; err != nil {
+		return err
+	}
+
 	return nil
 }
 

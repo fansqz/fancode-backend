@@ -19,11 +19,11 @@ type SysRoleController interface {
 	GetSysRoleList(ctx *gin.Context)
 	// UpdateSysRole 更新角色
 	UpdateSysRole(ctx *gin.Context)
-	// InsertApisToRole 给角色添加api
-	InsertApisToRole(ctx *gin.Context)
-	// InsertMenusToRole 给角色添加menu
-	InsertMenusToRole(ctx *gin.Context)
-	// GetApiIDsByRoleID 通过角色id获取该角色拥有的apiID
+	// UpdateRoleApis 更新角色api
+	UpdateRoleApis(ctx *gin.Context)
+	// UpdateRoleMenus 更新角色menu
+	UpdateRoleMenus(ctx *gin.Context)
+	// GetApiIDsByRoleID 通过角
 	GetApiIDsByRoleID(ctx *gin.Context)
 	// GetMenuIDsByRoleID 通过角色id获取该角色拥有的menuID
 	GetMenuIDsByRoleID(ctx *gin.Context)
@@ -121,7 +121,7 @@ type insertApisToRoleRequest struct {
 	ApiIDs []uint `json:"apiIDs"`
 }
 
-func (s *sysRoleController) InsertApisToRole(ctx *gin.Context) {
+func (s *sysRoleController) UpdateRoleApis(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var json insertApisToRoleRequest
 	err := ctx.BindJSON(&json)
@@ -129,7 +129,7 @@ func (s *sysRoleController) InsertApisToRole(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err2 := s.sysRoleService.InsertApisToRole(json.RoleID, json.ApiIDs)
+	err2 := s.sysRoleService.UpdateRoleApis(json.RoleID, json.ApiIDs)
 	if err2 != nil {
 		result.Error(err2)
 		return
@@ -142,7 +142,7 @@ type insertMenusToRoleRequest struct {
 	MenuIDs []uint `json:"menuIDs"`
 }
 
-func (s *sysRoleController) InsertMenusToRole(ctx *gin.Context) {
+func (s *sysRoleController) UpdateRoleMenus(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var json insertMenusToRoleRequest
 	err := ctx.BindJSON(&json)
@@ -150,7 +150,7 @@ func (s *sysRoleController) InsertMenusToRole(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err2 := s.sysRoleService.InsertMenusToRole(json.RoleID, json.MenuIDs)
+	err2 := s.sysRoleService.UpdateRoleMenus(json.RoleID, json.MenuIDs)
 	if err2 != nil {
 		result.Error(err2)
 		return
