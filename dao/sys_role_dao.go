@@ -60,8 +60,8 @@ func InsertMenusToRole(db *gorm.DB, roleID uint, menus []uint) error {
 	return nil
 }
 
-// GetRoleMenuIDs 获取用户关联的所有menu的id
-func GetRoleMenuIDs(db *gorm.DB, roleID uint) ([]uint, error) {
+// GetMenuIDsByRoleID 获取用户关联的所有menu的id
+func GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	var role *po.SysRole
 	if err := db.Model(&po.SysRole{}).Select("id").Preload("Menus", "id").
 		First(&role, roleID).Error; err != nil {
@@ -89,8 +89,8 @@ func InsertApisToRole(db *gorm.DB, roleID uint, apis []uint) error {
 	return nil
 }
 
-// GetRoleApiIDs 获取用户关联的所有api的id
-func GetRoleApiIDs(db *gorm.DB, roleID uint) ([]uint, error) {
+// GetApiIDsByRoleID 获取用户关联的所有api的id
+func GetApiIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	var role *po.SysRole
 	if err := db.Model(&po.SysRole{}).Select("id").Preload("Apis", "id").
 		First(&role, roleID).Error; err != nil {

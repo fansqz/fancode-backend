@@ -17,6 +17,14 @@ type SysRoleService interface {
 	DeleteSysRole(id uint) *e.Error
 	// GetSysRoleList 获取角色列表
 	GetSysRoleList(roleName string, page int, pageSize int) (*dto.PageInfo, *e.Error)
+	// InsertApisToRole 给角色添加api
+	InsertApisToRole(roleID uint, apiIDs []uint) *e.Error
+	// InsertMenusToRole 给角色添加menu
+	InsertMenusToRole(roleID uint, menuIDs []uint) *e.Error
+	// GetApiIDsByRoleID 通过角色id获取该角色拥有的apiID
+	GetApiIDsByRoleID(roleID uint) ([]uint, *e.Error)
+	// GetMenuIDsByRoleID 通过角色id获取该角色拥有的menuID
+	GetMenuIDsByRoleID(roleID uint) ([]uint, *e.Error)
 }
 
 type sysRoleService struct {
@@ -83,4 +91,36 @@ func (r *sysRoleService) GetSysRoleList(roleName string, page int, pageSize int)
 		List:  newSysRoles,
 	}
 	return pageInfo, nil
+}
+
+func (r *sysRoleService) InsertApisToRole(roleID uint, apiIDs []uint) *e.Error {
+	err := dao.InsertApisToRole(global.Mysql, roleID, apiIDs)
+	if err != nil {
+		return e.ErrApiUnknownError
+	}
+	return nil
+}
+
+func (r *sysRoleService) InsertMenusToRole(roleID uint, menuIDs []uint) *e.Error {
+	err := dao.InsertMenusToRole(global.Mysql, roleID, menuIDs)
+	if err != nil {
+		return e.ErrApiUnknownError
+	}
+	return nil
+}
+
+func (r *sysRoleService) GetApiIDsByRoleID(roleID uint) ([]uint, *e.Error) {
+	apiIDs, err := dao.GetApiIDsByRoleID(global.Mysql, roleID)
+	if err != nil {
+		return nil, e.ErrRoleUnknownError
+	}
+	return apiIDs, nil
+}
+
+func (r *sysRoleService) GetMenuIDsByRoleID(roleID uint) ([]uint, *e.Error) {
+	menuIDs, err := dao.GetMenuIDsByRoleID(global.Mysql, roleID)
+	if err != nil {
+		return nil, e.ErrRoleUnknownError
+	}
+	return menuIDs, nil
 }
