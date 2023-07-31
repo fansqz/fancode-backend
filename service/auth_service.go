@@ -47,7 +47,6 @@ func (u *authService) Register(user *po.SysUser) *e.Error {
 	}
 	user.Password = string(newPassword)
 	// 设置enable
-	user.Enable = true
 	//插入
 	err = dao.InsertUser(global.Mysql, user)
 	if err != nil {

@@ -96,7 +96,7 @@ func (s *sysUserService) GetSysUserList(userName string, page int, pageSize int)
 		}
 		pageInfo = &dto.PageInfo{
 			Total: count,
-			List:  userList,
+			List:  userDtoList,
 		}
 		return nil
 	})

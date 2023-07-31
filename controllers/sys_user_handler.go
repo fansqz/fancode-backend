@@ -52,7 +52,7 @@ func (s *sysUserController) InsertSysUser(ctx *gin.Context) {
 		result.Error(err)
 		return
 	}
-	result.SuccessData(id)
+	result.Success("添加成功", id)
 }
 
 func (s *sysUserController) UpdateSysUser(ctx *gin.Context) {
