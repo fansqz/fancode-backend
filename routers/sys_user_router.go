@@ -16,6 +16,6 @@ func SetupSysUserRoutes(r *gin.Engine) {
 		user.GET("/list", userController.GetSysUserList)
 		user.GET("/role/:id", userController.GetRoleIDsByUserID)
 		user.PUT("/role", userController.UpdateUserRoles)
-		user.GET("/role/list", userController.GetAllSimpleRole)
+		user.GET("/simpleRole/list", userController.GetAllSimpleRole)
 	}
 }
