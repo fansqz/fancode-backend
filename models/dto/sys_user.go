@@ -12,7 +12,7 @@ type SysUserDtoForList struct {
 	Username  string     `json:"username"`
 	Email     string     `json:"email"`
 	Phone     string     `json:"phone"`
-	UpdateAt  utils.Time `json:"updateAt"`
+	UpdateAt  utils.Time `json:"updatedAt"`
 	Roles     []string   `json:"roles"`
 }
 

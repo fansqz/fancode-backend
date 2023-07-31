@@ -107,10 +107,10 @@ func GetRoleIDsByUserID(db *gorm.DB, userID uint) ([]uint, error) {
 func InsertRolesToUser(db *gorm.DB, userID uint, roleIDs []uint) error {
 	user := &po.SysUser{}
 	user.ID = userID
-	for _, apiID := range roleIDs {
-		api := &po.SysApi{}
-		api.ID = apiID
-		err := db.Model(user).Association("Roles").Append(api).Error
+	for _, roleID := range roleIDs {
+		role := &po.SysRole{}
+		role.ID = roleID
+		err := db.Model(user).Association("Roles").Append(role).Error
 		if err != nil {
 			return err
 		}
