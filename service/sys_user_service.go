@@ -137,6 +137,7 @@ func (s *sysUserService) GetRoleIDsByUserID(userID uint) ([]uint, *e.Error) {
 func (s *sysUserService) GetAllSimpleRole() ([]*dto.SimpleRoleDto, *e.Error) {
 	roles, err := dao.GetAllSimpleRoleList(global.Mysql)
 	if err != nil {
+		log.Println(err.Error())
 		return nil, e.ErrSysUserUnknownError
 	}
 	simpleRoles := make([]*dto.SimpleRoleDto, len(roles))
