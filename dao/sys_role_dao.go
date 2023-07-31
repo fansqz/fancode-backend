@@ -124,3 +124,13 @@ func GetApiIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	}
 	return apiIDs, nil
 }
+
+// GetAllSimpleRoleList 获取所有角色列表，只含有id和name
+func GetAllSimpleRoleList(db *gorm.DB) ([]*po.SysRole, error) {
+	var roles []*po.SysRole
+	err := db.Model(&po.SysRole{}).Select("id", "name").Find(&roles).Error
+	if err != nil {
+		return nil, err
+	}
+	return roles, nil
+}

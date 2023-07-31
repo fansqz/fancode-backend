@@ -24,6 +24,8 @@ type SysUserService interface {
 	UpdateUserRoles(userID uint, roleIDs []uint) *e.Error
 	// GetRoleIDsByUserID 通过用户id获取所有角色id
 	GetRoleIDsByUserID(userID uint) ([]uint, *e.Error)
+	// GetAllSimpleRole
+	GetAllSimpleRole() ([]*dto.SimpleRoleDto, *e.Error)
 }
 
 type sysUserService struct {
@@ -130,4 +132,16 @@ func (s *sysUserService) GetRoleIDsByUserID(userID uint) ([]uint, *e.Error) {
 		return nil, e.ErrSysUserUnknownError
 	}
 	return roleIDs, nil
+}
+
+func (s *sysUserService) GetAllSimpleRole() ([]*dto.SimpleRoleDto, *e.Error) {
+	roles, err := dao.GetAllSimpleRoleList(global.Mysql)
+	if err != nil {
+		return nil, e.ErrSysUserUnknownError
+	}
+	simpleRoles := make([]*dto.SimpleRoleDto, len(roles))
+	for i, role := range roles {
+		simpleRoles[i] = dto.NewSimpleRoleDto(role)
+	}
+	return simpleRoles, nil
 }

@@ -22,6 +22,8 @@ type SysUserController interface {
 	UpdateUserRoles(ctx *gin.Context)
 	// GetRoleIDsByUserID 通过用户id获取所有角色id
 	GetRoleIDsByUserID(ctx *gin.Context)
+	// GetAllSimpleRole 获取简单角色列表
+	GetAllSimpleRole(ctx *gin.Context)
 }
 
 type sysUserController struct {
@@ -158,4 +160,14 @@ func (s *sysUserController) GetRoleIDsByUserID(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData(roleIDs)
+}
+
+func (s *sysUserController) GetAllSimpleRole(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	roles, err := s.sysUserService.GetAllSimpleRole()
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(roles)
 }
