@@ -7,7 +7,7 @@ import (
 
 func SetupProblemRoutes(r *gin.Engine) {
 	//题目相关路由
-	problem := r.Group("/problem")
+	problem := r.Group("/manage/problem")
 	{
 		problemController := controllers.NewProblemController()
 		problem.GET("/code/check/:code", problemController.CheckProblemCode)
