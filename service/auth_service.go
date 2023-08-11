@@ -71,7 +71,16 @@ func (u *authService) Login(userLoginName string, password string) (string, *e.E
 	if user == nil || !utils.ComparePwd(user.Password, password) {
 		return "", e.ErrUserNameOrPasswordWrong
 	}
-	token, err := utils.GenerateToken(dto.NewUserInfo(user))
+	userInfo := dto.NewUserInfo(user)
+	token, err := utils.GenerateToken(utils.Claims{
+		ID:        userInfo.ID,
+		Username:  userInfo.Username,
+		LoginName: userInfo.LoginName,
+		Phone:     userInfo.Phone,
+		Email:     userInfo.Email,
+		Roles:     userInfo.Roles,
+		Menus:     userInfo.Menus,
+	})
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrUserUnknownError

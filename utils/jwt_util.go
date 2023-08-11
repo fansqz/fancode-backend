@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"FanCode/models/dto"
 	"github.com/dgrijalva/jwt-go"
 	"time"
 )
@@ -11,7 +10,7 @@ const (
 	expiredTime = 12 * time.Hour
 )
 
-type claims struct {
+type Claims struct {
 	ID        uint     `json:"id"`
 	Username  string   `json:"username"`
 	LoginName string   `json:"loginName"`
@@ -29,23 +28,14 @@ type claims struct {
 //	@param user    用户
 //	@return string 生成的token
 //	@return error
-func GenerateToken(user *dto.UserInfo) (string, error) {
+func GenerateToken(claims Claims) (string, error) {
 	nowTime := time.Now()
 	expiredTime := nowTime.Add(expiredTime)
-	claims := claims{
-		ID:        user.ID,
-		Username:  user.Username,
-		LoginName: user.LoginName,
-		Phone:     user.Phone,
-		Email:     user.Email,
-		Menus:     user.Menus,
-		Roles:     user.Roles,
-		StandardClaims: jwt.StandardClaims{
-			//过期时间
-			ExpiresAt: expiredTime.Unix(),
-			//指定token发行人
-			Issuer: "fancode",
-		},
+	claims.StandardClaims = jwt.StandardClaims{
+		//过期时间
+		ExpiresAt: expiredTime.Unix(),
+		//指定token发行人
+		Issuer: "fancode",
 	}
 	//设置加密算法，生成token对象
 	tokenClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -59,23 +49,15 @@ func GenerateToken(user *dto.UserInfo) (string, error) {
 //	@Description: 解析token，返回user
 //	@param token
 //	@return user
-func ParseToken(token string) (*dto.UserInfo, error) {
+func ParseToken(token string) (*Claims, error) {
 	//获取到token对象
-	tokenClaims, err := jwt.ParseWithClaims(token, &claims{}, func(token *jwt.Token) (interface{}, error) {
+	tokenClaims, err := jwt.ParseWithClaims(token, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(key), nil
 	})
 	//通过断言获取到claim
 	if tokenClaims != nil {
-		if claims, ok := tokenClaims.Claims.(*claims); ok && tokenClaims.Valid {
-			user := &dto.UserInfo{}
-			user.ID = claims.ID
-			user.Username = claims.Username
-			user.LoginName = claims.LoginName
-			user.Phone = claims.Phone
-			user.Email = claims.Email
-			user.Roles = claims.Roles
-			user.Menus = claims.Menus
-			return user, nil
+		if claims, ok := tokenClaims.Claims.(*Claims); ok && tokenClaims.Valid {
+			return claims, nil
 		}
 	}
 	return nil, err
