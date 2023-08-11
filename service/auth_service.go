@@ -4,6 +4,7 @@ import (
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/global"
+	"FanCode/models/dto"
 	"FanCode/models/po"
 	"FanCode/utils"
 	"log"
@@ -70,7 +71,7 @@ func (u *authService) Login(userLoginName string, password string) (string, *e.E
 	if user == nil || !utils.ComparePwd(user.Password, password) {
 		return "", e.ErrUserNameOrPasswordWrong
 	}
-	token, err := utils.GenerateToken(user)
+	token, err := utils.GenerateToken(dto.NewUserInfo(user))
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrUserUnknownError

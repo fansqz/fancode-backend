@@ -2,6 +2,7 @@ package controllers
 
 import (
 	e "FanCode/error"
+	"FanCode/models/dto"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
@@ -81,6 +82,6 @@ func (u *authController) ChangePassword(ctx *gin.Context) {
 
 func (u *authController) GetUserInfo(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	user := ctx.Keys["user"].(*po.SysUser)
+	user := ctx.Keys["user"].(*dto.UserInfo)
 	result.SuccessData(user)
 }
