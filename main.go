@@ -35,7 +35,6 @@ func main() {
 	global.Mysql.AutoMigrate(&po.SysUser{})
 	global.Mysql.AutoMigrate(&po.Problem{})
 	global.Mysql.AutoMigrate(&po.Submission{})
-	defer initialize.CloseMysql()
 
 	//注册路由
 	routers.Run()

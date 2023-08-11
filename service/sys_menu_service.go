@@ -6,14 +6,14 @@ import (
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"log"
 )
 
 type SysMenuService interface {
 
 	// GetMenuCount 获取menu数目
-	GetMenuCount() (uint, *e.Error)
+	GetMenuCount() (int64, *e.Error)
 	// DeleteMenuByID 删除menu
 	DeleteMenuByID(id uint) *e.Error
 	// UpdateMenu 更新menu
@@ -34,7 +34,7 @@ func NewSysMenuService() SysMenuService {
 	return &sysMenuService{}
 }
 
-func (s *sysMenuService) GetMenuCount() (uint, *e.Error) {
+func (s *sysMenuService) GetMenuCount() (int64, *e.Error) {
 	count, err := dao.GetMenuCount(global.Mysql)
 	if err != nil {
 		log.Println(err)
@@ -78,7 +78,7 @@ func (s *sysMenuService) deleteMenusRecursive(db *gorm.DB, parentID uint) error 
 
 func (s *sysMenuService) UpdateMenu(menu *po.SysMenu) *e.Error {
 	err := dao.UpdateMenu(global.Mysql, menu)
-	if gorm.IsRecordNotFoundError(err) {
+	if gorm.ErrRecordNotFound == err {
 		return e.ErrMenuNotExist
 	}
 	return nil

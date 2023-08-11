@@ -7,7 +7,7 @@ import (
 	"FanCode/models/dto"
 	"FanCode/models/po"
 	"FanCode/utils"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"log"
 )
 
@@ -91,7 +91,7 @@ func (s *sysUserService) GetSysUserList(userName string, page int, pageSize int)
 			}
 			userDtoList[i] = dto.NewSysUserDtoForList(user)
 		}
-		var count uint
+		var count int64
 		count, err = dao.GetUserCount(global.Mysql)
 		if err != nil {
 			return err

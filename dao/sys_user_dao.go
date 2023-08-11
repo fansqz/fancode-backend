@@ -3,7 +3,7 @@ package dao
 import (
 	"FanCode/models/po"
 	"errors"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // InsertUser 创建用户
@@ -40,8 +40,8 @@ func GetUserList(db *gorm.DB, username string, page int, pageSize int) ([]*po.Sy
 }
 
 // GetUserCount 获取所有用户数量
-func GetUserCount(db *gorm.DB) (uint, error) {
-	var count uint
+func GetUserCount(db *gorm.DB) (int64, error) {
+	var count int64
 	err := db.Model(&po.SysUser{}).Count(&count).Error
 	return count, err
 }
@@ -50,7 +50,7 @@ func GetUserCount(db *gorm.DB) (uint, error) {
 func GetUserByLoginName(db *gorm.DB, loginName string) (*po.SysUser, error) {
 	var user po.SysUser
 	err := db.Where("login_name = ?", loginName).First(&user).
-		Association("Roles").Find(user.Roles).Error
+		Association("Roles").Find(user.Roles)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func CheckLoginName(db *gorm.DB, loginname string) (bool, error) {
 func DeleteUserRoleByUserID(db *gorm.DB, userID uint) error {
 	user := po.SysUser{}
 	user.ID = userID
-	if err := db.Model(&user).Association("Roles").Clear().Error; err != nil {
+	if err := db.Model(&user).Association("Roles").Clear(); err != nil {
 		return err
 	}
 	return nil
@@ -84,7 +84,7 @@ func DeleteUserRoleByUserID(db *gorm.DB, userID uint) error {
 func GetRolesByUserID(db *gorm.DB, userID uint) ([]po.SysRole, error) {
 	user := po.SysUser{}
 	user.ID = userID
-	if err := db.Model(&user).Association("Roles").Find(&user.Roles).Error; err != nil {
+	if err := db.Model(&user).Association("Roles").Find(&user.Roles); err != nil {
 		return nil, err
 	}
 	return user.Roles, nil
@@ -94,7 +94,7 @@ func GetRolesByUserID(db *gorm.DB, userID uint) ([]po.SysRole, error) {
 func GetRoleIDsByUserID(db *gorm.DB, userID uint) ([]uint, error) {
 	user := po.SysUser{}
 	user.ID = userID
-	if err := db.Model(&user).Association("Roles").Find(&user.Roles).Error; err != nil {
+	if err := db.Model(&user).Association("Roles").Find(&user.Roles); err != nil {
 		return nil, err
 	}
 	roleIDs := make([]uint, len(user.Roles))
@@ -111,7 +111,7 @@ func InsertRolesToUser(db *gorm.DB, userID uint, roleIDs []uint) error {
 	for _, roleID := range roleIDs {
 		role := &po.SysRole{}
 		role.ID = roleID
-		err := db.Model(user).Association("Roles").Append(role).Error
+		err := db.Model(user).Association("Roles").Append(role)
 		if err != nil {
 			return err
 		}

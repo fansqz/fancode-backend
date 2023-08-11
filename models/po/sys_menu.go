@@ -1,6 +1,6 @@
 package po
 
-import "github.com/jinzhu/gorm"
+import "gorm.io/gorm"
 
 type SysMenu struct {
 	gorm.Model

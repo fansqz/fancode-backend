@@ -3,7 +3,7 @@ package global
 import (
 	"FanCode/global/config"
 	"github.com/gomodule/redigo/redis"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 var (

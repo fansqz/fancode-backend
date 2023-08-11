@@ -80,14 +80,14 @@ func (r *sysRoleService) GetSysRoleList(roleName string, page int, pageSize int)
 		newSysRoles[i] = dto.NewSysRoleDtoForList(sysSysRoles[i])
 	}
 	// 获取所有角色总数目
-	var count uint
+	var count int64
 	count, err = dao.GetRoleCount(global.Mysql)
 	if err != nil {
 		return nil, e.ErrRoleUnknownError
 	}
 	pageInfo := &dto.PageInfo{
 		Total: count,
-		Size:  uint(len(newSysRoles)),
+		Size:  int64(len(newSysRoles)),
 		List:  newSysRoles,
 	}
 	return pageInfo, nil

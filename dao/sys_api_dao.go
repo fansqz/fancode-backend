@@ -2,7 +2,7 @@ package dao
 
 import (
 	"FanCode/models/po"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // InsertApi 创建角色
@@ -28,8 +28,8 @@ func GetApiListByParentID(db *gorm.DB, parentID int32) ([]*po.SysApi, error) {
 }
 
 // GetApiCount 获取api总数
-func GetApiCount(db *gorm.DB) (uint, error) {
-	var count uint
+func GetApiCount(db *gorm.DB) (int64, error) {
+	var count int64
 	err := db.Model(&po.SysApi{}).Count(&count).Error
 	return count, err
 }

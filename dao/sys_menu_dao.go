@@ -2,7 +2,7 @@ package dao
 
 import (
 	"FanCode/models/po"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // InsertMenu 创建角色
@@ -28,8 +28,8 @@ func GetMenuListByParentID(db *gorm.DB, parentID int32) ([]*po.SysMenu, error) {
 }
 
 // GetMenuCount 获取menu总数
-func GetMenuCount(db *gorm.DB) (uint, error) {
-	var count uint
+func GetMenuCount(db *gorm.DB) (int64, error) {
+	var count int64
 	err := db.Model(&po.SysMenu{}).Count(&count).Error
 	return count, err
 }

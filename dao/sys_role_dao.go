@@ -2,7 +2,7 @@ package dao
 
 import (
 	"FanCode/models/po"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // InsertRole 创建角色
@@ -39,8 +39,8 @@ func GetRoleList(db *gorm.DB, roleName string, page int, pageSize int) ([]*po.Sy
 }
 
 // GetRoleCount 获取所有角色数量
-func GetRoleCount(db *gorm.DB) (uint, error) {
-	var count uint
+func GetRoleCount(db *gorm.DB) (int64, error) {
+	var count int64
 	err := db.Model(&po.SysRole{}).Count(&count).Error
 	return count, err
 }
@@ -52,7 +52,7 @@ func InsertMenusToRole(db *gorm.DB, roleID uint, menus []uint) error {
 	for _, menuID := range menus {
 		menu := &po.SysMenu{}
 		menu.ID = menuID
-		err := db.Model(role).Association("Menus").Append(menu).Error
+		err := db.Model(role).Association("Menus").Append(menu)
 		if err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func InsertMenusToRole(db *gorm.DB, roleID uint, menus []uint) error {
 func DeleteRoleMenusByRoleID(db *gorm.DB, roleID uint) error {
 	role := po.SysRole{}
 	role.ID = roleID
-	if err := db.Model(&role).Association("Menus").Clear().Error; err != nil {
+	if err := db.Model(&role).Association("Menus").Clear(); err != nil {
 		return err
 	}
 
@@ -75,7 +75,7 @@ func DeleteRoleMenusByRoleID(db *gorm.DB, roleID uint) error {
 func GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	var role po.SysRole
 	role.ID = roleID
-	if err := db.Model(&role).Association("Menus").Find(&role.Menus).Error; err != nil {
+	if err := db.Model(&role).Association("Menus").Find(&role.Menus); err != nil {
 		return nil, err
 	}
 	menuIDs := make([]uint, len(role.Menus))
@@ -92,7 +92,7 @@ func InsertApisToRole(db *gorm.DB, roleID uint, apis []uint) error {
 	for _, apiID := range apis {
 		api := &po.SysApi{}
 		api.ID = apiID
-		err := db.Model(role).Association("Apis").Append(api).Error
+		err := db.Model(role).Association("Apis").Append(api)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func InsertApisToRole(db *gorm.DB, roleID uint, apis []uint) error {
 func DeleteRoleAPIsByRoleID(db *gorm.DB, roleID uint) error {
 	role := po.SysRole{}
 	role.ID = roleID
-	if err := db.Model(&role).Association("Apis").Clear().Error; err != nil {
+	if err := db.Model(&role).Association("Apis").Clear(); err != nil {
 		return err
 	}
 
@@ -115,7 +115,7 @@ func DeleteRoleAPIsByRoleID(db *gorm.DB, roleID uint) error {
 func GetApiIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	var role po.SysRole
 	role.ID = roleID
-	if err := db.Model(&role).Association("Apis").Find(&role.Apis).Error; err != nil {
+	if err := db.Model(&role).Association("Apis").Find(&role.Apis); err != nil {
 		return nil, err
 	}
 	apiIDs := make([]uint, len(role.Apis))

@@ -6,14 +6,14 @@ import (
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"log"
 )
 
 type SysApiService interface {
 
 	// GetApiCount 获取api数目
-	GetApiCount() (uint, *e.Error)
+	GetApiCount() (int64, *e.Error)
 	// DeleteApiByID 删除api
 	DeleteApiByID(id uint) *e.Error
 	// UpdateApi 更新api
@@ -34,7 +34,7 @@ func NewSysApiService() SysApiService {
 	return &sysApiService{}
 }
 
-func (s *sysApiService) GetApiCount() (uint, *e.Error) {
+func (s *sysApiService) GetApiCount() (int64, *e.Error) {
 	count, err := dao.GetApiCount(global.Mysql)
 	if err != nil {
 		log.Println(err)
@@ -78,7 +78,7 @@ func (s *sysApiService) deleteApisRecursive(db *gorm.DB, parentID uint) error {
 
 func (s *sysApiService) UpdateApi(api *po.SysApi) *e.Error {
 	err := dao.UpdateApi(global.Mysql, api)
-	if gorm.IsRecordNotFoundError(err) {
+	if gorm.ErrRecordNotFound == err {
 		return e.ErrApiNotExist
 	}
 	return nil

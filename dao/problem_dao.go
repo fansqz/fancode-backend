@@ -2,7 +2,7 @@ package dao
 
 import (
 	"FanCode/models/po"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 // InsertProblem 添加题库
@@ -75,8 +75,8 @@ func DeleteProblemByID(db *gorm.DB, id uint) error {
 	return db.Delete(&po.Problem{}, id).Error
 }
 
-func GetProblemCount(db *gorm.DB) (uint, error) {
-	var count uint
+func GetProblemCount(db *gorm.DB) (int64, error) {
+	var count int64
 	err := db.Model(&po.Problem{}).Count(&count).Error
 	return count, err
 }

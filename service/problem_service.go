@@ -162,14 +162,14 @@ func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, 
 		newProblems[i] = dto.NewProblemDtoForList(problems[i])
 	}
 	// 获取所有题目总数目
-	var count uint
+	var count int64
 	count, err = dao.GetProblemCount(global.Mysql)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
 	pageInfo := &dto.PageInfo{
 		Total: count,
-		Size:  uint(len(newProblems)),
+		Size:  int64(len(newProblems)),
 		List:  newProblems,
 	}
 	return pageInfo, nil
@@ -328,8 +328,8 @@ func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int) (*dto.
 	}
 	ioFileList2 := ioFileList[index1:index2]
 	ioFilePageInfo := &dto.PageInfo{
-		Total: uint(len(ioFileList)),
-		Size:  uint(len(ioFileList2)),
+		Total: int64(len(ioFileList)),
+		Size:  int64(len(ioFileList2)),
 		List:  ioFileList2,
 	}
 	return ioFilePageInfo, nil

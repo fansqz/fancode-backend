@@ -2,7 +2,7 @@ package dao
 
 import (
 	"FanCode/models/po"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 func InsertSubmission(db *gorm.DB, submission *po.Submission) error {
