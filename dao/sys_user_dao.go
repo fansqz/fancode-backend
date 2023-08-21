@@ -49,8 +49,7 @@ func GetUserCount(db *gorm.DB) (int64, error) {
 // GetUserByLoginName 根据用户登录名称获取用户
 func GetUserByLoginName(db *gorm.DB, loginName string) (*po.SysUser, error) {
 	var user po.SysUser
-	err := db.Where("login_name = ?", loginName).First(&user).
-		Association("Roles").Find(user.Roles)
+	err := db.Where("login_name = ?", loginName).Preload("Roles").First(&user).Error
 	if err != nil {
 		return nil, err
 	}
