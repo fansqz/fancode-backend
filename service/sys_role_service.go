@@ -6,6 +6,7 @@ import (
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
+	"time"
 )
 
 type SysRoleService interface {
@@ -34,26 +35,26 @@ func NewSysRoleService() SysRoleService {
 	return &sysRoleService{}
 }
 
-func (r *sysRoleService) InsertSysRole(sysSysRole *po.SysRole) (uint, *e.Error) {
+func (r *sysRoleService) InsertSysRole(sysRole *po.SysRole) (uint, *e.Error) {
 	// 对设置值的数据设置默认值
-	if sysSysRole.Name == "" {
-		sysSysRole.Name = "未命名角色"
+	if sysRole.Name == "" {
+		sysRole.Name = "未命名角色"
 	}
 	// 添加
-	err := dao.InsertRole(global.Mysql, sysSysRole)
+	err := dao.InsertRole(global.Mysql, sysRole)
 	if err != nil {
 		return 0, e.ErrRoleUnknownError
 	}
-	return sysSysRole.ID, nil
+	return sysRole.ID, nil
 }
 
-func (r *sysRoleService) UpdateSysRole(sysSysRole *po.SysRole) *e.Error {
+func (r *sysRoleService) UpdateSysRole(sysRole *po.SysRole) *e.Error {
 	// 对设置值的数据设置默认值
-	if sysSysRole.Name == "" {
-		sysSysRole.Name = "未命名角色"
+	if sysRole.Name == "" {
+		sysRole.Name = "未命名角色"
 	}
-
-	err := dao.UpdateRole(global.Mysql, sysSysRole)
+	sysRole.UpdatedAt = time.Now()
+	err := dao.UpdateRole(global.Mysql, sysRole)
 	if err != nil {
 		return e.ErrRoleUnknownError
 	}

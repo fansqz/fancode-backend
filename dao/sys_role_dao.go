@@ -12,7 +12,11 @@ func InsertRole(db *gorm.DB, role *po.SysRole) error {
 
 // UpdateRole 更新角色
 func UpdateRole(db *gorm.DB, role *po.SysRole) error {
-	return db.Save(role).Error
+	return db.Model(role).UpdateColumns(map[string]interface{}{
+		"name":        role.Name,
+		"description": role.Description,
+		"updated_at":  role.UpdatedAt,
+	}).Error
 }
 
 // DeleteRoleByID 删除角色
@@ -46,18 +50,17 @@ func GetRoleCount(db *gorm.DB) (int64, error) {
 }
 
 // InsertMenusToRole 给角色添加menu
-func InsertMenusToRole(db *gorm.DB, roleID uint, menus []uint) error {
+func InsertMenusToRole(db *gorm.DB, roleID uint, menuIDs []uint) error {
 	role := &po.SysRole{}
 	role.ID = roleID
-	for _, menuID := range menus {
-		menu := &po.SysMenu{}
+	var menus []po.SysMenu
+	for _, menuID := range menuIDs {
+		menu := po.SysMenu{}
 		menu.ID = menuID
-		err := db.Model(role).Association("Menus").Append(menu)
-		if err != nil {
-			return err
-		}
+		menus = append(menus, menu)
 	}
-	return nil
+	err := db.Model(role).Association("Menus").Append(menus)
+	return err
 }
 
 // DeleteRoleMenusByRoleID 清除所有与roleID关联的roleID-menuID数据
@@ -96,18 +99,17 @@ func GetMenusByRoleID(db *gorm.DB, roleID uint) ([]po.SysMenu, error) {
 }
 
 // InsertApisToRole 给角色添加api
-func InsertApisToRole(db *gorm.DB, roleID uint, apis []uint) error {
+func InsertApisToRole(db *gorm.DB, roleID uint, apiIDs []uint) error {
 	role := &po.SysRole{}
 	role.ID = roleID
-	for _, apiID := range apis {
-		api := &po.SysApi{}
+	var apis []po.SysApi
+	for _, apiID := range apiIDs {
+		api := po.SysApi{}
 		api.ID = apiID
-		err := db.Model(role).Association("Apis").Append(api)
-		if err != nil {
-			return err
-		}
+		apis = append(apis, api)
 	}
-	return nil
+	err := db.Model(role).Association("Apis").Append(apis)
+	return err
 }
 
 // DeleteRoleAPIsByRoleID 清除所有与roleID关联的roleID-apiID数据
