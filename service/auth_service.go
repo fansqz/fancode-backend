@@ -65,6 +65,14 @@ func (u *authService) Login(userLoginName string, password string) (string, *e.E
 		log.Println(userErr)
 		return "", e.ErrUserUnknownError
 	}
+	// 读取菜单
+	for i := 0; i < len(user.Roles); i++ {
+		var err error
+		user.Roles[i].Menus, err = dao.GetMenusByRoleID(global.Mysql, user.Roles[i].ID)
+		if err != nil {
+			return "", e.ErrUserUnknownError
+		}
+	}
 	if user == nil || user.LoginName == "" {
 		return "", e.ErrUserNotExist
 	}

@@ -85,6 +85,16 @@ func GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	return menuIDs, nil
 }
 
+// GetMenusByRoleID 通过用户角色获取菜单列表
+func GetMenusByRoleID(db *gorm.DB, roleID uint) ([]po.SysMenu, error) {
+	var role po.SysRole
+	role.ID = roleID
+	if err := db.Model(&role).Association("Menus").Find(&role.Menus); err != nil {
+		return nil, err
+	}
+	return role.Menus, nil
+}
+
 // InsertApisToRole 给角色添加api
 func InsertApisToRole(db *gorm.DB, roleID uint, apis []uint) error {
 	role := &po.SysRole{}
