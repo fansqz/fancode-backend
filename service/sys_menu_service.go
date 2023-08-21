@@ -8,6 +8,7 @@ import (
 	"FanCode/models/po"
 	"gorm.io/gorm"
 	"log"
+	"time"
 )
 
 type SysMenuService interface {
@@ -77,6 +78,7 @@ func (s *sysMenuService) deleteMenusRecursive(db *gorm.DB, parentID uint) error 
 }
 
 func (s *sysMenuService) UpdateMenu(menu *po.SysMenu) *e.Error {
+	menu.UpdatedAt = time.Now()
 	err := dao.UpdateMenu(global.Mysql, menu)
 	if gorm.ErrRecordNotFound == err {
 		return e.ErrMenuNotExist
