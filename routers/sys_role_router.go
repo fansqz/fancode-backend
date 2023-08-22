@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"FanCode/controllers"
+	"FanCode/controllers/admin"
 	"github.com/gin-gonic/gin"
 )
 
@@ -9,7 +9,7 @@ func SetupSysRoleRoutes(r *gin.Engine) {
 	//题目相关路由
 	role := r.Group("/manage/role")
 	{
-		roleController := controllers.NewSysRoleController()
+		roleController := admin.NewSysRoleController()
 		role.POST("", roleController.InsertSysRole)
 		role.PUT("", roleController.UpdateSysRole)
 		role.DELETE("/:id", roleController.DeleteSysRole)

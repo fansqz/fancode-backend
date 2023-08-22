@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"FanCode/controllers"
+	"FanCode/controllers/admin"
 	"github.com/gin-gonic/gin"
 )
 
@@ -9,7 +9,7 @@ func SetupSysMenuRoutes(r *gin.Engine) {
 	//题目相关路由
 	menu := r.Group("/manage/menu")
 	{
-		menuController := controllers.NewSysMenuController()
+		menuController := admin.NewSysMenuController()
 		menu.GET("/:id", menuController.GetMenuByID)
 		menu.POST("", menuController.InsertMenu)
 		menu.PUT("", menuController.UpdateMenu)

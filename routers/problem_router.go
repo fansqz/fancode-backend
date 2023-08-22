@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"FanCode/controllers"
+	"FanCode/controllers/admin"
 	"github.com/gin-gonic/gin"
 )
 
@@ -9,7 +9,7 @@ func SetupProblemRoutes(r *gin.Engine) {
 	//题目相关路由
 	problem := r.Group("/manage/problem")
 	{
-		problemController := controllers.NewProblemController()
+		problemController := admin.NewProblemController()
 		problem.GET("/code/check/:code", problemController.CheckProblemCode)
 		problem.POST("", problemController.InsertProblem)
 		problem.PUT("", problemController.UpdateProblem)
