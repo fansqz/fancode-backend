@@ -11,6 +11,6 @@ type Problem struct {
 	Title       string `gorm:"column:title" json:"title"`
 	// 存放题目内容的路径
 	Path       string `gorm:"column:path" json:"path"`
-	Difficulty int    `gorm:"column:difficulty" json:"difficulty"`
-	Enable     bool   `gorm:"column:enable" json:"enable"`
+	Difficulty *int   `gorm:"column:difficulty" json:"difficulty"`
+	Enable     *bool  `gorm:"column:enable" json:"enable"`
 }

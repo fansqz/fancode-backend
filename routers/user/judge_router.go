@@ -1,4 +1,4 @@
-package routers
+package user
 
 import (
 	"FanCode/controllers/user"

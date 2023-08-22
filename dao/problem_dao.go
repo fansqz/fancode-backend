@@ -10,14 +10,21 @@ func InsertProblem(db *gorm.DB, problem *po.Problem) error {
 	return db.Create(problem).Error
 }
 
-// GetProblemByProblemNumber 根据题目编码获取题目
-func GetProblemByProblemNumber(db *gorm.DB, problemCode string) (*po.Problem, error) {
+// GetProblemByNumber 根据题目编码获取题目
+func GetProblemByNumber(db *gorm.DB, problemCode string) (*po.Problem, error) {
 	question := &po.Problem{}
 	err := db.Where("number = ?", problemCode).First(&question).Error
 	return question, err
 }
 
-// GetProblemByProblemID 根据题目id获取题目
+// GetProblemIDByNumber 根据题目number获取题目id
+func GetProblemIDByNumber(db *gorm.DB, problemNumber string) (uint, error) {
+	question := &po.Problem{}
+	err := db.Where("number = ?", problemNumber).Select("id").Find(question).Error
+	return question.ID, err
+}
+
+// GetProblemByID 根据题目id获取题目
 func GetProblemByID(db *gorm.DB, problemID uint) (*po.Problem, error) {
 	question := &po.Problem{}
 	err := db.First(&question, problemID).Error
@@ -54,10 +61,23 @@ func SetProblemEnable(db *gorm.DB, id uint, enable bool) error {
 	return db.Model(&po.Problem{}).Where("id = ?", id).Update("enable", enable).Error
 }
 
-func GetProblemList(db *gorm.DB, page int, pageSize int) ([]*po.Problem, error) {
+func GetProblemList(db *gorm.DB, page int, pageSize int, problem *po.Problem) ([]*po.Problem, error) {
+	db2 := db
+	if problem != nil && problem.Number != "" {
+		db2 = db2.Where("number like ?", "%"+problem.Number+"%")
+	}
+	if problem != nil && problem.Name != "" {
+		db2 = db2.Where("name like ?", "%"+problem.Name+"%")
+	}
+	if problem != nil && problem.Difficulty != nil {
+		db2 = db2.Where("difficulty = ?", *problem.Difficulty)
+	}
+	if problem != nil && problem.Enable != nil {
+		db2 = db2.Where("enable = ?", *problem.Enable)
+	}
 	offset := (page - 1) * pageSize
 	var problems []*po.Problem
-	err := db.Limit(pageSize).Offset(offset).Find(&problems).Error
+	err := db2.Limit(pageSize).Offset(offset).Find(&problems).Error
 	return problems, err
 }
 
@@ -75,9 +95,22 @@ func DeleteProblemByID(db *gorm.DB, id uint) error {
 	return db.Delete(&po.Problem{}, id).Error
 }
 
-func GetProblemCount(db *gorm.DB) (int64, error) {
+func GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	var count int64
-	err := db.Model(&po.Problem{}).Count(&count).Error
+	db2 := db
+	if problem != nil && problem.Name != "" {
+		db2.Where("name like ?", "%"+problem.Name+"%")
+	}
+	if problem != nil && problem.Number != "" {
+		db2.Where("number = ?", problem.Number)
+	}
+	if problem != nil && problem.Difficulty != nil {
+		db2.Where("difficulty = ?", *problem.Difficulty)
+	}
+	if problem != nil && problem.Enable != nil {
+		db2.Where("enable = ?", *problem.Enable)
+	}
+	err := db2.Model(&po.Problem{}).Count(&count).Error
 	return count, err
 }
 

@@ -13,8 +13,8 @@ type ProblemDtoForGet struct {
 	Description string `json:"description"`
 	Title       string `json:"title"`
 	Path        string `json:"path"`
-	Difficulty  int    `json:"difficulty"`
-	Enable      bool   `json:"enable"`
+	Difficulty  *int   `json:"difficulty"`
+	Enable      *bool  `json:"enable"`
 }
 
 func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
@@ -40,8 +40,8 @@ type ProblemDtoForList struct {
 	Number     string     `json:"number"`
 	Title      string     `json:"title"`
 	Path       string     `json:"path"`
-	Difficulty int        `json:"difficulty"`
-	Enable     bool       `json:"enable"`
+	Difficulty *int       `json:"difficulty"`
+	Enable     *bool      `json:"enable"`
 }
 
 func NewProblemDtoForList(problem *po.Problem) *ProblemDtoForList {

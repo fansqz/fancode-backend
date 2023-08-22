@@ -30,16 +30,19 @@ type ProblemService interface {
 	DeleteProblem(id uint) *e.Error
 	// GetProblemList 获取题目列表
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
-	// UploadProblemFile 上传题目文件
-	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemCode string) *e.Error
+	// GetProblemListForUser 用户获取题目列表
+	GetProblemListForUser(page int, pageSize int) (*dto.PageInfo, *e.Error)
 	// DownloadProblemZipFile 下载题目压缩文件
 	DownloadProblemZipFile(ctx *gin.Context, problemID uint)
 	// DownloadProblemTemplateFile 获取题目模板文件
 	DownloadProblemTemplateFile(ctx *gin.Context)
 	// GetProblemByID 获取题目信息
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
-	// GetProblemCodeByID 获取题目编程文件
-	GetProblemCodeByID(id uint) (string, *e.Error)
+	// GetProblemByNumber 根据题目编号获取题目信息
+	GetProblemByNumber(number string) (*dto.ProblemDtoForGet, *e.Error)
+	// GetProblemCodeByNumber 获取题目编程文件
+	GetProblemCodeByNumber(number string) (string, *e.Error)
+	// UpdateProblemEnable 设置题目可用
 	UpdateProblemEnable(id uint, enable bool) *e.Error
 
 	// todo: 支持线上编辑题目
@@ -93,9 +96,10 @@ func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
 		}
 	}
 	// 题目难度不在范围，那么都设置为1
-	if problem.Difficulty > 5 || problem.Difficulty < 1 {
-		problem.Difficulty = 1
+	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
+		*problem.Difficulty = 1
 	}
+	*problem.Enable = false
 	// 添加
 	err := dao.InsertProblem(global.Mysql, problem)
 	if err != nil {
@@ -110,12 +114,12 @@ func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, fi
 		log.Println(err)
 		return e.ErrProblemUpdateFailed
 	}
-	if problem.Enable && (path == "" && file == nil) {
+	if problem.Enable != nil && *problem.Enable && (path == "" && file == nil) {
 		return e.NewCustomMsg("该题目没有上传编程文件，不可启动")
 	}
 	if file != nil {
 		// 更新文件
-		err2 := q.UploadProblemFile2(ctx, file, problem.ID)
+		err2 := q.UploadProblemFile(ctx, file, problem.ID)
 		return err2
 	}
 
@@ -164,7 +168,7 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 
 func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error) {
 	// 获取题目列表
-	problems, err := dao.GetProblemList(global.Mysql, page, pageSize)
+	problems, err := dao.GetProblemList(global.Mysql, page, pageSize, nil)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
@@ -174,7 +178,7 @@ func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, 
 	}
 	// 获取所有题目总数目
 	var count int64
-	count, err = dao.GetProblemCount(global.Mysql)
+	count, err = dao.GetProblemCount(global.Mysql, nil)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
@@ -186,41 +190,34 @@ func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, 
 	return pageInfo, nil
 }
 
-func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, problemCode string) *e.Error {
-	filename := file.Filename
-	// 保存文件到本地
-	tempPath := global.Conf.FilePathConfig.TempDir
-	tempPath = tempPath + "/" + utils.GetUUID()
-	err := ctx.SaveUploadedFile(file, tempPath+"/"+filename)
+func (q *problemService) GetProblemListForUser(page int, pageSize int) (*dto.PageInfo, *e.Error) {
+	p := &po.Problem{}
+	*p.Enable = true
+	// 获取题目列表
+	problems, err := dao.GetProblemList(global.Mysql, page, pageSize, p)
 	if err != nil {
-		log.Println(err)
-		return e.ErrProblemFileUploadFailed
+		return nil, e.ErrProblemListFailed
 	}
-	//解压
-	err = utils.Extract(tempPath+"/"+filename, tempPath+"/"+problemCode)
+	newProblems := make([]*dto.ProblemDtoForList, len(problems))
+	for i := 0; i < len(problems); i++ {
+		newProblems[i] = dto.NewProblemDtoForList(problems[i])
+	}
+	// 获取所有题目总数目
+	var count int64
+	count, err = dao.GetProblemCount(global.Mysql, p)
 	if err != nil {
-		log.Println(err)
-		return e.ErrProblemFileUploadFailed
+		return nil, e.ErrProblemListFailed
 	}
-	//检测文件内有一个文件夹，或者是多个文件
-	ProblemPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + problemCode)
-	s := file_store.NewCOS()
-	err = s.DeleteFolder(problemCode)
-	s.UploadFolder(problemCode, ProblemPathInLocal)
-	// 存储到数据库
-	updateError := dao.UpdatePathByCode(global.Mysql, problemCode, problemCode)
-	if updateError != nil {
-		return e.ErrProblemFileUploadFailed
+	pageInfo := &dto.PageInfo{
+		Total: count,
+		Size:  int64(len(newProblems)),
+		List:  newProblems,
 	}
-	//删除temp中所有文件
-	err = os.RemoveAll(tempPath)
-	if err != nil {
-		log.Println(err)
-	}
-	return nil
+	return pageInfo, nil
 }
 
-func (q *problemService) UploadProblemFile2(ctx *gin.Context, file *multipart.FileHeader, problemID uint) *e.Error {
+// UploadProblemFile 保存到oss的时候，以id做为文件名
+func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, problemID uint) *e.Error {
 	path := strconv.Itoa(int(problemID))
 	filename := file.Filename
 	// 保存文件到本地
@@ -270,8 +267,32 @@ func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Erro
 	return dto.NewProblemDtoForGet(problem), nil
 }
 
-func (q *problemService) GetProblemCodeByID(id uint) (string, *e.Error) {
-	return "", nil
+func (q *problemService) GetProblemByNumber(number string) (*dto.ProblemDtoForGet, *e.Error) {
+	problem, err := dao.GetProblemByNumber(global.Mysql, number)
+	if err != nil {
+		log.Println(err)
+		return nil, e.ErrProblemGetFailed
+	}
+	return dto.NewProblemDtoForGet(problem), nil
+}
+
+func (q *problemService) GetProblemCodeByNumber(number string) (string, *e.Error) {
+	// 读取获取题目id
+	id, err := dao.GetProblemIDByNumber(global.Mysql, number)
+	if err != nil {
+		log.Println(err)
+		return "", e.ErrProblemGetFailed
+	}
+	// 读取文件地址
+	path, err := dao.GetProblemFilePathByID(global.Mysql, id)
+	store := file_store.NewCOS()
+	var content []byte
+	content, err = store.ReadFile(path)
+	if err != nil {
+		log.Println(err)
+		return "", e.ErrProblemGetFailed
+	}
+	return string(content), nil
 }
 
 func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error) {

@@ -9,10 +9,12 @@ import (
 )
 
 type ProblemController interface {
-	// 读取题目列表
+	// GetProblemList 读取题目列表
 	GetProblemList(ctx *gin.Context)
-	// 读取题目详细信息
-	GetProblemByID(ctx *gin.Context)
+	// GetProblemByNumber 读取题目详细信息
+	GetProblemByNumber(ctx *gin.Context)
+	// GetProblemCodeByNumber 读取题目编程文件
+	GetProblemCodeByNumber(ctx *gin.Context)
 }
 
 type problemController struct {
@@ -42,7 +44,7 @@ func (p *problemController) GetProblemList(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	pageInfo, err := p.problemService.GetProblemList(page, pageSize)
+	pageInfo, err := p.problemService.GetProblemListForUser(page, pageSize)
 	if err != nil {
 		result.Error(err)
 		return
@@ -50,21 +52,24 @@ func (p *problemController) GetProblemList(ctx *gin.Context) {
 	result.SuccessData(pageInfo)
 }
 
-func (p *problemController) GetProblemByID(ctx *gin.Context) {
+func (p *problemController) GetProblemByNumber(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	ids := ctx.Param("id")
-	id, convertErr := strconv.Atoi(ids)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	problem, err2 := p.problemService.GetProblemByID(uint(id))
-	if err2 != nil {
-		result.Error(err2)
+	numberStr := ctx.Param("number")
+	problem, err := p.problemService.GetProblemByNumber(numberStr)
+	if err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessData(problem)
 }
 
-func (p *problemController) GetProblemCode(ctx *gin.Context) {
+func (p *problemController) GetProblemCodeByNumber(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	number := ctx.Param("number")
+	code, err := p.problemService.GetProblemCodeByNumber(number)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(code)
 }

@@ -63,15 +63,15 @@ func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 	var err error
 	if difficultyStr == "" {
 		// 题目难度默认为1
-		problem.Difficulty = 1
+		*problem.Difficulty = 1
 	} else {
-		problem.Difficulty, err = strconv.Atoi(difficultyStr)
+		*problem.Difficulty, err = strconv.Atoi(difficultyStr)
 	}
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	if problem.Difficulty > 5 || problem.Difficulty < 1 {
+	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
 		result.SimpleErrorMessage("题目难度必须在1-5之间")
 		return
 	}
@@ -100,17 +100,17 @@ func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 	problem.Title = ctx.PostForm("title")
 	problem.Path = ctx.PostForm("path")
 	difficultyStr := ctx.PostForm("difficulty")
-	problem.Difficulty, err = strconv.Atoi(difficultyStr)
+	*problem.Difficulty, err = strconv.Atoi(difficultyStr)
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	if problem.Difficulty > 5 || problem.Difficulty < 1 {
+	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
 		result.SimpleErrorMessage("题目难度必须在1-5之间")
 		return
 	}
 	enableStr := ctx.PostForm("enable")
-	problem.Enable = enableStr == "true"
+	*problem.Enable = enableStr == "true"
 	file, _ := ctx.FormFile("file")
 	err2 := q.problemService.UpdateProblem(problem, ctx, file)
 	if err2 != nil {

@@ -8,6 +8,8 @@ import (
 	"FanCode/controllers"
 	"FanCode/global"
 	"FanCode/interceptor"
+	"FanCode/routers/admin"
+	"FanCode/routers/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,12 +36,15 @@ func Run() {
 	r.GET("/ping", controllers.Ping)
 
 	SetupAuthRoutes(r)
-	SetupProblemRoutes(r)
-	SetupJudgeRoutes(r)
-	SetupSysApiRoutes(r)
-	SetupSysMenuRoutes(r)
-	SetupSysRoleRoutes(r)
-	SetupSysUserRoutes(r)
+
+	admin.SetupProblemRoutes(r)
+	admin.SetupSysApiRoutes(r)
+	admin.SetupSysMenuRoutes(r)
+	admin.SetupSysRoleRoutes(r)
+	admin.SetupSysUserRoutes(r)
+
+	user.SetupJudgeRoutes(r)
+	user.SetupProblemRoutes(r)
 
 	err := r.Run(":" + global.Conf.Port)
 	if err != nil {
