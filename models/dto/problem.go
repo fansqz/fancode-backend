@@ -5,7 +5,7 @@ import (
 	"FanCode/utils"
 )
 
-// 获取题目详细信息
+// ProblemDtoForGet 获取题目详细信息
 type ProblemDtoForGet struct {
 	ID          uint   `json:"id"`
 	Name        string `json:"name"`
@@ -31,7 +31,7 @@ func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
 	return response
 }
 
-// 获取题目列表
+// ProblemDtoForList 获取题目列表
 type ProblemDtoForList struct {
 	ID         uint       `json:"id"`
 	CreatedAt  utils.Time `json:"createdAt"`
@@ -59,7 +59,7 @@ func NewProblemDtoForList(problem *po.Problem) *ProblemDtoForList {
 	return response
 }
 
-// 获取题目文件列表的dto
+// ProblemFileDto 获取题目文件列表的dto
 type ProblemFileDto struct {
 	// 输入文件分页
 	Files []*FileDto

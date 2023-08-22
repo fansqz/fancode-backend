@@ -20,15 +20,26 @@ import (
 )
 
 type ProblemService interface {
+	// CheckProblemCode 检测题目编码
 	CheckProblemCode(problemCode string) (bool, *e.Error)
+	// InsertProblem 添加题目
 	InsertProblem(problem *po.Problem) (uint, *e.Error)
+	// UpdateProblem 更新题目
 	UpdateProblem(Problem *po.Problem, ctx *gin.Context, file *multipart.FileHeader) *e.Error
+	// DeleteProblem 删除题目
 	DeleteProblem(id uint) *e.Error
+	// GetProblemList 获取题目列表
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
+	// UploadProblemFile 上传题目文件
 	UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, ProblemCode string) *e.Error
+	// DownloadProblemZipFile 下载题目压缩文件
 	DownloadProblemZipFile(ctx *gin.Context, problemID uint)
+	// DownloadProblemTemplateFile 获取题目模板文件
 	DownloadProblemTemplateFile(ctx *gin.Context)
+	// GetProblemByID 获取题目信息
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
+	// GetProblemCodeByID 获取题目编程文件
+	GetProblemCodeByID(id uint) (string, *e.Error)
 	UpdateProblemEnable(id uint, enable bool) *e.Error
 
 	// todo: 支持线上编辑题目
@@ -257,6 +268,10 @@ func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Erro
 		return nil, e.ErrProblemGetFailed
 	}
 	return dto.NewProblemDtoForGet(problem), nil
+}
+
+func (q *problemService) GetProblemCodeByID(id uint) (string, *e.Error) {
+	return "", nil
 }
 
 func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error) {
