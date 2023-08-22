@@ -9,7 +9,7 @@ import (
 type ProblemDtoForGet struct {
 	ID          uint   `json:"id"`
 	Name        string `json:"name"`
-	Code        string `json:"code"`
+	Number      string `json:"number"`
 	Description string `json:"description"`
 	Title       string `json:"title"`
 	Path        string `json:"path"`
@@ -21,7 +21,7 @@ func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
 	response := &ProblemDtoForGet{
 		ID:          problem.ID,
 		Name:        problem.Name,
-		Code:        problem.Code,
+		Number:      problem.Number,
 		Description: problem.Description,
 		Title:       problem.Title,
 		Path:        problem.Path,
@@ -37,7 +37,7 @@ type ProblemDtoForList struct {
 	CreatedAt  utils.Time `json:"createdAt"`
 	UpdatedAt  utils.Time `json:"updatedAt"`
 	Name       string     `json:"name"`
-	Code       string     `json:"code"`
+	Number     string     `json:"number"`
 	Title      string     `json:"title"`
 	Path       string     `json:"path"`
 	Difficulty int        `json:"difficulty"`
@@ -50,7 +50,7 @@ func NewProblemDtoForList(problem *po.Problem) *ProblemDtoForList {
 		CreatedAt:  utils.Time(problem.CreatedAt),
 		UpdatedAt:  utils.Time(problem.UpdatedAt),
 		Name:       problem.Name,
-		Code:       problem.Code,
+		Number:     problem.Number,
 		Title:      problem.Title,
 		Path:       problem.Path,
 		Difficulty: problem.Difficulty,

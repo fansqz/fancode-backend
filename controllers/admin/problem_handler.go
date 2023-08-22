@@ -55,7 +55,7 @@ func (q *problemManagementController) CheckProblemCode(ctx *gin.Context) {
 func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	problem := &po.Problem{}
-	problem.Code = ctx.PostForm("code")
+	problem.Number = ctx.PostForm("number")
 	problem.Name = ctx.PostForm("name")
 	problem.Description = ctx.PostForm("description")
 	problem.Title = ctx.PostForm("title")
@@ -94,7 +94,7 @@ func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 	}
 	problem := &po.Problem{}
 	problem.ID = uint(problemID)
-	problem.Code = ctx.PostForm("code")
+	problem.Number = ctx.PostForm("number")
 	problem.Name = ctx.PostForm("name")
 	problem.Description = ctx.PostForm("description")
 	problem.Title = ctx.PostForm("title")
