@@ -9,7 +9,7 @@ func SetupProblemRoutes(r *gin.Engine) {
 	//题目相关路由
 	problem := r.Group("/manage/problem")
 	{
-		problemController := admin.NewProblemController()
+		problemController := admin.NewProblemManagementController()
 		problem.GET("/code/check/:code", problemController.CheckProblemCode)
 		problem.POST("", problemController.InsertProblem)
 		problem.PUT("", problemController.UpdateProblem)

@@ -11,7 +11,7 @@ import (
 
 // ProblemController
 // @Description: 题目管理相关功能
-type ProblemController interface {
+type ProblemManagementController interface {
 	CheckProblemCode(ctx *gin.Context)
 	InsertProblem(ctx *gin.Context)
 	DeleteProblem(ctx *gin.Context)
@@ -28,17 +28,17 @@ type ProblemController interface {
 	UpdateProblemEnable(ctx *gin.Context)
 }
 
-type problemController struct {
+type problemManagementController struct {
 	problemService service.ProblemService
 }
 
-func NewProblemController() ProblemController {
-	return &problemController{
+func NewProblemManagementController() ProblemManagementController {
+	return &problemManagementController{
 		problemService: service.NewProblemService(),
 	}
 }
 
-func (q *problemController) CheckProblemCode(ctx *gin.Context) {
+func (q *problemManagementController) CheckProblemCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	code := ctx.Param("code")
 	b, err := q.problemService.CheckProblemCode(code)
@@ -52,7 +52,7 @@ func (q *problemController) CheckProblemCode(ctx *gin.Context) {
 	}
 }
 
-func (q *problemController) InsertProblem(ctx *gin.Context) {
+func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	problem := &po.Problem{}
 	problem.Code = ctx.PostForm("code")
@@ -84,7 +84,7 @@ func (q *problemController) InsertProblem(ctx *gin.Context) {
 	result.Success("题库添加成功", pID)
 }
 
-func (q *problemController) UpdateProblem(ctx *gin.Context) {
+func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	problemIDString := ctx.PostForm("id")
 	problemID, err := strconv.Atoi(problemIDString)
@@ -120,7 +120,7 @@ func (q *problemController) UpdateProblem(ctx *gin.Context) {
 	result.SuccessData("修改成功")
 }
 
-func (q *problemController) DeleteProblem(ctx *gin.Context) {
+func (q *problemManagementController) DeleteProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	ids := ctx.Param("id")
 	id, convertErr := strconv.Atoi(ids)
@@ -137,7 +137,7 @@ func (q *problemController) DeleteProblem(ctx *gin.Context) {
 }
 
 // GetProblemList 读取一个列表的题目
-func (q *problemController) GetProblemList(ctx *gin.Context) {
+func (q *problemManagementController) GetProblemList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	pageStr := ctx.Param("page")
 	pageSizeStr := ctx.Param("pageSize")
@@ -162,7 +162,7 @@ func (q *problemController) GetProblemList(ctx *gin.Context) {
 	result.SuccessData(pageInfo)
 }
 
-func (q *problemController) GetProblemByID(ctx *gin.Context) {
+func (q *problemManagementController) GetProblemByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	ids := ctx.Param("id")
 	id, convertErr := strconv.Atoi(ids)
@@ -178,7 +178,7 @@ func (q *problemController) GetProblemByID(ctx *gin.Context) {
 	result.SuccessData(problem)
 }
 
-func (q *problemController) DownloadProblemFile(ctx *gin.Context) {
+func (q *problemManagementController) DownloadProblemFile(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	pidstr := ctx.Param("id")
 	pid, err := strconv.Atoi(pidstr)
@@ -189,11 +189,11 @@ func (q *problemController) DownloadProblemFile(ctx *gin.Context) {
 	q.problemService.DownloadProblemZipFile(ctx, uint(pid))
 }
 
-func (q *problemController) DownloadProblemTemplateFile(ctx *gin.Context) {
+func (q *problemManagementController) DownloadProblemTemplateFile(ctx *gin.Context) {
 	q.problemService.DownloadProblemTemplateFile(ctx)
 }
 
-func (q *problemController) UpdateProblemEnable(ctx *gin.Context) {
+func (q *problemManagementController) UpdateProblemEnable(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	problemIDStr := ctx.PostForm("problemID")
 	problemID, err := strconv.Atoi(problemIDStr)
