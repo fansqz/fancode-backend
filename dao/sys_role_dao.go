@@ -82,8 +82,8 @@ func GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 		return nil, err
 	}
 	menuIDs := make([]uint, len(role.Menus))
-	for i, api := range role.Apis {
-		menuIDs[i] = api.ID
+	for i, menu := range role.Menus {
+		menuIDs[i] = menu.ID
 	}
 	return menuIDs, nil
 }
