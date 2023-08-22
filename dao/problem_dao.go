@@ -10,15 +10,15 @@ func InsertProblem(db *gorm.DB, problem *po.Problem) error {
 	return db.Create(problem).Error
 }
 
-// GetProblemByProblemCode
-func GetProblemByProblemCode(db *gorm.DB, problemCode string) (*po.Problem, error) {
+// GetProblemByProblemNumber 根据题目编码获取题目
+func GetProblemByProblemNumber(db *gorm.DB, problemCode string) (*po.Problem, error) {
 	question := &po.Problem{}
-	err := db.Where("code = ?", problemCode).First(&question).Error
+	err := db.Where("number = ?", problemCode).First(&question).Error
 	return question, err
 }
 
-// GetProblemByProblemID
-func GetProblemByProblemID(db *gorm.DB, problemID uint) (*po.Problem, error) {
+// GetProblemByProblemID 根据题目id获取题目
+func GetProblemByID(db *gorm.DB, problemID uint) (*po.Problem, error) {
 	question := &po.Problem{}
 	err := db.First(&question, problemID).Error
 	return question, err
@@ -28,7 +28,7 @@ func GetProblemByProblemID(db *gorm.DB, problemID uint) (*po.Problem, error) {
 // 不修改path
 func UpdateProblem(db *gorm.DB, problem *po.Problem) error {
 	return db.Model(&po.Problem{}).Where("id = ?", problem.ID).Updates(map[string]interface{}{
-		"code":        problem.Code,
+		"number":      problem.Number,
 		"name":        problem.Name,
 		"description": problem.Description,
 		"difficulty":  problem.Difficulty,
@@ -37,16 +37,16 @@ func UpdateProblem(db *gorm.DB, problem *po.Problem) error {
 	}).Error
 }
 
-// CheckProblemCodeExists 检测用户ID是否存在
-func CheckProblemCodeExists(db *gorm.DB, problemCode string) (bool, error) {
+// CheckProblemNumberExists 检测用户ID是否存在
+func CheckProblemNumberExists(db *gorm.DB, problemCode string) (bool, error) {
 	//执行
-	row := db.Model(&po.Problem{}).Select("code").Where("code = ?", problemCode)
+	row := db.Model(&po.Problem{}).Select("number").Where("number = ?", problemCode)
 	if row.Error != nil {
 		return false, row.Error
 	}
 	problem := &po.Problem{}
 	row.Scan(&problem)
-	return problem.Code != "", nil
+	return problem.Number != "", nil
 }
 
 // SetProblemEnable 让一个题目可用
