@@ -8,6 +8,7 @@ import (
 	"FanCode/models/po"
 	"FanCode/utils"
 	"log"
+	"time"
 )
 
 type AuthService interface {
@@ -116,6 +117,7 @@ func (u *authService) ChangePassword(userLoginName, oldPassword, newPassword str
 		return e.ErrPasswordEncodeFailed
 	}
 	user.Password = string(password)
+	user.UpdatedAt = time.Now()
 	err = dao.UpdateUser(global.Mysql, user)
 	if err != nil {
 		return e.ErrUserUnknownError
