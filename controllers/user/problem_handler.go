@@ -44,7 +44,10 @@ func (p *problemController) GetProblemList(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	pageInfo, err := p.problemService.GetProblemListForUser(page, pageSize)
+	if pageSize > 50 {
+		pageSize = 50
+	}
+	pageInfo, err := p.problemService.GetUserProblemList(ctx, page, pageSize)
 	if err != nil {
 		result.Error(err)
 		return
