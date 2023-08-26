@@ -1,11 +1,13 @@
 package constants
 
 const (
+	// Accepted 成功
 	Accepted = 200 + iota
+	// WrongAnswer 答案错误
 	WrongAnswer
 	TimeLimitExceeded
-	// 编译出错
+	// CompileError 编译出错
 	CompileError
-	// 运行出错
+	// RuntimeError 运行出错
 	RuntimeError
 )

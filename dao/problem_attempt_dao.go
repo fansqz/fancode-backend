@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"FanCode/constants"
 	"FanCode/models/po"
 	"gorm.io/gorm"
 )
@@ -29,10 +30,13 @@ func GetProblemAttempt(db *gorm.DB, userId uint, problemId uint) (*po.ProblemAtt
 
 func GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, error) {
 	var problemAttempt po.ProblemAttempt
-	err := db.Model(&po.ProblemAttempt{}).Select("state").
+	err := db.Model(&po.ProblemAttempt{}).Select("state", "id").
 		Where("user_id = ? and problem_id = ?", userId, problemID).Find(&problemAttempt).Error
 	if err != nil {
 		return 0, err
+	}
+	if problemAttempt.ID == 0 {
+		return constants.NotStarted, nil
 	}
 	return problemAttempt.State, nil
 }

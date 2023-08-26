@@ -7,7 +7,7 @@ import (
 
 func SetupProblemRoutes(r *gin.Engine) {
 	//题目相关路由
-	problem := r.Group("/user/problem")
+	problem := r.Group("/problem")
 	{
 		problemController := user.NewProblemController()
 		problem.GET("/list/:page/:pageSize", problemController.GetProblemList)
