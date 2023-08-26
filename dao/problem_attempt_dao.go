@@ -26,3 +26,13 @@ func GetProblemAttempt(db *gorm.DB, userId uint, problemId uint) (*po.ProblemAtt
 		Find(&problemAttempt).Error
 	return &problemAttempt, err
 }
+
+func GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, error) {
+	var problemAttempt po.ProblemAttempt
+	err := db.Model(&po.ProblemAttempt{}).Select("state").
+		Where("user_id = ? and problem_id = ?", userId, problemID).Find(&problemAttempt).Error
+	if err != nil {
+		return 0, err
+	}
+	return problemAttempt.State, nil
+}

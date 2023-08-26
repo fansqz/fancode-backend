@@ -30,8 +30,8 @@ type ProblemService interface {
 	DeleteProblem(id uint) *e.Error
 	// GetProblemList 获取题目列表
 	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
-	// GetProblemListForUser 用户获取题目列表
-	GetProblemListForUser(page int, pageSize int) (*dto.PageInfo, *e.Error)
+	// GetUserProblemList 用户获取题目列表
+	GetUserProblemList(ctx *gin.Context, page int, pageSize int) (*dto.PageInfo, *e.Error)
 	// DownloadProblemZipFile 下载题目压缩文件
 	DownloadProblemZipFile(ctx *gin.Context, problemID uint)
 	// DownloadProblemTemplateFile 获取题目模板文件
@@ -190,7 +190,8 @@ func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, 
 	return pageInfo, nil
 }
 
-func (q *problemService) GetProblemListForUser(page int, pageSize int) (*dto.PageInfo, *e.Error) {
+func (q *problemService) GetUserProblemList(ctx *gin.Context, page int, pageSize int) (*dto.PageInfo, *e.Error) {
+	userId := ctx.Keys["user"].(*dto.UserInfo).ID
 	p := &po.Problem{}
 	enable := true
 	p.Enable = &(enable)
@@ -199,9 +200,16 @@ func (q *problemService) GetProblemListForUser(page int, pageSize int) (*dto.Pag
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
-	newProblems := make([]*dto.ProblemDtoForList, len(problems))
+	newProblems := make([]*dto.ProblemDtoForUserList, len(problems))
 	for i := 0; i < len(problems); i++ {
-		newProblems[i] = dto.NewProblemDtoForList(problems[i])
+		newProblems[i] = dto.NewProblemDtoForUserList(problems[i])
+		// 读取题目完成情况
+		var state int
+		state, err = dao.GetProblemAttemptState(global.Mysql, userId, problems[i].ID)
+		if err != nil {
+			return nil, e.ErrProblemListFailed
+		}
+		newProblems[i].State = state
 	}
 	// 获取所有题目总数目
 	var count int64

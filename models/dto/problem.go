@@ -68,3 +68,26 @@ type ProblemFileDto struct {
 	// 输入输出文件类型
 	IOFileType string
 }
+
+// ProblemDtoForUserList 用户获取题目列表的时候返回的题目数据
+type ProblemDtoForUserList struct {
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	Number      string `json:"number"`
+	Description string `json:"description"`
+	Title       string `json:"title"`
+	Difficulty  *int   `json:"difficulty"`
+	// 学生做题状态
+	State int `json:"state"`
+}
+
+func NewProblemDtoForUserList(problem *po.Problem) *ProblemDtoForUserList {
+	return &ProblemDtoForUserList{
+		ID:          problem.ID,
+		Name:        problem.Name,
+		Number:      problem.Number,
+		Description: problem.Description,
+		Title:       problem.Title,
+		Difficulty:  problem.Difficulty,
+	}
+}
