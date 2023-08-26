@@ -34,8 +34,9 @@ func (j *judgeController) Execute(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	judgeRequest := &dto.JudgingRequestDTO{
+	judgeRequest := &dto.ExecuteRequestDto{
 		Code:      ctx.PostForm("code"),
+		Input:     ctx.PostForm("input"),
 		ProblemID: uint(problemID),
 	}
 	// 读取题目id
@@ -55,7 +56,7 @@ func (j *judgeController) Submit(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	judgeRequest := &dto.JudgingRequestDTO{
+	judgeRequest := &dto.SubmitRequestDTO{
 		Code:      ctx.PostForm("code"),
 		ProblemID: uint(problemID),
 	}

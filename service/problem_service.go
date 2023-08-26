@@ -192,7 +192,8 @@ func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, 
 
 func (q *problemService) GetProblemListForUser(page int, pageSize int) (*dto.PageInfo, *e.Error) {
 	p := &po.Problem{}
-	*p.Enable = true
+	enable := true
+	p.Enable = &(enable)
 	// 获取题目列表
 	problems, err := dao.GetProblemList(global.Mysql, page, pageSize, p)
 	if err != nil {

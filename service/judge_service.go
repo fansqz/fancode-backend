@@ -20,9 +20,9 @@ import (
 
 type JudgeService interface {
 	// 答案提交
-	Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitResultDTO, *e.Error)
+	Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDTO) (*dto.SubmitResultDTO, *e.Error)
 	// 执行
-	Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.ExecuteResultDto, *e.Error)
+	Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error)
 }
 
 type judgeService struct {
@@ -32,7 +32,7 @@ func NewJudgeService() JudgeService {
 	return &judgeService{}
 }
 
-func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequestDTO) (*dto.SubmitResultDTO, *e.Error) {
+func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDTO) (*dto.SubmitResultDTO, *e.Error) {
 	uuid := utils.GetUUID()
 	// 提交结果对象
 	submission := &po.Submission{
@@ -41,7 +41,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 		UserID:    ctx.Keys["user"].(*po.SysUser).ID,
 	}
 	//读取题目到本地，并编译
-	problem, err := dao.GetProblemByProblemID(global.Mysql, judgeRequest.ProblemID)
+	problem, err := dao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
@@ -154,10 +154,10 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.JudgingRequest
 	}, nil
 }
 
-func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.ExecuteResultDto, *e.Error) {
+func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error) {
 
 	//读取题目到本地，并编译
-	problem, err := dao.GetProblemByProblemID(global.Mysql, judgeRequest.ProblemID)
+	problem, err := dao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
@@ -175,7 +175,7 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 	// 保存code文件
 	localPath := getLocalPathByPath(problem.Path)
 	var code []byte
-	code, err = os.ReadFile(localPath + "/code")
+	code, err = os.ReadFile(localPath + "/code.c")
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
@@ -200,60 +200,22 @@ func (j *judgeService) Execute(judgeRequest *dto.JudgingRequestDTO) (*dto.Execut
 			Timestamp:    nil,
 		}, nil
 	}
-	// 运行
-	files, err2 := os.ReadDir(localPath)
-	if err2 != nil {
+	//执行
+	cmd2 := exec.Command(executePath + "/main")
+	cmd2.Stdin = strings.NewReader(judgeRequest.Input)
+	cmd2.Stdout = &bytes.Buffer{}
+	err = cmd2.Run()
+	if err != nil {
+		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
-	i := 0
-	for _, fileInfo := range files {
-		if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".in") {
-			i++
-			input, err3 := os.Open(localPath + "/" + fileInfo.Name())
-			if err3 != nil {
-				log.Println(err3)
-				return nil, e.ErrExecuteFailed
-			}
-			//执行
-			cmd2 := exec.Command(executePath + "/main")
-			cmd2.Stdin = input
-			cmd2.Stdout = &bytes.Buffer{}
-			err = cmd2.Run()
-			if err != nil {
-				log.Println(err)
-				return nil, e.ErrExecuteFailed
-			}
-			// 读取.out文件
-			outFilePath := localPath + "/" + strings.ReplaceAll(fileInfo.Name(), ".in", ".out")
-			outFileContent, err4 := os.ReadFile(outFilePath)
-			if err4 != nil {
-				log.Println(err4)
-				return nil, e.ErrExecuteFailed
-			}
-			// 将输出结果与.out文件对比
-			if bytes.Equal(cmd2.Stdout.(*bytes.Buffer).Bytes(), outFileContent) {
-				continue
-			} else {
-				return &dto.ExecuteResultDto{
-					ProblemID:      problem.ID,
-					Status:         constants.WrongAnswer,
-					ErrorMessage:   "",
-					ExpectedOutput: string(outFileContent),
-					UserOutput:     string(cmd2.Stdout.(*bytes.Buffer).Bytes()),
-					Timestamp:      nil,
-				}, nil
-			}
-			// 释放buffer
-			cmd2.Stdout.(*bytes.Buffer).Reset()
-		}
-		if i > 3 {
-			break
-		}
-	}
+	output := cmd2.Stdout.(*bytes.Buffer).Bytes()
+	cmd2.Stdout.(*bytes.Buffer).Reset()
 	return &dto.ExecuteResultDto{
 		ProblemID:    problem.ID,
 		Status:       constants.Accepted,
 		ErrorMessage: "",
+		UserOutput:   string(output),
 		Timestamp:    nil,
 	}, nil
 }
@@ -264,11 +226,6 @@ func checkAndDownloadQuestionFile(questionPath string) error {
 		// 拉取文件
 		store := file_store.NewCOS()
 		err := store.DownloadFolder(questionPath, localPath)
-		if err != nil {
-			return err
-		}
-		// 将code.c改为code
-		err = os.Rename(localPath+"/code.c", localPath+"/code")
 		if err != nil {
 			return err
 		}

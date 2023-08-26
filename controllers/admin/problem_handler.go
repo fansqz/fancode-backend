@@ -100,7 +100,9 @@ func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 	problem.Title = ctx.PostForm("title")
 	problem.Path = ctx.PostForm("path")
 	difficultyStr := ctx.PostForm("difficulty")
-	*problem.Difficulty, err = strconv.Atoi(difficultyStr)
+	var difficulty int
+	difficulty, err = strconv.Atoi(difficultyStr)
+	problem.Difficulty = &difficulty
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
@@ -110,7 +112,9 @@ func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 		return
 	}
 	enableStr := ctx.PostForm("enable")
-	*problem.Enable = enableStr == "true"
+	var enable bool
+	enable = enableStr == "true"
+	problem.Enable = &(enable)
 	file, _ := ctx.FormFile("file")
 	err2 := q.problemService.UpdateProblem(problem, ctx, file)
 	if err2 != nil {
