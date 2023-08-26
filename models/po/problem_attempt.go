@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 // ProblemAttempt  用户在一道题目中的做题情况
 type ProblemAttempt struct {
-	gorm.DB
+	gorm.Model
 	ProblemID       uint `gorm:"column:problem_id"`
 	UserID          uint `gorm:"column:user_id"`
 	SubmissionCount int  `gorm:"column:submission_count"`
