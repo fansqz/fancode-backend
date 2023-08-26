@@ -56,7 +56,7 @@ func (j *judgeController) Submit(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	judgeRequest := &dto.SubmitRequestDTO{
+	judgeRequest := &dto.SubmitRequestDto{
 		Code:      ctx.PostForm("code"),
 		ProblemID: uint(problemID),
 	}

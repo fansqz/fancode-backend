@@ -11,7 +11,6 @@ import (
 	"FanCode/utils"
 	"bytes"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"log"
 	"os"
 	"os/exec"
@@ -40,12 +39,16 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 	tx := global.Mysql.Begin()
 	_ = dao.InsertSubmission(tx, submission)
-	userId := ctx.Keys["user"].(*po.SysUser).ID
+	userId := ctx.Keys["user"].(*dto.UserInfo).ID
 	problemAttempt, err2 := dao.GetProblemAttempt(tx, userId, judgeRequest.ProblemID)
+	if err2 != nil {
+		log.Println(err2)
+		return nil, e.ErrSubmitFailed
+	}
 	// 如果本身就没有记录，就插入
-	if err2 == gorm.ErrRecordNotFound {
-		problemAttempt = &po.ProblemAttempt {
-			UserID: userId,
+	if problemAttempt.ID == 0 {
+		problemAttempt = &po.ProblemAttempt{
+			UserID:    userId,
 			ProblemID: judgeRequest.ProblemID,
 		}
 		problemAttempt.SubmissionCount++
@@ -66,10 +69,6 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		}
 		tx.Commit()
 		return dto.NewSubmitResultDto(submission), nil
-	}
-	if err2 != nil {
-		log.Println(err2)
-		return nil, e.ErrSubmitFailed
 	}
 
 	// 有记录则更新
@@ -99,7 +98,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	submission := &po.Submission{
 		Code:      judgeRequest.Code,
 		ProblemID: judgeRequest.ProblemID,
-		UserID:    ctx.Keys["user"].(*po.SysUser).ID,
+		UserID:    ctx.Keys["user"].(*dto.UserInfo).ID,
 	}
 	//读取题目到本地，并编译
 	problem, err := dao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
