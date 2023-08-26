@@ -19,3 +19,10 @@ func UpdateProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error 
 		"updated_at":       problemAttempt.UpdatedAt,
 	}).Error
 }
+
+func GetProblemAttempt(db *gorm.DB, userId uint, problemId uint) (*po.ProblemAttempt, error) {
+	var problemAttempt po.ProblemAttempt
+	err := db.Model(&po.ProblemAttempt{}).Where("user_id = ? and problem_id = ?", userId, problemId).
+		Find(&problemAttempt).Error
+	return &problemAttempt, err
+}

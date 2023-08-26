@@ -11,6 +11,7 @@ import (
 	"FanCode/utils"
 	"bytes"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"log"
 	"os"
 	"os/exec"
@@ -20,7 +21,7 @@ import (
 
 type JudgeService interface {
 	// 答案提交
-	Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDTO) (*dto.SubmitResultDTO, *e.Error)
+	Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*dto.SubmitResultDto, *e.Error)
 	// 执行
 	Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error)
 }
@@ -32,7 +33,67 @@ func NewJudgeService() JudgeService {
 	return &judgeService{}
 }
 
-func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDTO) (*dto.SubmitResultDTO, *e.Error) {
+func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*dto.SubmitResultDto, *e.Error) {
+	submission, err := j.submit(ctx, judgeRequest)
+	if err != nil {
+		return nil, err
+	}
+	tx := global.Mysql.Begin()
+	_ = dao.InsertSubmission(tx, submission)
+	userId := ctx.Keys["user"].(*po.SysUser).ID
+	problemAttempt, err2 := dao.GetProblemAttempt(tx, userId, judgeRequest.ProblemID)
+	// 如果本身就没有记录，就插入
+	if err2 == gorm.ErrRecordNotFound {
+		problemAttempt = &po.ProblemAttempt {
+			UserID: userId,
+			ProblemID: judgeRequest.ProblemID,
+		}
+		problemAttempt.SubmissionCount++
+		if submission.Status == constants.Accepted {
+			problemAttempt.SuccessCount++
+		} else {
+			problemAttempt.ErrCount++
+		}
+		problemAttempt.Code = judgeRequest.Code
+		if problemAttempt.State == 0 && submission.Status == constants.Accepted {
+			problemAttempt.State = 1
+		}
+		err2 = dao.InsertProblemAttempt(tx, problemAttempt)
+		if err2 != nil {
+			log.Println(err2)
+			tx.Rollback()
+			return nil, e.ErrSubmitFailed
+		}
+		tx.Commit()
+		return dto.NewSubmitResultDto(submission), nil
+	}
+	if err2 != nil {
+		log.Println(err2)
+		return nil, e.ErrSubmitFailed
+	}
+
+	// 有记录则更新
+	problemAttempt.SubmissionCount++
+	if submission.Status == constants.Accepted {
+		problemAttempt.SuccessCount++
+	} else {
+		problemAttempt.ErrCount++
+	}
+	problemAttempt.Code = judgeRequest.Code
+	if problemAttempt.State == 0 && submission.Status == constants.Accepted {
+		problemAttempt.State = 1
+	}
+	err2 = dao.UpdateProblemAttempt(tx, problemAttempt)
+	if err2 != nil {
+		log.Println(err2)
+		tx.Rollback()
+		return nil, e.ErrSubmitFailed
+	}
+	tx.Commit()
+	return dto.NewSubmitResultDto(submission), nil
+}
+
+func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*po.Submission, *e.Error) {
 	uuid := utils.GetUUID()
 	// 提交结果对象
 	submission := &po.Submission{
@@ -59,7 +120,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	// 保存code文件
 	localPath := global.Conf.FilePathConfig.ProblemFileDir + "/" + problem.Path
 	var code []byte
-	code, err = os.ReadFile(localPath + "/code")
+	code, err = os.ReadFile(localPath + "/code.c")
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
@@ -79,13 +140,9 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	if err != nil {
 		submission.Status = constants.CompileError
 		submission.ErrorMessage = err.Error()
-		_ = dao.InsertSubmission(global.Mysql, submission)
-		return &dto.SubmitResultDTO{
-			ProblemID:    problem.ID,
-			Status:       constants.CompileError,
-			ErrorMessage: err.Error(),
-			Timestamp:    nil,
-		}, nil
+		submission.Status = constants.CompileError
+		submission.ErrorMessage = err.Error()
+		return submission, nil
 	}
 	// 运行
 	files, err2 := os.ReadDir(localPath)
@@ -93,12 +150,9 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		submission.Status = constants.RuntimeError
 		submission.ErrorMessage = err2.Error()
 		_ = dao.InsertSubmission(global.Mysql, submission)
-		return &dto.SubmitResultDTO{
-			ProblemID:    problem.ID,
-			Status:       constants.RuntimeError,
-			ErrorMessage: err2.Error(),
-			Timestamp:    nil,
-		}, nil
+		submission.Status = constants.RuntimeError
+		submission.ErrorMessage = err2.Error()
+		return submission, nil
 	}
 	i := 0
 	for _, fileInfo := range files {
@@ -126,32 +180,19 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 				return nil, e.ErrExecuteFailed
 			}
 			// 将输出结果与.out文件对比
-			if bytes.Equal(cmd2.Stdout.(*bytes.Buffer).Bytes(), outFileContent) {
-				continue
-			} else {
+			if !bytes.Equal(cmd2.Stdout.(*bytes.Buffer).Bytes(), outFileContent) {
 				submission.Status = constants.WrongAnswer
-				_ = dao.InsertSubmission(global.Mysql, submission)
-				return &dto.SubmitResultDTO{
-					ProblemID:      problem.ID,
-					Status:         constants.WrongAnswer,
-					ErrorMessage:   "",
-					ExpectedOutput: string(outFileContent),
-					UserOutput:     string(cmd2.Stdout.(*bytes.Buffer).Bytes()),
-					Timestamp:      nil,
-				}, nil
+				submission.ExpectedOutput = string(outFileContent)
+				submission.UserOutput = string(cmd2.Stdout.(*bytes.Buffer).Bytes())
+				cmd2.Stdout.(*bytes.Buffer).Reset()
+				return submission, nil
 			}
 			// 释放buffer
 			cmd2.Stdout.(*bytes.Buffer).Reset()
 		}
 	}
 	submission.Status = constants.Accepted
-	_ = dao.InsertSubmission(global.Mysql, submission)
-	return &dto.SubmitResultDTO{
-		ProblemID:    problem.ID,
-		Status:       constants.Accepted,
-		ErrorMessage: "",
-		Timestamp:    nil,
-	}, nil
+	return submission, nil
 }
 
 func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error) {

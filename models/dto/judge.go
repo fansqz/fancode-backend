@@ -1,20 +1,33 @@
 package dto
 
-import "time"
+import (
+	"FanCode/models/po"
+	"time"
+)
 
 // 判题请请求需要的
-type SubmitRequestDTO struct {
+type SubmitRequestDto struct {
 	ProblemID uint
 	Code      string
 }
 
-type SubmitResultDTO struct {
+type SubmitResultDto struct {
 	ProblemID      uint
-	Status         uint
+	Status         int
 	ErrorMessage   string
 	ExpectedOutput string //预期输出
 	UserOutput     string //用户输出
 	Timestamp      *time.Time
+}
+
+func NewSubmitResultDto(submission *po.Submission) *SubmitResultDto {
+	return &SubmitResultDto{
+		ProblemID:      submission.ProblemID,
+		Status:         submission.Status,
+		ErrorMessage:   submission.ErrorMessage,
+		ExpectedOutput: submission.ExpectedOutput,
+		UserOutput:     submission.UserOutput,
+	}
 }
 
 // ExecuteRequestDto 执行请求需要的dto
