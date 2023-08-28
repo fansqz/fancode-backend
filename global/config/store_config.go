@@ -4,11 +4,12 @@ import "gopkg.in/ini.v1"
 
 // @Description:oss的配置
 type COSConfig struct {
-	AppID      string `ini:"appID"`
-	Region     string `ini:"region"`
-	SecretID   string `ini:"secretID"`
-	SecretKey  string `ini:"secretKey"`
-	BucketName string `ini:"bucketName"`
+	AppID             string `ini:"appID"`
+	Region            string `ini:"region"`
+	SecretID          string `ini:"secretID"`
+	SecretKey         string `ini:"secretKey"`
+	ProblemBucketName string `ini:"problemBucketName"`
+	ImageBucketName   string `ini:"imageBucketName"`
 }
 
 func NewCOSConfig(cfg *ini.File) *COSConfig {

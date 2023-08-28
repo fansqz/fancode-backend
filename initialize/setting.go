@@ -1,4 +1,4 @@
-// Package setting
+// Package initialize
 // @Author: fzw
 // @Create: 2023/7/14
 // @Description: 初始化时读取配置文件相关工具
@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// Init
+// InitSetting
 //
 //	@Description: 初始化配置
 //	@param file 配置文件路径

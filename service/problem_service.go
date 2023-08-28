@@ -145,7 +145,7 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 	}
 	if problem.Path != "" {
 		// 删除题目文件
-		s := file_store.NewCOS()
+		s := file_store.NewProblemCOS()
 		err = s.DeleteFolder(problem.Path)
 		if err != nil {
 			return e.ErrProblemDeleteFailed
@@ -245,7 +245,7 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 	}
 	//检测文件内有一个文件夹，或者是多个文件
 	ProblemPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + path)
-	s := file_store.NewCOS()
+	s := file_store.NewProblemCOS()
 	err = s.DeleteFolder(strconv.Itoa(int(problemID)))
 	s.UploadFolder(path, ProblemPathInLocal)
 	// 存储到数据库
@@ -305,7 +305,7 @@ func (q *problemService) GetUserCodeByNumber(ctx *gin.Context, number string) (s
 	}
 	// 读取文件地址
 	path, err := dao.GetProblemFilePathByID(global.Mysql, id)
-	store := file_store.NewCOS()
+	store := file_store.NewProblemCOS()
 	var content []byte
 	content, err = store.ReadFile(path + "/code.c")
 	if err != nil {
@@ -441,7 +441,7 @@ func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint
 	}()
 	localPath := temp + "/" + strconv.Itoa(int(problemID))
 	zipPath := localPath + ".zip"
-	store := file_store.NewCOS()
+	store := file_store.NewProblemCOS()
 	err = store.DownloadAndCompressFolder(path, localPath, zipPath)
 	if err != nil {
 		result.Error(e.ErrProblemZipFileDownloadFailed)

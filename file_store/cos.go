@@ -20,10 +20,18 @@ type cosStore struct {
 	client *cos.Client
 }
 
-func NewCOS() Store {
+func NewImageCOS() Store {
+	return NewCOS(global.Conf.ImageBucketName)
+}
+
+func NewProblemCOS() Store {
+	return NewCOS(global.Conf.ProblemBucketName)
+}
+
+func NewCOS(bucketName string) Store {
 	storeConfig := global.Conf.COSConfig
 	u, _ := url.Parse(fmt.Sprintf("http://%s-%s.cos.%s.myqcloud.com",
-		storeConfig.BucketName, storeConfig.AppID, storeConfig.Region))
+		bucketName, storeConfig.AppID, storeConfig.Region))
 	b := &cos.BaseURL{BucketURL: u}
 	client := cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{

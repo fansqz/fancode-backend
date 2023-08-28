@@ -264,7 +264,7 @@ func checkAndDownloadQuestionFile(questionPath string) error {
 	localPath := global.Conf.FilePathConfig.ProblemFileDir + "/" + questionPath
 	if !utils.CheckFolderExists(localPath) {
 		// 拉取文件
-		store := file_store.NewCOS()
+		store := file_store.NewProblemCOS()
 		err := store.DownloadFolder(questionPath, localPath)
 		if err != nil {
 			return err
