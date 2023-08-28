@@ -1,9 +1,8 @@
-package controllers
+package admin
 
 import (
 	e "FanCode/error"
 	"FanCode/models/dto"
-	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
@@ -14,8 +13,6 @@ import (
 type AuthController interface {
 	// Login 用户登录
 	Login(ctx *gin.Context)
-	// Register 注册
-	Register(ctx *gin.Context)
 	// GetUserInfo 根据token获取用户信息
 	GetUserInfo(ctx *gin.Context)
 	// ChangePassword 改密码
@@ -29,20 +26,6 @@ type authController struct {
 func NewAuthController() AuthController {
 	return &authController{
 		authService: service.NewAuthService(),
-	}
-}
-
-func (u *authController) Register(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	user := &po.SysUser{}
-	user.LoginName = ctx.PostForm("loginName")
-	user.Password = ctx.PostForm("password")
-	user.Username = ctx.PostForm("username")
-	err := u.authService.Register(user)
-	if err == nil {
-		result.Error(err)
-	} else {
-		result.SuccessMessage("注册成功")
 	}
 }
 
