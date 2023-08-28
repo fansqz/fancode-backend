@@ -69,6 +69,20 @@ func CheckLoginName(db *gorm.DB, loginname string) (bool, error) {
 	return true, nil
 }
 
+func ListLoginName(db *gorm.DB, loginName string) ([]string, error) {
+	var users []*po.SysUser
+	err := db.Model(&po.SysUser{}).Where("login_name like ?", loginName+"%").
+		Select("login_name").Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	answer := make([]string, len(users))
+	for i := 0; i < len(users); i++ {
+		answer[i] = users[i].LoginName
+	}
+	return answer, nil
+}
+
 // CheckEmail 检测邮箱是否已经存在
 func CheckEmail(db *gorm.DB, email string) (bool, error) {
 	var user *po.SysUser

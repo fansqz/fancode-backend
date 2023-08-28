@@ -7,23 +7,28 @@ import (
 	"FanCode/models/dto"
 	"FanCode/models/po"
 	"FanCode/utils"
-	"fmt"
+	"github.com/Chain-Zhang/pinyin"
 	"log"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
 const (
 	Email_Pro_Key = "emailcode-"
+	// cos中，用户图片存储的位置
+	User_Avatar_Path = "/avatar/user"
+	// 图片的网站前缀
+	Sys_URL = "http://code.fansqz.com"
 )
 
 type AuthService interface {
 	// Login 用户登录
 	Login(loginName string, password string) (string, *e.Error)
-	// Register 注册
-	Register(user *po.SysUser) *e.Error
 	// SendRegisterCode 获取邮件的验证码
 	SendRegisterCode(email string) (string, *e.Error)
+	// UserRegister 用户注册
+	UserRegister(user *po.SysUser, code string) *e.Error
 	// ChangePassword 改密码
 	ChangePassword(loginName, oldPassword, newPassword string) *e.Error
 }
@@ -83,7 +88,7 @@ func (u *authService) SendRegisterCode(email string) (string, *e.Error) {
 		return "", e.ErrUserEmailIsExist
 	}
 	// 发送code
-	code := u.getCode()
+	code := u.getCode(6)
 	message := utils.EmailMessage{
 		To:      []string{email},
 		Subject: "fancode注册验证码",
@@ -103,28 +108,40 @@ func (u *authService) SendRegisterCode(email string) (string, *e.Error) {
 	return code, nil
 }
 
-func (u *authService) Register(user *po.SysUser) *e.Error {
+func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	if user.Username == "" {
 		user.Username = "fancoder"
 		return nil
 	}
-	b, err := dao.CheckLoginName(global.Mysql, user.LoginName)
+	// 生成用户名称，唯一
+	loginName, err := pinyin.New(user.Username).Split("").Convert()
 	if err != nil {
 		return e.ErrUserUnknownError
 	}
-	if b {
-		return e.ErrUserNameIsExist
+	loginName = loginName + u.getCode(3)
+	for i := 0; i < 5; i++ {
+		b, err2 := dao.CheckLoginName(global.Mysql, user.LoginName)
+		if err2 != nil {
+			log.Println(err2)
+			return e.ErrUserUnknownError
+		}
+		if b {
+			loginName = loginName + u.getCode(1)
+		} else {
+			break
+		}
 	}
 	if len(user.Password) < 6 {
 		return e.ErrUserPasswordNotEnoughAccuracy
 	}
+
 	//进行注册操作
 	newPassword, err := utils.GetPwd(user.Password)
 	if err != nil {
 		return e.ErrPasswordEncodeFailed
 	}
 	user.Password = string(newPassword)
-	// 设置enable
+
 	//插入
 	err = dao.InsertUser(global.Mysql, user)
 	if err != nil {
@@ -164,8 +181,9 @@ func (u *authService) ChangePassword(userLoginName, oldPassword, newPassword str
 }
 
 // getCode 生成6位验证码
-func (u *authService) getCode() string {
+func (u *authService) getCode(number int) string {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	vcode := fmt.Sprintf("%06v", rnd.Int31n(1000000))
-	return vcode
+	a := rnd.Int31n(1000000)
+	s := strconv.Itoa(int(a))
+	return s[0:number]
 }

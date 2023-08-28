@@ -15,8 +15,8 @@ type AuthController interface {
 	Login(ctx *gin.Context)
 	// SendRegisterCode 读取注册时的验证码
 	SendRegisterCode(ctx *gin.Context)
-	// Register 注册
-	Register(ctx *gin.Context)
+	// UserRegister 用户注册
+	UserRegister(ctx *gin.Context)
 	// GetUserInfo 根据token获取用户信息
 	GetUserInfo(ctx *gin.Context)
 	// ChangePassword 改密码
@@ -49,13 +49,15 @@ func (u *authController) SendRegisterCode(ctx *gin.Context) {
 	result.SuccessMessage("验证码发送成功")
 }
 
-func (u *authController) Register(ctx *gin.Context) {
+func (u *authController) UserRegister(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	user := &po.SysUser{}
-	user.Phone = ctx.PostForm("phone")
 	user.Email = ctx.PostForm("email")
+	code := ctx.PostForm("code")
+	user.Avatar = ctx.PostForm("avatar")
+	user.Username = ctx.PostForm("username")
 	user.Password = ctx.PostForm("password")
-	err := u.authService.Register(user)
+	err := u.authService.UserRegister(user, code)
 	if err == nil {
 		result.Error(err)
 	} else {

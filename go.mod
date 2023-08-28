@@ -17,6 +17,7 @@ require (
 )
 
 require (
+	github.com/Chain-Zhang/pinyin v0.1.3 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
