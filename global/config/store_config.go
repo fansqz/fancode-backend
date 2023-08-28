@@ -2,7 +2,7 @@ package config
 
 import "gopkg.in/ini.v1"
 
-// @Description:oss的配置
+// COSConfig @Description:oss的配置
 type COSConfig struct {
 	AppID             string `ini:"appID"`
 	Region            string `ini:"region"`

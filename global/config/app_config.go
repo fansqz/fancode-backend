@@ -9,6 +9,7 @@ type AppConfig struct {
 	ProUrl           string `ini:"proUrl"`
 	DefaultPassword  string `ini:"defaultPassword"`
 	*MySqlConfig
+	*RedisConfig
 	*ReleasePathConfig
 	*COSConfig
 	*FilePathConfig
