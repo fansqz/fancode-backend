@@ -1,12 +1,12 @@
 package file_store
 
 import (
-	"strings"
+	"io"
 )
 
 type Store interface {
 	// SaveFile 上传文件到对象存储
-	SaveFile(storePath string, file *strings.Reader) error
+	SaveFile(storePath string, file io.Reader) error
 	// DownloadFile 下载一个文件 storePath:对象存储的路劲，loadPath:本地路径
 	DownloadFile(storePath, localPath string) error
 	// DownloadFolder 下载文件夹, storePath：文件在对象存储中的位置，localPath：文件在本地中的位置

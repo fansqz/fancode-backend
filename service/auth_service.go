@@ -3,24 +3,27 @@ package service
 import (
 	"FanCode/dao"
 	e "FanCode/error"
+	"FanCode/file_store"
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
 	"FanCode/utils"
 	"github.com/Chain-Zhang/pinyin"
+	"github.com/gin-gonic/gin"
 	"log"
 	"math/rand"
+	"mime/multipart"
 	"strconv"
 	"time"
 )
 
 const (
-	Register_Email_Pro_Key = "emailcode-register-"
-	Login_Email_Pro_Key    = "emailcode-login"
+	RegisterEmailProKey = "emailcode-register-"
+	LoginEmailProKey    = "emailcode-login"
 	// cos中，用户图片存储的位置
-	User_Avatar_Path = "/avatar/user"
+	UserAvatarPath = "/avatar/user"
 	// 图片的网站前缀
-	Sys_URL = "http://code.fansqz.com"
+	SysURL = "https://code.fansqz.com"
 )
 
 type AuthService interface {
@@ -32,7 +35,7 @@ type AuthService interface {
 	// SendAuthCode 获取邮件的验证码
 	SendAuthCode(email string, kind string) (string, *e.Error)
 	// UserRegister 用户注册
-	UserRegister(user *po.SysUser, code string) *e.Error
+	UserRegister(ctx *gin.Context, user *po.SysUser, avatarFile *multipart.FileHeader, code string) *e.Error
 	// ChangePassword 改密码
 	ChangePassword(loginName, oldPassword, newPassword string) *e.Error
 }
@@ -101,7 +104,7 @@ func (u *authService) EmailLogin(email string, code string) (string, *e.Error) {
 		return "", e.ErrUserNotExist
 	}
 	// 检测验证码
-	key := Login_Email_Pro_Key + email
+	key := LoginEmailProKey + email
 	result, err2 := global.Redis.Get(key).Result()
 	if err2 != nil {
 		log.Println(err)
@@ -167,9 +170,9 @@ func (u *authService) SendAuthCode(email string, kind string) (string, *e.Error)
 	// 存储到redis
 	var key string
 	if kind == "register" {
-		key = Register_Email_Pro_Key + email
+		key = RegisterEmailProKey + email
 	} else {
-		key = Login_Email_Pro_Key + email
+		key = LoginEmailProKey + email
 	}
 	_, err2 := global.Redis.Set(key, code, 10*time.Minute).Result()
 	if err2 != nil {
@@ -179,7 +182,7 @@ func (u *authService) SendAuthCode(email string, kind string) (string, *e.Error)
 	return code, nil
 }
 
-func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
+func (u *authService) UserRegister(ctx *gin.Context, user *po.SysUser, avatarFile *multipart.FileHeader, code string) *e.Error {
 	if user.Username == "" {
 		user.Username = "fancoder"
 		return nil
@@ -205,7 +208,19 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	if len(user.Password) < 6 {
 		return e.ErrUserPasswordNotEnoughAccuracy
 	}
-
+	// 上传头像
+	cos := file_store.NewImageCOS()
+	file, err := avatarFile.Open()
+	if err != nil {
+		log.Println(err)
+		return e.ErrUserUnknownError
+	}
+	err = cos.SaveFile(UserAvatarPath, file)
+	if err != nil {
+		log.Println(err)
+		return e.ErrApiUnknownError
+	}
+	user.Avatar = SysURL + UserAvatarPath + "/" + avatarFile.Filename
 	//进行注册操作
 	newPassword, err := utils.GetPwd(user.Password)
 	if err != nil {

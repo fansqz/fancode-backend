@@ -50,7 +50,7 @@ func NewCOS(bucketName string) Store {
 	}
 }
 
-func (c *cosStore) SaveFile(storePath string, file *strings.Reader) error {
+func (c *cosStore) SaveFile(storePath string, file io.Reader) error {
 	_, err := c.client.Object.Put(context.Background(), storePath, file, nil)
 	return err
 }

@@ -81,7 +81,7 @@ func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 		result.Error(err2)
 		return
 	}
-	result.Success("题库添加成功", pID)
+	result.Success("题目添加成功", pID)
 }
 
 func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
