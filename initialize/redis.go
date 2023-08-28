@@ -1,20 +1,23 @@
 package initialize
 
-import "github.com/gomodule/redigo/redis"
+import (
+	"FanCode/global"
+	"github.com/go-redis/redis"
+)
 
 var (
-	RedisClient redis.Conn
+	RedisClient *redis.Client
 )
 
 // InitRedis
 //
 //	@Description: todo:初始化redis，留以后做吧
 func InitRedis() {
-	var err error
-	RedisClient, err = redis.Dial("tcp", "local")
-	if err != nil {
-		panic(err)
-	}
+	RedisClient = redis.NewClient(&redis.Options{
+		Addr:     global.Conf.Host + ":" + global.Conf.Port,
+		Password: global.Conf.Password,
+		DB:       0, // 数据库
+	})
 }
 
 // Close
