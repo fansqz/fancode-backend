@@ -99,16 +99,16 @@ func GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	var count int64
 	db2 := db
 	if problem != nil && problem.Name != "" {
-		db2.Where("name like ?", "%"+problem.Name+"%")
+		db2 = db2.Where("name like ?", "%"+problem.Name+"%")
 	}
 	if problem != nil && problem.Number != "" {
-		db2.Where("number = ?", problem.Number)
+		db2 = db2.Where("number = ?", problem.Number)
 	}
 	if problem != nil && problem.Difficulty != nil {
-		db2.Where("difficulty = ?", *problem.Difficulty)
+		db2 = db2.Where("difficulty = ?", *problem.Difficulty)
 	}
 	if problem != nil && problem.Enable != nil {
-		db2.Where("enable = ?", *problem.Enable)
+		db2 = db2.Where("enable = ?", *problem.Enable)
 	}
 	err := db2.Model(&po.Problem{}).Count(&count).Error
 	return count, err
