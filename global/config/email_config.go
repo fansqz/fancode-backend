@@ -5,7 +5,7 @@ import "gopkg.in/ini.v1"
 type EmailConfig struct {
 	Host     string `ini:"host"`
 	Port     int    `int:"port"`
-	UserName string `ini:"userName"`
+	User     string `ini:"user"`
 	Password string `ini:"password"`
 }
 
