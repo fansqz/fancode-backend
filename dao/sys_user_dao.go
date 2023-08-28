@@ -56,6 +56,16 @@ func GetUserByLoginName(db *gorm.DB, loginName string) (*po.SysUser, error) {
 	return &user, nil
 }
 
+// GetUserByEmail 根据用户邮箱获取用户信息
+func GetUserByEmail(db *gorm.DB, email string) (*po.SysUser, error) {
+	var user po.SysUser
+	err := db.Where("email = ?", email).Preload("Roles").First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
 // CheckLoginName 检测loginname是否存在
 func CheckLoginName(db *gorm.DB, loginname string) (bool, error) {
 	var user *po.SysUser

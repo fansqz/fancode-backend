@@ -1,4 +1,4 @@
-package user
+package controllers
 
 import (
 	e "FanCode/error"
@@ -13,8 +13,8 @@ import (
 type AuthController interface {
 	// Login 用户登录
 	Login(ctx *gin.Context)
-	// SendRegisterCode 读取注册时的验证码
-	SendRegisterCode(ctx *gin.Context)
+	// SendAuthCode 发送验证码
+	SendAuthCode(ctx *gin.Context)
 	// UserRegister 用户注册
 	UserRegister(ctx *gin.Context)
 	// GetUserInfo 根据token获取用户信息
@@ -33,15 +33,16 @@ func NewAuthController() AuthController {
 	}
 }
 
-func (u *authController) SendRegisterCode(ctx *gin.Context) {
+func (u *authController) SendAuthCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	email := ctx.PostForm("email")
+	kind := ctx.PostForm("type")
 	if email != "" && utils.VerifyEmailFormat(email) {
 		result.SimpleErrorMessage("邮箱格式错误")
 		return
 	}
 	// 生成code
-	_, err := u.authService.SendRegisterCode(email)
+	_, err := u.authService.SendAuthCode(email, kind)
 	if err != nil {
 		result.Error(err)
 		return
@@ -68,18 +69,31 @@ func (u *authController) UserRegister(ctx *gin.Context) {
 func (u *authController) Login(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	//获取并检验用户参数
-	userCode := ctx.PostForm("loginName")
+	kind := ctx.PostForm("type")
+	userCode := ctx.PostForm("loginCode")
+	email := ctx.PostForm("email")
 	password := ctx.PostForm("password")
+
 	if userCode == "" || password == "" {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	token, err := u.authService.Login(userCode, password)
+	var token string
+	var err *e.Error
+	if kind == "password" {
+		token, err = u.authService.PasswordLogin(userCode, password)
+	} else if kind == "email" {
+		token, err = u.authService.EmailLogin(email, password)
+	} else {
+		result.Error(e.ErrLoginType)
+		return
+	}
 	if err != nil {
 		result.Error(err)
-	} else {
-		result.SuccessData(token)
+		return
 	}
+	result.SuccessData(token)
+
 }
 
 func (u *authController) ChangePassword(ctx *gin.Context) {

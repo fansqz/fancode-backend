@@ -15,7 +15,8 @@ import (
 )
 
 const (
-	Email_Pro_Key = "emailcode-"
+	Register_Email_Pro_Key = "emailcode-register-"
+	Login_Email_Pro_Key    = "emailcode-login"
 	// cos中，用户图片存储的位置
 	User_Avatar_Path = "/avatar/user"
 	// 图片的网站前缀
@@ -23,10 +24,13 @@ const (
 )
 
 type AuthService interface {
-	// Login 用户登录
-	Login(loginName string, password string) (string, *e.Error)
-	// SendRegisterCode 获取邮件的验证码
-	SendRegisterCode(email string) (string, *e.Error)
+
+	// PasswordLogin 密码登录 loginCode可能是邮箱可能是用户id
+	PasswordLogin(loginCode string, password string) (string, *e.Error)
+	// EmailLogin 邮箱验证登录
+	EmailLogin(email string, code string) (string, *e.Error)
+	// SendAuthCode 获取邮件的验证码
+	SendAuthCode(email string, kind string) (string, *e.Error)
 	// UserRegister 用户注册
 	UserRegister(user *po.SysUser, code string) *e.Error
 	// ChangePassword 改密码
@@ -40,12 +44,23 @@ func NewAuthService() AuthService {
 	return &authService{}
 }
 
-func (u *authService) Login(userLoginName string, password string) (string, *e.Error) {
-
-	user, userErr := dao.GetUserByLoginName(global.Mysql, userLoginName)
+func (u *authService) PasswordLogin(loginCode string, password string) (string, *e.Error) {
+	var user *po.SysUser
+	var userErr error
+	if utils.VerifyEmailFormat(loginCode) {
+		user, userErr = dao.GetUserByEmail(global.Mysql, loginCode)
+	} else {
+		user, userErr = dao.GetUserByLoginName(global.Mysql, loginCode)
+	}
 	if userErr != nil {
 		log.Println(userErr)
 		return "", e.ErrUserUnknownError
+	}
+	if user == nil || user.LoginName == "" {
+		return "", e.ErrUserNotExist
+	}
+	if user == nil || !utils.ComparePwd(user.Password, password) {
+		return "", e.ErrUserNameOrPasswordWrong
 	}
 	// 读取菜单
 	for i := 0; i < len(user.Roles); i++ {
@@ -54,12 +69,6 @@ func (u *authService) Login(userLoginName string, password string) (string, *e.E
 		if err != nil {
 			return "", e.ErrUserUnknownError
 		}
-	}
-	if user == nil || user.LoginName == "" {
-		return "", e.ErrUserNotExist
-	}
-	if user == nil || !utils.ComparePwd(user.Password, password) {
-		return "", e.ErrUserNameOrPasswordWrong
 	}
 	userInfo := dto.NewUserInfo(user)
 	token, err := utils.GenerateToken(utils.Claims{
@@ -78,29 +87,91 @@ func (u *authService) Login(userLoginName string, password string) (string, *e.E
 	return token, nil
 }
 
-func (u *authService) SendRegisterCode(email string) (string, *e.Error) {
-
-	f, err := dao.CheckEmail(global.Mysql, email)
-	if err != nil {
+func (u *authService) EmailLogin(email string, code string) (string, *e.Error) {
+	if !utils.VerifyEmailFormat(email) {
 		return "", e.ErrUserUnknownError
 	}
-	if f {
-		return "", e.ErrUserEmailIsExist
+	// 获取用户
+	user, err := dao.GetUserByEmail(global.Mysql, email)
+	if err != nil {
+		log.Println(err)
+		return "", e.ErrUserUnknownError
+	}
+	if user == nil || user.LoginName == "" {
+		return "", e.ErrUserNotExist
+	}
+	// 检测验证码
+	key := Login_Email_Pro_Key + email
+	result, err2 := global.Redis.Get(key).Result()
+	if err2 != nil {
+		log.Println(err)
+		return "", e.ErrUserUnknownError
+	}
+	if result != code {
+		return "", e.ErrLoginCodeWrong
+	}
+	// 获取菜单
+	for i := 0; i < len(user.Roles); i++ {
+		var err error
+		user.Roles[i].Menus, err = dao.GetMenusByRoleID(global.Mysql, user.Roles[i].ID)
+		if err != nil {
+			return "", e.ErrUserUnknownError
+		}
+	}
+	userInfo := dto.NewUserInfo(user)
+	token, err := utils.GenerateToken(utils.Claims{
+		ID:        userInfo.ID,
+		Username:  userInfo.Username,
+		LoginName: userInfo.LoginName,
+		Phone:     userInfo.Phone,
+		Email:     userInfo.Email,
+		Roles:     userInfo.Roles,
+		Menus:     userInfo.Menus,
+	})
+	if err != nil {
+		log.Println(err)
+		return "", e.ErrUserUnknownError
+	}
+	return token, nil
+}
+
+func (u *authService) SendAuthCode(email string, kind string) (string, *e.Error) {
+	if kind == "register" {
+		f, err := dao.CheckEmail(global.Mysql, email)
+		if err != nil {
+			return "", e.ErrUserUnknownError
+		}
+		if f {
+			return "", e.ErrUserEmailIsExist
+		}
+	}
+
+	var subject string
+	if kind == "register" {
+		subject = "fancode注册验证码"
+	} else {
+		subject = "fancode登录验证码"
 	}
 	// 发送code
 	code := u.getCode(6)
 	message := utils.EmailMessage{
 		To:      []string{email},
-		Subject: "fancode注册验证码",
+		Subject: subject,
 		Body:    "验证码：" + code,
 	}
-	err = utils.SendMail(global.Conf.EmailConfig, message)
+	err := utils.SendMail(global.Conf.EmailConfig, message)
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrUserUnknownError
 	}
 	// 存储到redis
-	_, err2 := global.Redis.Set(Email_Pro_Key+email, code, 10*time.Minute).Result()
+	var key string
+	if kind == "register" {
+		key = Register_Email_Pro_Key + email
+	} else {
+		key = Login_Email_Pro_Key + email
+	}
+	_, err2 := global.Redis.Set(key, code, 10*time.Minute).Result()
 	if err2 != nil {
 		log.Println(err2)
 		return "", e.ErrUserUnknownError

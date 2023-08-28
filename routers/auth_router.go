@@ -1,7 +1,7 @@
-package admin
+package routers
 
 import (
-	"FanCode/controllers/admin"
+	"FanCode/controllers"
 	"github.com/gin-gonic/gin"
 )
 
@@ -9,8 +9,10 @@ func SetupAuthRoutes(r *gin.Engine) {
 	//用户相关
 	auth := r.Group("/auth")
 	{
-		authController := admin.NewAuthController()
+		authController := controllers.NewAuthController()
 		auth.POST("/login", authController.Login)
+		auth.POST("/register", authController.UserRegister)
+		auth.POST("/code/send", authController.SendAuthCode)
 		auth.POST("/update/password", authController.ChangePassword)
 		auth.GET("/get/info", authController.GetUserInfo)
 	}
