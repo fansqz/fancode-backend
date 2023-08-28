@@ -7,17 +7,14 @@ import (
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"FanCode/utils"
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"math/rand"
-	"time"
 )
 
 type AuthController interface {
 	// Login 用户登录
 	Login(ctx *gin.Context)
-	// GetRegisterCode 读取注册时的验证码
-	GetRegisterCode(ctx *gin.Context)
+	// SendRegisterCode 读取注册时的验证码
+	SendRegisterCode(ctx *gin.Context)
 	// Register 注册
 	Register(ctx *gin.Context)
 	// GetUserInfo 根据token获取用户信息
@@ -36,23 +33,20 @@ func NewAuthController() AuthController {
 	}
 }
 
-func (u *authController) GetRegisterCode(ctx *gin.Context) {
+func (u *authController) SendRegisterCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	phone := ctx.PostForm("phone")
 	email := ctx.PostForm("email")
-	if phone == "" && email == "" {
-		result.SimpleErrorMessage("电话或邮箱为空")
-		return
-	}
-	if phone != "" && utils.VerifyMobileFormat(phone) {
-		result.SimpleErrorMessage("电话格式错误")
-		return
-	} else if email != "" && utils.VerifyEmailFormat(email) {
+	if email != "" && utils.VerifyEmailFormat(email) {
 		result.SimpleErrorMessage("邮箱格式错误")
 		return
 	}
 	// 生成code
-
+	_, err := u.authService.SendRegisterCode(email)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessMessage("验证码发送成功")
 }
 
 func (u *authController) Register(ctx *gin.Context) {
@@ -107,11 +101,4 @@ func (u *authController) GetUserInfo(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	user := ctx.Keys["user"].(*dto.UserInfo)
 	result.SuccessData(user)
-}
-
-// getCode 生成6位验证码
-func (u *authController) getCode() string {
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	vcode := fmt.Sprintf("%06v", rnd.Int31n(1000000))
-	return vcode
 }

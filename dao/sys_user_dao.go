@@ -69,6 +69,19 @@ func CheckLoginName(db *gorm.DB, loginname string) (bool, error) {
 	return true, nil
 }
 
+// CheckEmail 检测邮箱是否已经存在
+func CheckEmail(db *gorm.DB, email string) (bool, error) {
+	var user *po.SysUser
+	err := db.Where("email = ?", email).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return user.ID != 0, nil
+}
+
 // DeleteUserRoleByUserID 清除所有与userID关联的userID-roleID数据
 func DeleteUserRoleByUserID(db *gorm.DB, userID uint) error {
 	user := po.SysUser{}

@@ -7,8 +7,14 @@ import (
 	"FanCode/models/dto"
 	"FanCode/models/po"
 	"FanCode/utils"
+	"fmt"
 	"log"
+	"math/rand"
 	"time"
+)
+
+const (
+	Email_Pro_Key = "emailcode-"
 )
 
 type AuthService interface {
@@ -16,6 +22,8 @@ type AuthService interface {
 	Login(loginName string, password string) (string, *e.Error)
 	// Register 注册
 	Register(user *po.SysUser) *e.Error
+	// SendRegisterCode 获取邮件的验证码
+	SendRegisterCode(email string) (string, *e.Error)
 	// ChangePassword 改密码
 	ChangePassword(loginName, oldPassword, newPassword string) *e.Error
 }
@@ -25,38 +33,6 @@ type authService struct {
 
 func NewAuthService() AuthService {
 	return &authService{}
-}
-
-func (u *authService) Register(user *po.SysUser) *e.Error {
-	if user.Username == "" {
-		user.Username = "fancoder"
-		return nil
-	}
-	b, err := dao.CheckLoginName(global.Mysql, user.LoginName)
-	if err != nil {
-		return e.ErrUserUnknownError
-	}
-	if b {
-		return e.ErrUserNameIsExist
-	}
-	if len(user.Password) < 6 {
-		return e.ErrUserPasswordNotEnoughAccuracy
-	}
-	//进行注册操作
-	newPassword, err := utils.GetPwd(user.Password)
-	if err != nil {
-		return e.ErrPasswordEncodeFailed
-	}
-	user.Password = string(newPassword)
-	// 设置enable
-	//插入
-	err = dao.InsertUser(global.Mysql, user)
-	if err != nil {
-		log.Println(err)
-		return e.ErrUserCreationFailed
-	} else {
-		return nil
-	}
 }
 
 func (u *authService) Login(userLoginName string, password string) (string, *e.Error) {
@@ -97,6 +73,68 @@ func (u *authService) Login(userLoginName string, password string) (string, *e.E
 	return token, nil
 }
 
+func (u *authService) SendRegisterCode(email string) (string, *e.Error) {
+
+	f, err := dao.CheckEmail(global.Mysql, email)
+	if err != nil {
+		return "", e.ErrUserUnknownError
+	}
+	if f {
+		return "", e.ErrUserEmailIsExist
+	}
+	// 发送code
+	code := u.getCode()
+	message := utils.EmailMessage{
+		To:      []string{email},
+		Subject: "fancode注册验证码",
+		Body:    "验证码：" + code,
+	}
+	err = utils.SendMail(global.Conf.EmailConfig, message)
+	if err != nil {
+		log.Println(err)
+		return "", e.ErrUserUnknownError
+	}
+	// 存储到redis
+	_, err2 := global.Redis.Set(Email_Pro_Key+email, code, 10*time.Minute).Result()
+	if err2 != nil {
+		log.Println(err2)
+		return "", e.ErrUserUnknownError
+	}
+	return code, nil
+}
+
+func (u *authService) Register(user *po.SysUser) *e.Error {
+	if user.Username == "" {
+		user.Username = "fancoder"
+		return nil
+	}
+	b, err := dao.CheckLoginName(global.Mysql, user.LoginName)
+	if err != nil {
+		return e.ErrUserUnknownError
+	}
+	if b {
+		return e.ErrUserNameIsExist
+	}
+	if len(user.Password) < 6 {
+		return e.ErrUserPasswordNotEnoughAccuracy
+	}
+	//进行注册操作
+	newPassword, err := utils.GetPwd(user.Password)
+	if err != nil {
+		return e.ErrPasswordEncodeFailed
+	}
+	user.Password = string(newPassword)
+	// 设置enable
+	//插入
+	err = dao.InsertUser(global.Mysql, user)
+	if err != nil {
+		log.Println(err)
+		return e.ErrUserCreationFailed
+	} else {
+		return nil
+	}
+}
+
 func (u *authService) ChangePassword(userLoginName, oldPassword, newPassword string) *e.Error {
 	//检验用户名
 	user, err := dao.GetUserByLoginName(global.Mysql, userLoginName)
@@ -123,4 +161,11 @@ func (u *authService) ChangePassword(userLoginName, oldPassword, newPassword str
 		return e.ErrUserUnknownError
 	}
 	return nil
+}
+
+// getCode 生成6位验证码
+func (u *authService) getCode() string {
+	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
+	vcode := fmt.Sprintf("%06v", rnd.Int31n(1000000))
+	return vcode
 }

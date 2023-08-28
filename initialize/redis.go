@@ -1,17 +1,14 @@
 package initialize
 
 import (
+	"FanCode/global"
 	"FanCode/global/config"
 	"github.com/go-redis/redis"
 )
 
-var (
-	RedisClient *redis.Client
-)
-
 // InitRedis
 func InitRedis(cfg *config.RedisConfig) error {
-	RedisClient = redis.NewClient(&redis.Options{
+	global.Redis = redis.NewClient(&redis.Options{
 		Addr:     cfg.Host + ":" + cfg.Port,
 		Password: cfg.Password,
 		DB:       0, // 数据库
@@ -23,7 +20,7 @@ func InitRedis(cfg *config.RedisConfig) error {
 //
 //	@Description: 关闭redis
 func Close() {
-	err := RedisClient.Close()
+	err := global.Redis.Close()
 	if err != nil {
 		return
 	}

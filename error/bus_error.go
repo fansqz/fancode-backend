@@ -103,7 +103,7 @@ var (
 
 /************菜单管理**************/
 const (
-	CodeRoleUnknownError = 13500 + iota //题目编号已存在
+	CodeRoleUnknownError = 13500 + iota
 )
 
 var (
@@ -112,7 +112,7 @@ var (
 
 /************用户管理**************/
 const (
-	CodeSysUserUnknownError = 13500 + iota //题目编号已存在
+	CodeSysUserUnknownError = 13500 + iota
 )
 
 var (

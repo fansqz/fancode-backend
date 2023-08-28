@@ -2,7 +2,7 @@ package global
 
 import (
 	"FanCode/global/config"
-	"github.com/gomodule/redigo/redis"
+	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 )
 
@@ -11,5 +11,5 @@ var (
 	// RuntimeRoot runtime root path prefix
 	Conf  *config.AppConfig
 	Mysql *gorm.DB
-	Redis redis.Conn
+	Redis *redis.Client
 )
