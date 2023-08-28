@@ -10,6 +10,7 @@ type AppConfig struct {
 	DefaultPassword  string `ini:"defaultPassword"`
 	*MySqlConfig
 	*RedisConfig
+	*EmailConfig
 	*ReleasePathConfig
 	*COSConfig
 	*FilePathConfig

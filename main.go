@@ -27,6 +27,11 @@ func main() {
 		fmt.Println("数据库连接失败")
 	}
 
+	//连接redis
+	if err := initialize.InitRedis(global.Conf.RedisConfig); err != nil {
+		fmt.Println("redis连接失败")
+	}
+
 	// 模型绑定
 	global.Mysql.AutoMigrate(&po.SysUser{})
 	global.Mysql.AutoMigrate(&po.SysApi{})

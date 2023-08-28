@@ -30,6 +30,7 @@ func InitSetting(file string) error {
 
 	global.Conf.MySqlConfig = config.NewMySqlConfig(cfg)
 	global.Conf.RedisConfig = config.NewRedisConfig(cfg)
+	global.Conf.EmailConfig = config.NewEmailConfig(cfg)
 	global.Conf.COSConfig = config.NewCOSConfig(cfg)
 	global.Conf.FilePathConfig = config.NewFilePathConfig(cfg)
 	return nil
