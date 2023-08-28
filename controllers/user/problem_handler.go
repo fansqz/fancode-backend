@@ -11,10 +11,10 @@ import (
 type ProblemController interface {
 	// GetProblemList 读取题目列表
 	GetProblemList(ctx *gin.Context)
-	// GetProblemByNumber 读取题目详细信息
-	GetProblemByNumber(ctx *gin.Context)
-	// GetProblemCodeByNumber 读取题目编程文件
-	GetProblemCodeByNumber(ctx *gin.Context)
+	// GetProblem 读取题目详细信息
+	GetProblem(ctx *gin.Context)
+	// GetUserCode 读取题目编程文件
+	GetUserCode(ctx *gin.Context)
 }
 
 type problemController struct {
@@ -55,7 +55,7 @@ func (p *problemController) GetProblemList(ctx *gin.Context) {
 	result.SuccessData(pageInfo)
 }
 
-func (p *problemController) GetProblemByNumber(ctx *gin.Context) {
+func (p *problemController) GetProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	numberStr := ctx.Param("number")
 	problem, err := p.problemService.GetProblemByNumber(numberStr)
@@ -66,10 +66,10 @@ func (p *problemController) GetProblemByNumber(ctx *gin.Context) {
 	result.SuccessData(problem)
 }
 
-func (p *problemController) GetProblemCodeByNumber(ctx *gin.Context) {
+func (p *problemController) GetUserCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	number := ctx.Param("number")
-	code, err := p.problemService.GetProblemCodeByNumber(number)
+	code, err := p.problemService.GetUserCodeByNumber(ctx, number)
 	if err != nil {
 		result.Error(err)
 		return

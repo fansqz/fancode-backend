@@ -253,7 +253,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	cmd2.Stdout.(*bytes.Buffer).Reset()
 	return &dto.ExecuteResultDto{
 		ProblemID:    problem.ID,
-		Status:       constants.Accepted,
+		Status:       constants.RunSuccess,
 		ErrorMessage: "",
 		UserOutput:   string(output),
 		Timestamp:    nil,

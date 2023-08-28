@@ -40,8 +40,8 @@ type ProblemService interface {
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
 	// GetProblemByNumber 根据题目编号获取题目信息
 	GetProblemByNumber(number string) (*dto.ProblemDtoForGet, *e.Error)
-	// GetProblemCodeByNumber 获取题目编程文件
-	GetProblemCodeByNumber(number string) (string, *e.Error)
+	// GetUserCodeByNumber 获取用户编程文件
+	GetUserCodeByNumber(ctx *gin.Context, number string) (string, *e.Error)
 	// UpdateProblemEnable 设置题目可用
 	UpdateProblemEnable(id uint, enable bool) *e.Error
 
@@ -285,18 +285,29 @@ func (q *problemService) GetProblemByNumber(number string) (*dto.ProblemDtoForGe
 	return dto.NewProblemDtoForGet(problem), nil
 }
 
-func (q *problemService) GetProblemCodeByNumber(number string) (string, *e.Error) {
+func (q *problemService) GetUserCodeByNumber(ctx *gin.Context, number string) (string, *e.Error) {
 	// 读取获取题目id
 	id, err := dao.GetProblemIDByNumber(global.Mysql, number)
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrProblemGetFailed
 	}
+	// 判断用户是否编辑过该题目
+	userId := ctx.Keys["user"].(*dto.UserInfo).ID
+	var problemAttempt *po.ProblemAttempt
+	problemAttempt, err = dao.GetProblemAttempt(global.Mysql, userId, id)
+	if err != nil {
+		log.Println(err)
+		return "", e.ErrProblemGetFailed
+	}
+	if problemAttempt.ID != 0 {
+		return problemAttempt.Code, nil
+	}
 	// 读取文件地址
 	path, err := dao.GetProblemFilePathByID(global.Mysql, id)
 	store := file_store.NewCOS()
 	var content []byte
-	content, err = store.ReadFile(path)
+	content, err = store.ReadFile(path + "/code.c")
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrProblemGetFailed

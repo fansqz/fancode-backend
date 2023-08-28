@@ -12,12 +12,14 @@ type SubmitRequestDto struct {
 }
 
 type SubmitResultDto struct {
-	ProblemID      uint
-	Status         int
-	ErrorMessage   string
-	ExpectedOutput string //预期输出
-	UserOutput     string //用户输出
-	Timestamp      *time.Time
+	ProblemID    uint   `json:"problemID"`
+	Status       int    `json:"status"`
+	ErrorMessage string `json:"errorMessage"`
+	// 预期输出
+	ExpectedOutput string `json:"expectedOutput"`
+	// 用户输出
+	UserOutput string     `json:"userOutput"`
+	Timestamp  *time.Time `json:"timestamp"`
 }
 
 func NewSubmitResultDto(submission *po.Submission) *SubmitResultDto {
@@ -39,7 +41,7 @@ type ExecuteRequestDto struct {
 
 // ExecuteResultDto 执行的响应结果
 type ExecuteResultDto struct {
-	ProblemID    uint       `json:"question_id"`
+	ProblemID    uint       `json:"problemID"`
 	Status       uint       `json:"status"`
 	ErrorMessage string     `json:"errorMessage"`
 	UserOutput   string     `json:"userOutput"` //用户输出
