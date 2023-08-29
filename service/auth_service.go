@@ -185,6 +185,15 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	if f {
 		return e.ErrUserEmailIsExist
 	}
+	// 检测code
+	result := global.Redis.Get(RegisterEmailProKey + user.Email)
+	if result.Err() != nil {
+		return e.ErrUserUnknownError
+	}
+	if result.Val() != code {
+		return e.ErrRoleUnknownError
+	}
+	// 设置用户名
 	if user.Username == "" {
 		user.Username = "fancoder"
 		return nil
