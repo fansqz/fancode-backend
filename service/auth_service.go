@@ -28,8 +28,8 @@ const (
 
 type AuthService interface {
 
-	// PasswordLogin 密码登录 loginCode可能是邮箱可能是用户id
-	PasswordLogin(loginCode string, password string) (string, *e.Error)
+	// PasswordLogin 密码登录 account可能是邮箱可能是用户id
+	PasswordLogin(account string, password string) (string, *e.Error)
 	// EmailLogin 邮箱验证登录
 	EmailLogin(email string, code string) (string, *e.Error)
 	// SendAuthCode 获取邮件的验证码
@@ -47,13 +47,13 @@ func NewAuthService() AuthService {
 	return &authService{}
 }
 
-func (u *authService) PasswordLogin(loginCode string, password string) (string, *e.Error) {
+func (u *authService) PasswordLogin(account string, password string) (string, *e.Error) {
 	var user *po.SysUser
 	var userErr error
-	if utils.VerifyEmailFormat(loginCode) {
-		user, userErr = dao.GetUserByEmail(global.Mysql, loginCode)
+	if utils.VerifyEmailFormat(account) {
+		user, userErr = dao.GetUserByEmail(global.Mysql, account)
 	} else {
-		user, userErr = dao.GetUserByLoginName(global.Mysql, loginCode)
+		user, userErr = dao.GetUserByLoginName(global.Mysql, account)
 	}
 	if userErr != nil {
 		log.Println(userErr)

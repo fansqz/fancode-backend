@@ -37,7 +37,7 @@ func (u *authController) SendAuthCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	email := ctx.PostForm("email")
 	kind := ctx.PostForm("type")
-	if email != "" && utils.VerifyEmailFormat(email) {
+	if email != "" && !utils.VerifyEmailFormat(email) {
 		result.SimpleErrorMessage("邮箱格式错误")
 		return
 	}
@@ -71,20 +71,27 @@ func (u *authController) Login(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	//获取并检验用户参数
 	kind := ctx.PostForm("type")
-	userCode := ctx.PostForm("loginCode")
+	account := ctx.PostForm("account")
 	email := ctx.PostForm("email")
 	password := ctx.PostForm("password")
-
-	if userCode == "" || password == "" {
+	code := ctx.PostForm("code")
+	if kind != "password" && kind != "email" {
+		result.Error(e.ErrBadRequest)
+		return
+	} else if kind == "password" && (account == "" || password == "") {
+		result.Error(e.ErrBadRequest)
+		return
+	} else if kind == "email" && (email == "" || code == "") {
 		result.Error(e.ErrBadRequest)
 		return
 	}
+	// 登录
 	var token string
 	var err *e.Error
 	if kind == "password" {
-		token, err = u.authService.PasswordLogin(userCode, password)
+		token, err = u.authService.PasswordLogin(account, password)
 	} else if kind == "email" {
-		token, err = u.authService.EmailLogin(email, password)
+		token, err = u.authService.EmailLogin(email, code)
 	} else {
 		result.Error(e.ErrLoginType)
 		return
