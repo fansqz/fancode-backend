@@ -3,16 +3,13 @@ package service
 import (
 	"FanCode/dao"
 	e "FanCode/error"
-	"FanCode/file_store"
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
 	"FanCode/utils"
 	"github.com/Chain-Zhang/pinyin"
-	"github.com/gin-gonic/gin"
 	"log"
 	"math/rand"
-	"mime/multipart"
 	"strconv"
 	"time"
 )
@@ -35,7 +32,7 @@ type AuthService interface {
 	// SendAuthCode 获取邮件的验证码
 	SendAuthCode(email string, kind string) (string, *e.Error)
 	// UserRegister 用户注册
-	UserRegister(ctx *gin.Context, user *po.SysUser, avatarFile *multipart.FileHeader, code string) *e.Error
+	UserRegister(user *po.SysUser, code string) *e.Error
 	// ChangePassword 改密码
 	ChangePassword(loginName, oldPassword, newPassword string) *e.Error
 }
@@ -182,7 +179,7 @@ func (u *authService) SendAuthCode(email string, kind string) (string, *e.Error)
 	return code, nil
 }
 
-func (u *authService) UserRegister(ctx *gin.Context, user *po.SysUser, avatarFile *multipart.FileHeader, code string) *e.Error {
+func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	if user.Username == "" {
 		user.Username = "fancoder"
 		return nil
@@ -208,19 +205,6 @@ func (u *authService) UserRegister(ctx *gin.Context, user *po.SysUser, avatarFil
 	if len(user.Password) < 6 {
 		return e.ErrUserPasswordNotEnoughAccuracy
 	}
-	// 上传头像
-	cos := file_store.NewImageCOS()
-	file, err := avatarFile.Open()
-	if err != nil {
-		log.Println(err)
-		return e.ErrUserUnknownError
-	}
-	err = cos.SaveFile(UserAvatarPath, file)
-	if err != nil {
-		log.Println(err)
-		return e.ErrApiUnknownError
-	}
-	user.Avatar = SysURL + UserAvatarPath + "/" + avatarFile.Filename
 	//进行注册操作
 	newPassword, err := utils.GetPwd(user.Password)
 	if err != nil {

@@ -55,11 +55,9 @@ func (u *authController) UserRegister(ctx *gin.Context) {
 	user := &po.SysUser{}
 	user.Email = ctx.PostForm("email")
 	code := ctx.PostForm("code")
-	// 头像的图片
-	file, _ := ctx.FormFile("avatar")
 	user.Username = ctx.PostForm("username")
 	user.Password = ctx.PostForm("password")
-	err := u.authService.UserRegister(ctx, user, file, code)
+	err := u.authService.UserRegister(user, code)
 	if err == nil {
 		result.Error(err)
 	} else {
