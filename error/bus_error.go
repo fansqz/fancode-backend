@@ -28,7 +28,7 @@ var (
 	ErrPasswordEncodeFailed          = NewError(CodePasswordEncodeFailed, "Failed to encode password", ErrTypeServer)
 	ErrUserNotExist                  = NewError(CodeUserNotExist, "The user does not exist", ErrTypeBus)
 	ErrUserUnknownError              = NewError(CodeUserUnknownError, "Unknown error", ErrTypeServer)
-	ErrUserNameOrPasswordWrong       = NewError(CodeUserNameOrPasswordWrong, "username or password wrong", ErrTypeBus)
+	ErrUserNameOrPasswordWrong       = NewError(CodeUserNameOrPasswordWrong, "账号或密码错误", ErrTypeBus)
 	ErrUserEmailIsNotValid           = NewError(CodeUserEmailIsNotValid, "email is not valid", ErrTypeBadReq)
 	ErrUserEmailIsExist              = NewError(CodeUserEmailIsExist, "email already exist", ErrTypeBus)
 	ErrLoginCodeWrong                = NewError(CodeLoginCodeWrong, "登录验证码错误", ErrTypeBus)

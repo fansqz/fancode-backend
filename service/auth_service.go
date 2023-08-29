@@ -56,10 +56,11 @@ func (u *authService) PasswordLogin(account string, password string) (string, *e
 		log.Println(userErr)
 		return "", e.ErrUserUnknownError
 	}
-	if user == nil || user.LoginName == "" {
+	if user == nil {
 		return "", e.ErrUserNotExist
 	}
-	if user == nil || !utils.ComparePwd(user.Password, password) {
+	// 比较密码
+	if !utils.ComparePwd(user.Password, password) {
 		return "", e.ErrUserNameOrPasswordWrong
 	}
 	// 读取菜单
@@ -216,6 +217,7 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 			break
 		}
 	}
+	user.LoginName = loginName
 	if len(user.Password) < 6 {
 		return e.ErrUserPasswordNotEnoughAccuracy
 	}
