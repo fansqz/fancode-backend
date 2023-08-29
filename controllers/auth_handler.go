@@ -58,7 +58,7 @@ func (u *authController) UserRegister(ctx *gin.Context) {
 	user.Username = ctx.PostForm("username")
 	user.Password = ctx.PostForm("password")
 	err := u.authService.UserRegister(user, code)
-	if err == nil {
+	if err != nil {
 		result.Error(err)
 	} else {
 		result.SuccessMessage("注册成功")

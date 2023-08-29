@@ -180,20 +180,25 @@ func (u *authService) SendAuthCode(email string, kind string) (string, *e.Error)
 }
 
 func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
+	// 检测是否已注册过
+	f, err := dao.CheckEmail(global.Mysql, user.Email)
+	if f {
+		return e.ErrUserEmailIsExist
+	}
 	if user.Username == "" {
 		user.Username = "fancoder"
 		return nil
 	}
 	// 生成用户名称，唯一
-	loginName, err := pinyin.New(user.Username).Split("").Convert()
-	if err != nil {
+	loginName, err2 := pinyin.New(user.Username).Split("").Convert()
+	if err2 != nil {
 		return e.ErrUserUnknownError
 	}
 	loginName = loginName + u.getCode(3)
 	for i := 0; i < 5; i++ {
-		b, err2 := dao.CheckLoginName(global.Mysql, user.LoginName)
-		if err2 != nil {
-			log.Println(err2)
+		b, err3 := dao.CheckLoginName(global.Mysql, user.LoginName)
+		if err3 != nil {
+			log.Println(err3)
 			return e.ErrUserUnknownError
 		}
 		if b {
