@@ -21,7 +21,11 @@ const (
 )
 
 type AccountService interface {
+	// GetAccountInfo 获取账号信息
+	GetAccountInfo(ctx *gin.Context) (*dto.AccountInfo, *e.Error)
+	// UpdateAccountInfo 更新账号信息
 	UpdateAccountInfo(user *po.SysUser) *e.Error
+	// ChangePassword 修改密码
 	ChangePassword(ctx *gin.Context, oldPassword, newPassword string) *e.Error
 	// ResetPassword 重置密码
 	ResetPassword(ctx *gin.Context) *e.Error
@@ -36,6 +40,15 @@ func NewAccountService() AccountService {
 }
 
 type accountService struct {
+}
+
+func (a *accountService) GetAccountInfo(ctx *gin.Context) (*dto.AccountInfo, *e.Error) {
+	user := ctx.Keys["user"].(*dto.UserInfo)
+	u, err := dao.GetUserByID(global.Mysql, user.ID)
+	if err != nil {
+		return nil, e.ErrMysql
+	}
+	return dto.NewAccountInfo(u), nil
 }
 
 func (a *accountService) UpdateAccountInfo(user *po.SysUser) *e.Error {

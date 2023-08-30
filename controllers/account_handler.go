@@ -13,6 +13,8 @@ import (
 
 // AccountController 关于一些账号信息的handler
 type AccountController interface {
+	// GetAccountInfo 获取账号信息
+	GetAccountInfo(ctx *gin.Context)
 	// UpdateAccountInfo 更新账号信息
 	UpdateAccountInfo(ctx *gin.Context)
 	// ChangePassword 修改密码
@@ -31,6 +33,16 @@ type accountController struct {
 
 func NewAccountController() AccountController {
 	return &accountController{}
+}
+
+func (a *accountController) GetAccountInfo(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	accountInfo, err := a.accountService.GetAccountInfo(ctx)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(accountInfo)
 }
 
 func (a *accountController) UpdateAccountInfo(ctx *gin.Context) {

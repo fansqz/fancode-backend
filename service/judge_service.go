@@ -19,9 +19,9 @@ import (
 )
 
 type JudgeService interface {
-	// 答案提交
+	// Submit 答案提交
 	Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*dto.SubmitResultDto, *e.Error)
-	// 执行
+	// Execute 执行
 	Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error)
 }
 
