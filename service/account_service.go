@@ -7,6 +7,7 @@ import (
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
+	r "FanCode/models/vo"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -66,7 +67,14 @@ func (a *accountService) UploadAvatar(file *multipart.FileHeader) (string, *e.Er
 }
 
 func (a *accountService) ReadAvatar(ctx *gin.Context, avatarName string) {
-
+	result := r.NewResult(ctx)
+	cos := file_store.NewImageCOS()
+	bytes, err := cos.ReadFile(UserAvatarPath + "/" + avatarName)
+	if err != nil {
+		result.Error(e.ErrServer)
+		return
+	}
+	_, _ = ctx.Writer.Write(bytes)
 }
 
 func (a *accountService) GetAccountInfo(ctx *gin.Context) (*dto.AccountInfo, *e.Error) {

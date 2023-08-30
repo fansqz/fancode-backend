@@ -59,7 +59,8 @@ func (a *accountController) UploadAvatar(ctx *gin.Context) {
 }
 
 func (a *accountController) ReadAvatar(ctx *gin.Context) {
-
+	avatarName := ctx.Param("avatarName")
+	a.accountService.ReadAvatar(ctx, avatarName)
 }
 
 func (a *accountController) GetAccountInfo(ctx *gin.Context) {
