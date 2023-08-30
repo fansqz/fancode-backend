@@ -13,6 +13,10 @@ import (
 
 // AccountController 关于一些账号信息的handler
 type AccountController interface {
+	// UploadAvatar 上传头像
+	UploadAvatar(ctx *gin.Context)
+	// ReadAvatar 读取头像
+	ReadAvatar(ctx *gin.Context)
 	// GetAccountInfo 获取账号信息
 	GetAccountInfo(ctx *gin.Context)
 	// UpdateAccountInfo 更新账号信息
@@ -33,6 +37,29 @@ type accountController struct {
 
 func NewAccountController() AccountController {
 	return &accountController{}
+}
+
+func (a *accountController) UploadAvatar(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	file, err := ctx.FormFile("avatar")
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	if file.Size > 2<<20 {
+		result.SimpleErrorMessage("文件大小不能超过2m")
+		return
+	}
+	path, err2 := a.accountService.UploadAvatar(file)
+	if err2 != nil {
+		result.Error(err2)
+		return
+	}
+	result.SuccessData(path)
+}
+
+func (a *accountController) ReadAvatar(ctx *gin.Context) {
+
 }
 
 func (a *accountController) GetAccountInfo(ctx *gin.Context) {

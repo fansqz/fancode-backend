@@ -3,12 +3,15 @@ package service
 import (
 	"FanCode/dao"
 	e "FanCode/error"
+	"FanCode/file_store"
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"log"
+	"mime/multipart"
+	"path"
 	"strconv"
 	"time"
 )
@@ -16,11 +19,15 @@ import (
 const (
 	// UserAvatarPath cos中，用户图片存储的位置
 	UserAvatarPath = "/avatar/user"
-	// 图片的网站前缀
+	// SysURL 图片的网站前缀
 	SysURL = "https://code.fansqz.com"
 )
 
 type AccountService interface {
+	// UploadAvatar 上传头像
+	UploadAvatar(file *multipart.FileHeader) (string, *e.Error)
+	// ReadAvatar 读取头像
+	ReadAvatar(ctx *gin.Context, avatarName string)
 	// GetAccountInfo 获取账号信息
 	GetAccountInfo(ctx *gin.Context) (*dto.AccountInfo, *e.Error)
 	// UpdateAccountInfo 更新账号信息
@@ -40,6 +47,26 @@ func NewAccountService() AccountService {
 }
 
 type accountService struct {
+}
+
+func (a *accountService) UploadAvatar(file *multipart.FileHeader) (string, *e.Error) {
+	cos := file_store.NewImageCOS()
+	fileName := file.Filename
+	fileName = utils.GetUUID() + "." + path.Base(fileName)
+	file2, err := file.Open()
+	if err != nil {
+		return "", e.ErrBadRequest
+	}
+	err = cos.SaveFile(UserAvatarPath+"/"+fileName, file2)
+	if err != nil {
+		log.Println(err)
+		return "", e.ErrServer
+	}
+	return SysURL + UserAvatarPath + "/" + fileName, nil
+}
+
+func (a *accountService) ReadAvatar(ctx *gin.Context, avatarName string) {
+
 }
 
 func (a *accountService) GetAccountInfo(ctx *gin.Context) (*dto.AccountInfo, *e.Error) {
