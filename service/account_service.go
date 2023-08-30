@@ -12,9 +12,18 @@ import (
 	"time"
 )
 
+const (
+	// UserAvatarPath cos中，用户图片存储的位置
+	UserAvatarPath = "/avatar/user"
+	// 图片的网站前缀
+	SysURL = "https://code.fansqz.com"
+)
+
 type AccountService interface {
 	UpdateAccountInfo(user *po.SysUser) *e.Error
 	ChangePassword(ctx *gin.Context, oldPassword, newPassword string) *e.Error
+	// ResetPassword 重置密码
+	ResetPassword(ctx *gin.Context) *e.Error
 }
 
 func NewAccountService() AccountService {
@@ -66,6 +75,36 @@ func (u *accountService) ChangePassword(ctx *gin.Context, oldPassword, newPasswo
 		"password":   user.Password,
 	})
 	if err != nil {
+		return e.ErrUserUnknownError
+	}
+	return nil
+}
+
+func (u *accountService) ResetPassword(ctx *gin.Context) *e.Error {
+	user := ctx.Keys["user"].(*dto.UserInfo)
+	password := utils.GetRandomPassword(11)
+	password2, err := utils.GetPwd(password)
+	if err != nil {
+		return e.ErrUserUnknownError
+	}
+	// 更新密码
+	tx := global.Mysql.Begin()
+	err = dao.UpdateUser(tx, user.ID, map[string]interface{}{
+		"password": password2,
+	})
+	if err != nil {
+		tx.Rollback()
+		return e.ErrUserUnknownError
+	}
+	// 发送密码
+	message := utils.EmailMessage{
+		To:      []string{user.Email},
+		Subject: "fancode-重置密码",
+		Body:    "新密码：" + password,
+	}
+	err = utils.SendMail(global.Conf.EmailConfig, message)
+	if err != nil {
+		tx.Rollback()
 		return e.ErrUserUnknownError
 	}
 	return nil

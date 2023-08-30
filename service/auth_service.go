@@ -9,18 +9,12 @@ import (
 	"FanCode/utils"
 	"github.com/Chain-Zhang/pinyin"
 	"log"
-	"math/rand"
-	"strconv"
 	"time"
 )
 
 const (
 	RegisterEmailProKey = "emailcode-register-"
-	LoginEmailProKey    = "emailcode-login"
-	// cos中，用户图片存储的位置
-	UserAvatarPath = "/avatar/user"
-	// 图片的网站前缀
-	SysURL = "https://code.fansqz.com"
+	LoginEmailProKey    = "emailcode-login-"
 )
 
 type AuthService interface {
@@ -33,8 +27,6 @@ type AuthService interface {
 	SendAuthCode(email string, kind string) (string, *e.Error)
 	// UserRegister 用户注册
 	UserRegister(user *po.SysUser, code string) *e.Error
-	// ChangePassword 改密码
-	ChangePassword(loginName, oldPassword, newPassword string) *e.Error
 }
 
 type authService struct {
@@ -150,11 +142,11 @@ func (u *authService) SendAuthCode(email string, kind string) (string, *e.Error)
 	var subject string
 	if kind == "register" {
 		subject = "fancode注册验证码"
-	} else {
+	} else if kind == "login" {
 		subject = "fancode登录验证码"
 	}
 	// 发送code
-	code := u.getCode(6)
+	code := utils.GetRandomNumber(6)
 	message := utils.EmailMessage{
 		To:      []string{email},
 		Subject: subject,
@@ -204,7 +196,7 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	if err2 != nil {
 		return e.ErrUserUnknownError
 	}
-	loginName = loginName + u.getCode(3)
+	loginName = loginName + utils.GetRandomNumber(3)
 	for i := 0; i < 5; i++ {
 		b, err3 := dao.CheckLoginName(global.Mysql, user.LoginName)
 		if err3 != nil {
@@ -212,7 +204,7 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 			return e.ErrUserUnknownError
 		}
 		if b {
-			loginName = loginName + u.getCode(1)
+			loginName = loginName + utils.GetRandomNumber(1)
 		} else {
 			break
 		}
@@ -236,12 +228,4 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	} else {
 		return nil
 	}
-}
-
-// getCode 生成6位验证码
-func (u *authService) getCode(number int) string {
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	a := rnd.Int31n(1000000)
-	s := strconv.Itoa(int(a))
-	return s[0:number]
 }

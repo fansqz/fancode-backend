@@ -19,6 +19,8 @@ type AccountController interface {
 	ChangePassword(ctx *gin.Context)
 	// GetUserActivity 获取用户活动图
 	GetUserActivity(ctx *gin.Context)
+	// ResetPassword 重置密码
+	ResetPassword(ctx *gin.Context)
 }
 
 type accountController struct {
@@ -68,7 +70,17 @@ func (a *accountController) ChangePassword(ctx *gin.Context) {
 	if err != nil {
 		result.Error(err)
 	}
-	result.Error(err)
+	result.SuccessMessage("修改成功，请重新登录")
+}
+
+func (a *accountController) ResetPassword(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	err := a.accountService.ResetPassword(ctx)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessMessage("重置成功，请留意邮箱")
 }
 
 func (a *accountController) GetUserActivity(ctx *gin.Context) {
