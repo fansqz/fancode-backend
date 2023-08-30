@@ -19,8 +19,6 @@ type AuthController interface {
 	UserRegister(ctx *gin.Context)
 	// GetUserInfo 根据token获取用户信息
 	GetUserInfo(ctx *gin.Context)
-	// ChangePassword 改密码
-	ChangePassword(ctx *gin.Context)
 }
 
 type authController struct {
@@ -100,23 +98,6 @@ func (u *authController) Login(ctx *gin.Context) {
 	}
 	result.SuccessData(token)
 
-}
-
-func (u *authController) ChangePassword(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	loginName := ctx.PostForm("loginName")
-	oldPassword := ctx.PostForm("oldPassword")
-	newPassword := ctx.PostForm("newPassword")
-	if loginName == "" || oldPassword == "" {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	err := u.authService.ChangePassword(loginName, oldPassword, newPassword)
-	if err != nil {
-		result.Error(err)
-	} else {
-		result.SuccessMessage("Password changed")
-	}
 }
 
 func (u *authController) GetUserInfo(ctx *gin.Context) {

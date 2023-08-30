@@ -61,7 +61,13 @@ func (s *sysUserService) InsertSysUser(sysUser *po.SysUser) (uint, *e.Error) {
 
 func (s *sysUserService) UpdateSysUser(sysUser *po.SysUser) *e.Error {
 	sysUser.UpdatedAt = time.Now()
-	err := dao.UpdateUser(global.Mysql, sysUser)
+	err := dao.UpdateUser(global.Mysql, sysUser.ID, map[string]interface{}{
+		"login_name": sysUser.LoginName,
+		"username":   sysUser.Username,
+		"password":   sysUser.Password,
+		"email":      sysUser.Email,
+		"phone":      sysUser.Phone,
+	})
 	if err != nil {
 		log.Println(err)
 		return e.ErrSysUserUnknownError

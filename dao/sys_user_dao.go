@@ -11,9 +11,11 @@ func InsertUser(db *gorm.DB, user *po.SysUser) error {
 	return db.Create(user).Error
 }
 
-// UpdateUser 更新用户，注：不更新密码，头像，备注
-func UpdateUser(db *gorm.DB, user *po.SysUser) error {
-	return db.Model(user).Omit("password", "avatar", "remark", "updated_at").Updates(user).Error
+// UpdateUser
+func UpdateUser(db *gorm.DB, id uint, m map[string]interface{}) error {
+	var user *po.SysUser
+	user.ID = id
+	return db.Model(user).UpdateColumns(m).Error
 }
 
 // DeleteUserByID 删除用户

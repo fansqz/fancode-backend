@@ -238,34 +238,6 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	}
 }
 
-func (u *authService) ChangePassword(userLoginName, oldPassword, newPassword string) *e.Error {
-	//检验用户名
-	user, err := dao.GetUserByLoginName(global.Mysql, userLoginName)
-	if err != nil {
-		log.Println(err)
-		return e.ErrUserUnknownError
-	}
-	if user == nil || user.LoginName == "" {
-		return e.ErrUserNotExist
-	}
-	//检验旧密码
-	if !utils.ComparePwd(oldPassword, user.Password) {
-		return e.ErrUserNameOrPasswordWrong
-	}
-	password, getPwdErr := utils.GetPwd(newPassword)
-	if getPwdErr != nil {
-		log.Println(getPwdErr)
-		return e.ErrPasswordEncodeFailed
-	}
-	user.Password = string(password)
-	user.UpdatedAt = time.Now()
-	err = dao.UpdateUser(global.Mysql, user)
-	if err != nil {
-		return e.ErrUserUnknownError
-	}
-	return nil
-}
-
 // getCode 生成6位验证码
 func (u *authService) getCode(number int) string {
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
