@@ -84,5 +84,34 @@ func (a *accountController) ResetPassword(ctx *gin.Context) {
 }
 
 func (a *accountController) GetUserActivity(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	yearStr := ctx.PostForm("year")
+	var year int
+	if yearStr == "" {
+		year = 0
+	} else {
+		var b bool
+		year, b = checkYear(yearStr)
+		if !b {
+			result.Error(e.ErrBadRequest)
+			return
+		}
+	}
+	activityMap, err := a.accountService.GetActivityMap(ctx, year)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(activityMap)
+}
 
+func checkYear(str string) (int, bool) {
+	year, err := strconv.Atoi(str)
+	if err != nil {
+		return 0, false
+	}
+
+	currentYear := time.Now().Year()
+	b := year > 2022 && year <= currentYear
+	return year, b
 }

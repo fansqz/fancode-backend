@@ -24,6 +24,8 @@ type AccountService interface {
 	ChangePassword(ctx *gin.Context, oldPassword, newPassword string) *e.Error
 	// ResetPassword 重置密码
 	ResetPassword(ctx *gin.Context) *e.Error
+	// GetActivityMap 获取活动图
+	GetActivityMap(ctx *gin.Context, year int) ([]*dto.ActivityItem, *e.Error)
 }
 
 func NewAccountService() AccountService {
@@ -108,4 +110,43 @@ func (u *accountService) ResetPassword(ctx *gin.Context) *e.Error {
 		return e.ErrUserUnknownError
 	}
 	return nil
+}
+
+func (u *accountService) GetActivityMap(ctx *gin.Context, year int) ([]*dto.ActivityItem, *e.Error) {
+	user := ctx.Keys["user"].(*dto.UserInfo)
+	var startDate time.Time
+	var endDate time.Time
+	// 如果year == 0，获取以今天截至的一年的数据
+	if year == 0 {
+		startDate = time.Now()
+		endDate = time.Date(startDate.Year()-1, startDate.Month(), startDate.Day(),
+			0, 0, 0, 0, time.Local)
+	} else {
+		startDate, endDate = getYearRange(year)
+	}
+	submissions, err := dao.GetUserSimpleSubmissionsByTime(global.Mysql, user.ID, startDate, endDate)
+	if err != nil {
+		return nil, e.ErrUserUnknownError
+	}
+	// 构建活动数据
+	m := make(map[string]int, 366)
+	for i := 0; i < len(submissions); i++ {
+		date := submissions[i].CreatedAt.Format("2006-01-02")
+		m[date]++
+	}
+	answer := make([]*dto.ActivityItem, 366)
+	i := 0
+	for k, v := range m {
+		answer[i] = &dto.ActivityItem{
+			Date:  k,
+			Count: v,
+		}
+	}
+	return answer, nil
+}
+
+func getYearRange(year int) (time.Time, time.Time) {
+	startDate := time.Date(year, 1, 1, 0, 0, 0, 0, time.Local)
+	endDate := time.Date(year, 12, 31, 23, 59, 59, 999999999, time.Local)
+	return startDate, endDate
 }

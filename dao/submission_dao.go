@@ -3,6 +3,7 @@ package dao
 import (
 	"FanCode/models/po"
 	"gorm.io/gorm"
+	"time"
 )
 
 func InsertSubmission(db *gorm.DB, submission *po.Submission) error {
@@ -12,5 +13,17 @@ func InsertSubmission(db *gorm.DB, submission *po.Submission) error {
 func GetSubmissionListByUserIDAndProblemID(db *gorm.DB, userID uint, problemID uint) ([]*po.Submission, error) {
 	var submissions []*po.Submission
 	err := db.Where(`user_id = ? and problem_id = ?`, userID, problemID).Find(&submissions).Error
+	return submissions, err
+}
+
+func GetUserSimpleSubmissionsByTime(db *gorm.DB, userID uint, begin time.Time, end time.Time) ([]*po.Submission, error) {
+	submission := po.Submission{}
+	submission.UserID = userID
+	var submissions []*po.Submission
+	err := db.Model(submission).Where("created_at >= ? and created_at <= ?", begin, end).
+		Select("created_at").Find(submissions).Error
+	if err != nil {
+		return nil, err
+	}
 	return submissions, err
 }
