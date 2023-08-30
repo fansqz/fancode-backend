@@ -11,14 +11,16 @@ import (
 	"time"
 )
 
-// 关于一些账号信息的handler
+// AccountController 关于一些账号信息的handler
 type AccountController interface {
 	// UpdateAccountInfo 更新账号信息
 	UpdateAccountInfo(ctx *gin.Context)
 	// ChangePassword 修改密码
 	ChangePassword(ctx *gin.Context)
-	// GetUserActivity 获取用户活动图
-	GetUserActivity(ctx *gin.Context)
+	// GetUserActivityMap 获取用户活动图
+	GetUserActivityMap(ctx *gin.Context)
+	// GetUserActivityYear 获取用户有活动的年份
+	GetUserActivityYear(ctx *gin.Context)
 	// ResetPassword 重置密码
 	ResetPassword(ctx *gin.Context)
 }
@@ -83,9 +85,10 @@ func (a *accountController) ResetPassword(ctx *gin.Context) {
 	result.SuccessMessage("重置成功，请留意邮箱")
 }
 
-func (a *accountController) GetUserActivity(ctx *gin.Context) {
+func (a *accountController) GetUserActivityMap(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	yearStr := ctx.PostForm("year")
+	// 检测年份是否合理
 	var year int
 	if yearStr == "" {
 		year = 0
@@ -103,6 +106,16 @@ func (a *accountController) GetUserActivity(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData(activityMap)
+}
+
+func (a *accountController) GetUserActivityYear(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	years, err := a.accountService.GetActivityYear(ctx)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(years)
 }
 
 func checkYear(str string) (int, bool) {

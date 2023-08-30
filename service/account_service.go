@@ -9,6 +9,7 @@ import (
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -26,6 +27,8 @@ type AccountService interface {
 	ResetPassword(ctx *gin.Context) *e.Error
 	// GetActivityMap 获取活动图
 	GetActivityMap(ctx *gin.Context, year int) ([]*dto.ActivityItem, *e.Error)
+	// GetActivityYear 获取用户有活动的年份
+	GetActivityYear(ctx *gin.Context) ([]string, *e.Error)
 }
 
 func NewAccountService() AccountService {
@@ -45,7 +48,7 @@ func (a *accountService) UpdateAccountInfo(user *po.SysUser) *e.Error {
 	})
 	if err != nil {
 		log.Panicln(err)
-		return e.ErrUserUnknownError
+		return e.ErrMysql
 	}
 	return nil
 }
@@ -56,7 +59,7 @@ func (u *accountService) ChangePassword(ctx *gin.Context, oldPassword, newPasswo
 	user, err := dao.GetUserByID(global.Mysql, userInfo.ID)
 	if err != nil {
 		log.Println(err)
-		return e.ErrUserUnknownError
+		return e.ErrMysql
 	}
 	if user == nil || user.LoginName == "" {
 		return e.ErrUserNotExist
@@ -77,7 +80,7 @@ func (u *accountService) ChangePassword(ctx *gin.Context, oldPassword, newPasswo
 		"password":   user.Password,
 	})
 	if err != nil {
-		return e.ErrUserUnknownError
+		return e.ErrMysql
 	}
 	return nil
 }
@@ -96,7 +99,7 @@ func (u *accountService) ResetPassword(ctx *gin.Context) *e.Error {
 	})
 	if err != nil {
 		tx.Rollback()
-		return e.ErrUserUnknownError
+		return e.ErrMysql
 	}
 	// 发送密码
 	message := utils.EmailMessage{
@@ -126,7 +129,7 @@ func (u *accountService) GetActivityMap(ctx *gin.Context, year int) ([]*dto.Acti
 	}
 	submissions, err := dao.GetUserSimpleSubmissionsByTime(global.Mysql, user.ID, startDate, endDate)
 	if err != nil {
-		return nil, e.ErrUserUnknownError
+		return nil, e.ErrMysql
 	}
 	// 构建活动数据
 	m := make(map[string]int, 366)
@@ -140,6 +143,24 @@ func (u *accountService) GetActivityMap(ctx *gin.Context, year int) ([]*dto.Acti
 		answer[i] = &dto.ActivityItem{
 			Date:  k,
 			Count: v,
+		}
+	}
+	return answer, nil
+}
+
+func (u *accountService) GetActivityYear(ctx *gin.Context) ([]string, *e.Error) {
+	answer := []string{}
+	user := ctx.Keys["user"].(*dto.UserInfo)
+	beginYear := 2022
+	currentYear := time.Now().Year()
+	for i := beginYear; i <= currentYear; i++ {
+		beginDate, endDate := getYearRange(i)
+		b, err := dao.CheckUserIsSubmittedByTime(global.Mysql, user.ID, beginDate, endDate)
+		if err != nil {
+			return nil, e.ErrMysql
+		}
+		if b {
+			answer = append(answer, strconv.Itoa(i))
 		}
 	}
 	return answer, nil
