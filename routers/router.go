@@ -36,13 +36,12 @@ func Run() {
 	r.GET("/ping", controllers.Ping)
 
 	SetupAuthRoutes(r)
-
+	SetupAccountRoutes(r)
 	admin.SetupProblemRoutes(r)
 	admin.SetupSysApiRoutes(r)
 	admin.SetupSysMenuRoutes(r)
 	admin.SetupSysRoleRoutes(r)
 	admin.SetupSysUserRoutes(r)
-
 	user.SetupJudgeRoutes(r)
 	user.SetupProblemRoutes(r)
 
