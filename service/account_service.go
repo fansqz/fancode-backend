@@ -21,7 +21,7 @@ const (
 	// UserAvatarPath cos中，用户图片存储的位置
 	UserAvatarPath = "/avatar/user"
 	// SysURL 图片的网站前缀
-	SysURL = "https://code.fansqz.com"
+	SysURL = "http://code.fansqz.com"
 )
 
 type AccountService interface {
@@ -169,8 +169,8 @@ func (u *accountService) GetActivityMap(ctx *gin.Context, year int) ([]*dto.Acti
 	var endDate time.Time
 	// 如果year == 0，获取以今天截至的一年的数据
 	if year == 0 {
-		startDate = time.Now()
-		endDate = time.Date(startDate.Year()-1, startDate.Month(), startDate.Day(),
+		endDate = time.Now()
+		startDate = time.Date(endDate.Year()-1, endDate.Month()+1, endDate.Day(),
 			0, 0, 0, 0, time.Local)
 	} else {
 		startDate, endDate = getYearRange(year)
@@ -185,13 +185,14 @@ func (u *accountService) GetActivityMap(ctx *gin.Context, year int) ([]*dto.Acti
 		date := submissions[i].CreatedAt.Format("2006-01-02")
 		m[date]++
 	}
-	answer := make([]*dto.ActivityItem, 366)
+	answer := make([]*dto.ActivityItem, len(m))
 	i := 0
 	for k, v := range m {
 		answer[i] = &dto.ActivityItem{
 			Date:  k,
 			Count: v,
 		}
+		i++
 	}
 	return answer, nil
 }

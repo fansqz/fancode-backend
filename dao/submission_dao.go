@@ -17,11 +17,9 @@ func GetSubmissionListByUserIDAndProblemID(db *gorm.DB, userID uint, problemID u
 }
 
 func GetUserSimpleSubmissionsByTime(db *gorm.DB, userID uint, begin time.Time, end time.Time) ([]*po.Submission, error) {
-	submission := po.Submission{}
-	submission.UserID = userID
 	var submissions []*po.Submission
-	err := db.Model(&submission).Where("created_at >= ? and created_at <= ?", begin, end).
-		Select("created_at").Find(submissions).Error
+	err := db.Where("user_id = ? and created_at >= ? and created_at <= ?", userID, begin, end).
+		Select("created_at").Find(&submissions).Error
 	if err != nil {
 		return nil, err
 	}

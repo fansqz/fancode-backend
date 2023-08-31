@@ -15,7 +15,7 @@ type ActivityItem struct {
 type AccountInfo struct {
 	Avatar       string `json:"avatar"`
 	LoginName    string `json:"loginName"`
-	UserName     string `json:"userName"`
+	UserName     string `json:"username"`
 	Email        string `json:"email"`
 	Phone        string `json:"phone"`
 	Introduction string `json:"introduction"`

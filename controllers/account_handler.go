@@ -36,7 +36,9 @@ type accountController struct {
 }
 
 func NewAccountController() AccountController {
-	return &accountController{}
+	return &accountController{
+		accountService: service.NewAccountService(),
+	}
 }
 
 func (a *accountController) UploadAvatar(ctx *gin.Context) {
@@ -127,10 +129,10 @@ func (a *accountController) ResetPassword(ctx *gin.Context) {
 
 func (a *accountController) GetUserActivityMap(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	yearStr := ctx.PostForm("year")
+	yearStr := ctx.Param("year")
 	// 检测年份是否合理
 	var year int
-	if yearStr == "" {
+	if yearStr == "0" {
 		year = 0
 	} else {
 		var b bool
