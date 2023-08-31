@@ -13,8 +13,6 @@ func SetupAccountRoutes(r *gin.Engine) {
 		account.PUT("", accountController.UpdateAccountInfo)
 		account.POST("/password/reset", accountController.ResetPassword)
 		account.POST("/password", accountController.ChangePassword)
-		account.GET("/active/year", accountController.GetUserActivityYear)
-		account.GET("/active/map/:year", accountController.GetUserActivityMap)
 	}
 	avatar := r.Group("/avatar")
 	{

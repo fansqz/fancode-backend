@@ -44,6 +44,7 @@ func Run() {
 	admin.SetupSysUserRoutes(r)
 	user.SetupJudgeRoutes(r)
 	user.SetupProblemRoutes(r)
+	user.SetupSubmissionRoutes(r)
 
 	err := r.Run(":" + global.Conf.Port)
 	if err != nil {

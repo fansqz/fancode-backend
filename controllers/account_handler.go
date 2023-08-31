@@ -23,10 +23,6 @@ type AccountController interface {
 	UpdateAccountInfo(ctx *gin.Context)
 	// ChangePassword 修改密码
 	ChangePassword(ctx *gin.Context)
-	// GetUserActivityMap 获取用户活动图
-	GetUserActivityMap(ctx *gin.Context)
-	// GetUserActivityYear 获取用户有活动的年份
-	GetUserActivityYear(ctx *gin.Context)
 	// ResetPassword 重置密码
 	ResetPassword(ctx *gin.Context)
 }
@@ -125,48 +121,4 @@ func (a *accountController) ResetPassword(ctx *gin.Context) {
 		return
 	}
 	result.SuccessMessage("重置成功，请留意邮箱")
-}
-
-func (a *accountController) GetUserActivityMap(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	yearStr := ctx.Param("year")
-	// 检测年份是否合理
-	var year int
-	if yearStr == "0" {
-		year = 0
-	} else {
-		var b bool
-		year, b = checkYear(yearStr)
-		if !b {
-			result.Error(e.ErrBadRequest)
-			return
-		}
-	}
-	activityMap, err := a.accountService.GetActivityMap(ctx, year)
-	if err != nil {
-		result.Error(err)
-		return
-	}
-	result.SuccessData(activityMap)
-}
-
-func (a *accountController) GetUserActivityYear(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	years, err := a.accountService.GetActivityYear(ctx)
-	if err != nil {
-		result.Error(err)
-		return
-	}
-	result.SuccessData(years)
-}
-
-func checkYear(str string) (int, bool) {
-	year, err := strconv.Atoi(str)
-	if err != nil {
-		return 0, false
-	}
-
-	currentYear := time.Now().Year()
-	b := year > 2022 && year <= currentYear
-	return year, b
 }
