@@ -5,7 +5,9 @@ import (
 	e "FanCode/error"
 	"FanCode/global"
 	"FanCode/models/dto"
+	"FanCode/models/po"
 	"github.com/gin-gonic/gin"
+	"log"
 	"strconv"
 	"time"
 )
@@ -15,6 +17,8 @@ type SubmissionService interface {
 	GetActivityMap(ctx *gin.Context, year int) ([]*dto.ActivityItem, *e.Error)
 	// GetActivityYear 获取用户有活动的年份
 	GetActivityYear(ctx *gin.Context) ([]string, *e.Error)
+	// GetUserSubmissionList 获取用户
+	GetUserSubmissionList(ctx *gin.Context, page int, pageSize int) (*dto.PageInfo, *e.Error)
 }
 
 func NewSubmissionService() SubmissionService {
@@ -74,6 +78,28 @@ func (u *submissionService) GetActivityYear(ctx *gin.Context) ([]string, *e.Erro
 		}
 	}
 	return answer, nil
+}
+
+func (u *submissionService) GetUserSubmissionList(ctx *gin.Context, page int, pageSize int) (*dto.PageInfo, *e.Error) {
+	user := ctx.Keys["user"].(*dto.UserInfo)
+	submission := &po.Submission{
+		UserID: user.ID,
+	}
+	submissions, err := dao.GetSubmissionList(global.Mysql, page, pageSize, submission)
+	if err != nil {
+		log.Println(err)
+		return nil, e.ErrMysql
+	}
+	count, err2 := dao.GetSubmissionCount(global.Mysql, submission)
+	if err2 != nil {
+		log.Println(err)
+		return nil, e.ErrMysql
+	}
+	return &dto.PageInfo{
+		Total: count,
+		Size:  int64(len(submissions)),
+		List:  submissions,
+	}, nil
 }
 
 func getYearRange(year int) (time.Time, time.Time) {

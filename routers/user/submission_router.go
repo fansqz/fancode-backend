@@ -12,5 +12,6 @@ func SetupSubmissionRoutes(r *gin.Engine) {
 		submissionHandler := user.NewSubmissionHandler()
 		submission.GET("/active/year", submissionHandler.GetUserActivityYear)
 		submission.GET("/active/map/:year", submissionHandler.GetUserActivityMap)
+		submission.GET("/list/:page/:pageSize", submissionHandler.GetUserSubmissionList)
 	}
 }

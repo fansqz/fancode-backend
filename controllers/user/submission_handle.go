@@ -14,6 +14,8 @@ type SubmissionHandler interface {
 	GetUserActivityMap(ctx *gin.Context)
 	// GetUserActivityYear 获取用户有活动的年份
 	GetUserActivityYear(ctx *gin.Context)
+	// GetUserSubmissionList 获取用户提交列表
+	GetUserSubmissionList(ctx *gin.Context)
 }
 
 func NewSubmissionHandler() SubmissionHandler {
@@ -57,6 +59,34 @@ func (a *submissionHandler) GetUserActivityYear(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData(years)
+}
+
+func (a *submissionHandler) GetUserSubmissionList(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	pageStr := ctx.Param("page")
+	pageSizeStr := ctx.Param("pageSize")
+	var page int
+	var pageSize int
+	var convertErr error
+	page, convertErr = strconv.Atoi(pageStr)
+	if convertErr != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	pageSize, convertErr = strconv.Atoi(pageSizeStr)
+	if convertErr != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	if pageSize > 50 {
+		pageSize = 50
+	}
+	pageInfo, err := a.submissionService.GetUserSubmissionList(ctx, page, pageSize)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(pageInfo)
 }
 
 func checkYear(str string) (int, bool) {

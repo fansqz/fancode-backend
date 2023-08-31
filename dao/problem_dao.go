@@ -81,20 +81,6 @@ func GetProblemList(db *gorm.DB, page int, pageSize int, problem *po.Problem) ([
 	return problems, err
 }
 
-func UpdatePathByCode(db *gorm.DB, path string, problemCode string) error {
-	return db.Model(&po.Problem{}).
-		Where("code = ?", problemCode).Update("path", path).Error
-}
-
-func UpdatePathByID(db *gorm.DB, path string, id uint) error {
-	return db.Model(&po.Problem{}).
-		Where("id = ?", id).Update("path", path).Error
-}
-
-func DeleteProblemByID(db *gorm.DB, id uint) error {
-	return db.Delete(&po.Problem{}, id).Error
-}
-
 func GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	var count int64
 	db2 := db
@@ -112,6 +98,20 @@ func GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	}
 	err := db2.Model(&po.Problem{}).Count(&count).Error
 	return count, err
+}
+
+func UpdatePathByCode(db *gorm.DB, path string, problemCode string) error {
+	return db.Model(&po.Problem{}).
+		Where("code = ?", problemCode).Update("path", path).Error
+}
+
+func UpdatePathByID(db *gorm.DB, path string, id uint) error {
+	return db.Model(&po.Problem{}).
+		Where("id = ?", id).Update("path", path).Error
+}
+
+func DeleteProblemByID(db *gorm.DB, id uint) error {
+	return db.Delete(&po.Problem{}, id).Error
 }
 
 // UpdateProblemField 根据字段进行更新
