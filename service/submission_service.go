@@ -86,6 +86,15 @@ func (u *submissionService) GetUserSubmissionList(ctx *gin.Context, page int, pa
 		UserID: user.ID,
 	}
 	submissions, err := dao.GetSubmissionList(global.Mysql, page, pageSize, submission)
+	submissions2 := make([]*dto.SubmissionDtoForList, len(submissions))
+	for i := 0; i < len(submissions); i++ {
+		submissions2[i] = dto.NewSubmissionDtoForList(submissions[i])
+		name, err := dao.GetProblemNameByID(global.Mysql, submissions[i].ProblemID)
+		if err != nil {
+			return nil, e.ErrMysql
+		}
+		submissions2[i].ProblemName = name
+	}
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrMysql
@@ -97,8 +106,8 @@ func (u *submissionService) GetUserSubmissionList(ctx *gin.Context, page int, pa
 	}
 	return &dto.PageInfo{
 		Total: count,
-		Size:  int64(len(submissions)),
-		List:  submissions,
+		Size:  int64(len(submissions2)),
+		List:  submissions2,
 	}, nil
 }
 

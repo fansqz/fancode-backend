@@ -33,7 +33,7 @@ func GetSubmissionCount(db *gorm.DB, submission *po.Submission) (int64, error) {
 	if submission != nil && submission.ProblemID != 0 {
 		db2 = db2.Where("problem_id = ?", submission.ProblemID)
 	}
-	err := db2.Model(&po.Problem{}).Count(&count).Error
+	err := db2.Model(&po.Submission{}).Count(&count).Error
 	return count, err
 }
 

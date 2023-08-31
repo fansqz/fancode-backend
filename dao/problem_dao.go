@@ -24,6 +24,13 @@ func GetProblemIDByNumber(db *gorm.DB, problemNumber string) (uint, error) {
 	return question.ID, err
 }
 
+// GetProblemNameByID 根据题目id获取题目名称
+func GetProblemNameByID(db *gorm.DB, problemID uint) (string, error) {
+	question := &po.Problem{}
+	err := db.Where("id = ?", problemID).Select("name").Find(question).Error
+	return question.Name, err
+}
+
 // GetProblemByID 根据题目id获取题目
 func GetProblemByID(db *gorm.DB, problemID uint) (*po.Problem, error) {
 	question := &po.Problem{}
