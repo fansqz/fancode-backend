@@ -5,7 +5,6 @@ import (
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
-	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
@@ -85,14 +84,18 @@ func (a *accountController) UpdateAccountInfo(ctx *gin.Context) {
 	}
 	user.Sex = &sex2
 	birthDay := ctx.PostForm("birthDay")
-	t := utils.Time{}
-	err = t.UnmarshalJSON([]byte(birthDay))
-	if err != nil {
+	t, err2 := time.ParseInLocation("2006-01-02 15:04:05", birthDay, time.Local)
+	if err2 != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	user.BirthDay = time.Time(t)
-
+	user.BirthDay = t
+	err3 := a.accountService.UpdateAccountInfo(ctx, user)
+	if err3 != nil {
+		result.Error(err3)
+		return
+	}
+	result.SuccessMessage("提交成功，重新登录可更新数据")
 }
 
 func (a *accountController) ChangePassword(ctx *gin.Context) {

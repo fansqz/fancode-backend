@@ -19,8 +19,6 @@ import (
 const (
 	// UserAvatarPath cos中，用户图片存储的位置
 	UserAvatarPath = "/avatar/user"
-	// SysURL 图片的网站前缀
-	SysURL = "http://code.fansqz.com"
 )
 
 type AccountService interface {
@@ -31,7 +29,7 @@ type AccountService interface {
 	// GetAccountInfo 获取账号信息
 	GetAccountInfo(ctx *gin.Context) (*dto.AccountInfo, *e.Error)
 	// UpdateAccountInfo 更新账号信息
-	UpdateAccountInfo(user *po.SysUser) *e.Error
+	UpdateAccountInfo(ctx *gin.Context, user *po.SysUser) *e.Error
 	// ChangePassword 修改密码
 	ChangePassword(ctx *gin.Context, oldPassword, newPassword string) *e.Error
 	// ResetPassword 重置密码
@@ -58,7 +56,7 @@ func (a *accountService) UploadAvatar(file *multipart.FileHeader) (string, *e.Er
 		log.Println(err)
 		return "", e.ErrServer
 	}
-	return SysURL + UserAvatarPath + "/" + fileName, nil
+	return global.Conf.ProUrl + UserAvatarPath + "/" + fileName, nil
 }
 
 func (a *accountService) ReadAvatar(ctx *gin.Context, avatarName string) {
@@ -81,13 +79,15 @@ func (a *accountService) GetAccountInfo(ctx *gin.Context) (*dto.AccountInfo, *e.
 	return dto.NewAccountInfo(u), nil
 }
 
-func (a *accountService) UpdateAccountInfo(user *po.SysUser) *e.Error {
-	err := dao.UpdateUser(global.Mysql, user.ID, map[string]interface{}{
+func (a *accountService) UpdateAccountInfo(ctx *gin.Context, user *po.SysUser) *e.Error {
+	userInfo := ctx.Keys["user"].(*dto.UserInfo)
+	err := dao.UpdateUser(global.Mysql, userInfo.ID, map[string]interface{}{
 		"avatar":       user.Avatar,
 		"username":     user.Username,
 		"introduction": user.Introduction,
 		"sex":          user.Sex,
 		"birth_day":    user.BirthDay,
+		"updated_at":   time.Now(),
 	})
 	if err != nil {
 		log.Panicln(err)
