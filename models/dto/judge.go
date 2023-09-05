@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// 判题请请求需要的
+// SubmitRequestDto 判题请请求需要的
 type SubmitRequestDto struct {
 	ProblemID uint
 	Code      string
