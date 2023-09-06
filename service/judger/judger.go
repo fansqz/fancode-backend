@@ -7,8 +7,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"io"
-	"path/filepath"
+	"os"
 	"time"
 )
 
@@ -37,7 +36,7 @@ func NewJudgeCore(poolSize int) (*JudgeCore, error) {
 		resp, err := cli.ContainerCreate(
 			context.Background(),
 			&container.Config{
-				Image: "judge-docker-image",
+				Image: ImageName,
 			}, nil, nil, nil, "")
 
 		if err != nil {
@@ -55,32 +54,44 @@ func NewJudgeCore(poolSize int) (*JudgeCore, error) {
 	}, nil
 }
 
-func (j *JudgeCore) RunCode(execFile io.Reader, input <-chan string, language int, timeout time.Duration) (chan string, chan error, error) {
-	// 从连接池获取可用的容器
-	containerID := <-j.containerPool
+func (j *JudgeCore) Release() {
+	for i := 0; i < j.poolSize; i++ {
+		c := <-j.containerPool
+		_ = j.cli.ContainerRemove(context.Background(), c, types.ContainerRemoveOptions{})
+	}
+}
 
-	// 启动容器
-	err := j.cli.ContainerStart(context.Background(), containerID, types.ContainerStartOptions{})
+func (j *JudgeCore) RunCode(execFile string, input <-chan string, language int) (chan string, chan error, error) {
+	execFileReader, err := os.Open(execFile)
+	defer execFileReader.Close()
 	if err != nil {
 		return nil, nil, err
 	}
+	containerID := <-j.containerPool
 
-	// 创建临时文件路径
-	tmpFilePath := fmt.Sprintf("/tmp/execFile_%d", time.Now().UnixNano())
+	// 启动容器
+	err = j.cli.ContainerStart(context.Background(), containerID, types.ContainerStartOptions{})
+	if err != nil {
+		_ = j.releaseContainer(containerID)
+		return nil, nil, err
+	}
 
 	// 将执行文件拷贝到容器内部的临时文件
-	err = j.cli.CopyToContainer(context.Background(), containerID, tmpFilePath, execFile, types.CopyToContainerOptions{})
+	tmpFilePath := fmt.Sprintf("/tmp/execFile_%d", time.Now().UnixNano())
+	err = j.simpleExec("mkdir "+tmpFilePath, containerID)
 	if err != nil {
+		_ = j.releaseContainer(containerID)
+		return nil, nil, err
+	}
+	err = j.cli.CopyToContainer(context.Background(), containerID, tmpFilePath, execFileReader, types.CopyToContainerOptions{})
+	if err != nil {
+		_ = j.releaseContainer(containerID)
 		return nil, nil, err
 	}
 
 	// 创建输出通道和错误通道
 	output := make(chan string)
 	errCh := make(chan error)
-
-	// 获取文件名和扩展名
-	fileName := filepath.Base(tmpFilePath)
-	fileExt := filepath.Ext(fileName)
 
 	// 根据扩展名设置执行命令
 	cmd := []string{}
@@ -90,7 +101,7 @@ func (j *JudgeCore) RunCode(execFile io.Reader, input <-chan string, language in
 	case constants.ProgramJava:
 		cmd = []string{"sh", "-c", fmt.Sprintf("java -jar %s", tmpFilePath)}
 	default:
-		return nil, nil, fmt.Errorf("Unsupported file extension: %s", fileExt)
+		return nil, nil, fmt.Errorf("不支持该语言")
 	}
 
 	execConfig := types.ExecConfig{
@@ -103,11 +114,13 @@ func (j *JudgeCore) RunCode(execFile io.Reader, input <-chan string, language in
 	}
 	resp, err := j.cli.ContainerExecCreate(context.Background(), containerID, execConfig)
 	if err != nil {
+		_ = j.releaseContainer(containerID)
 		return nil, nil, err
 	}
 
 	hijack, err := j.cli.ContainerExecAttach(context.Background(), resp.ID, types.ExecStartCheck{})
 	if err != nil {
+		_ = j.releaseContainer(containerID)
 		return nil, nil, err
 	}
 	defer hijack.Close()
@@ -118,9 +131,8 @@ func (j *JudgeCore) RunCode(execFile io.Reader, input <-chan string, language in
 		return nil, nil, err
 	}
 
-	buf := make([]byte, 4096)
-
 	go func() {
+		buf := make([]byte, 4096)
 		for {
 			inputItem := <-input
 			if inputItem == "exit" {
@@ -136,20 +148,43 @@ func (j *JudgeCore) RunCode(execFile io.Reader, input <-chan string, language in
 			output <- string(buf[:n])
 		}
 
-		// 关闭容器
-		_ = j.cli.ContainerStop(context.Background(), containerID, container.StopOptions{})
-
 		// 删除临时文件
 		_ = j.cli.ContainerRemove(context.Background(), containerID, types.ContainerRemoveOptions{
 			RemoveVolumes: true,
 			Force:         true,
 		})
 
-		// 将容器 ID 放回连接池
-		j.containerPool <- containerID
-
+		_ = j.releaseContainer(containerID)
 		close(output)
 	}()
 
 	return output, errCh, nil
+}
+
+// releaseContainer 将容器放回容器池
+func (j *JudgeCore) releaseContainer(containerID string) error {
+	err := j.cli.ContainerStop(context.Background(), containerID, container.StopOptions{})
+	j.containerPool <- containerID
+	return err
+}
+
+func (j *JudgeCore) simpleExec(cmdStr string, containerID string) error {
+	cmd := []string{"sh", "-c", cmdStr}
+
+	execConfig := types.ExecConfig{
+		Cmd:          cmd,
+		AttachStdin:  true,
+		AttachStdout: true,
+		AttachStderr: true,
+		Tty:          false,
+		Detach:       false,
+	}
+	resp, err := j.cli.ContainerExecCreate(context.Background(), containerID, execConfig)
+	if err != nil {
+		_ = j.releaseContainer(containerID)
+		return err
+	}
+	// 等待命令执行完成
+	err = j.cli.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{})
+	return err
 }

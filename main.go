@@ -2,7 +2,7 @@ package main
 
 import (
 	"FanCode/global"
-	"FanCode/initialize"
+	"FanCode/global/config"
 	"FanCode/models/po"
 	"FanCode/routers"
 	"fmt"
@@ -17,18 +17,18 @@ func main() {
 	path = path + "/conf/config.ini"
 
 	//加载配置
-	if err := initialize.InitSetting(path); err != nil {
+	if err := config.InitSetting(path); err != nil {
 		fmt.Println("加载配置文件出错")
 		return
 	}
 
 	//连接数据库
-	if err := initialize.InitMysql(global.Conf.MySqlConfig); err != nil {
+	if err := global.InitMysql(global.Conf.MySqlConfig); err != nil {
 		fmt.Println("数据库连接失败")
 	}
 
 	//连接redis
-	if err := initialize.InitRedis(global.Conf.RedisConfig); err != nil {
+	if err := global.InitRedis(global.Conf.RedisConfig); err != nil {
 		fmt.Println("redis连接失败")
 	}
 

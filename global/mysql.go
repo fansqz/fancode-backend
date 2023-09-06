@@ -2,10 +2,9 @@
 // @Author: fzw
 // @Create: 2023/7/4
 // @Description: 数据库开启关闭等
-package initialize
+package global
 
 import (
-	"FanCode/global"
 	"FanCode/global/config"
 	"fmt"
 	"gorm.io/driver/mysql"
@@ -21,6 +20,6 @@ func InitMysql(cfg *config.MySqlConfig) error {
 	dsn := fmt.Sprintf("%s:%s@(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DB)
 	var err error
-	global.Mysql, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	Mysql, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	return err
 }
