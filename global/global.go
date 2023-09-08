@@ -1,7 +1,6 @@
 package global
 
 import (
-	"FanCode/global/config"
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
 )
@@ -9,7 +8,7 @@ import (
 var (
 	// Mode project mode: development/staging/production
 	// RuntimeRoot runtime root path prefix
-	Conf  *config.AppConfig
+	Conf  *AppConfig
 	Mysql *gorm.DB
 	Redis *redis.Client
 )

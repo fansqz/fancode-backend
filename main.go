@@ -2,7 +2,6 @@ package main
 
 import (
 	"FanCode/global"
-	"FanCode/global/config"
 	"FanCode/models/po"
 	"FanCode/routers"
 	"fmt"
@@ -17,7 +16,7 @@ func main() {
 	path = path + "/conf/config.ini"
 
 	//加载配置
-	if err := config.InitSetting(path); err != nil {
+	if err := global.InitSetting(path); err != nil {
 		fmt.Println("加载配置文件出错")
 		return
 	}

@@ -2,10 +2,9 @@
 // @Author: fzw
 // @Create: 2023/7/14
 // @Description: 初始化时读取配置文件相关工具
-package config
+package global
 
 import (
-	"FanCode/global"
 	"gopkg.in/ini.v1"
 	"strings"
 )
@@ -20,17 +19,17 @@ func InitSetting(file string) error {
 	if err != nil {
 		return err
 	}
-	global.Conf = new(AppConfig)
-	cfg.MapTo(global.Conf)
+	Conf = new(AppConfig)
+	cfg.MapTo(Conf)
 	//遍历releasePath
-	startPaths := strings.Split(global.Conf.ReleaseStartPath, ",")
+	startPaths := strings.Split(Conf.ReleaseStartPath, ",")
 	releasePathConfig := &ReleasePathConfig{StartWith: startPaths}
-	global.Conf.ReleasePathConfig = releasePathConfig
+	Conf.ReleasePathConfig = releasePathConfig
 
-	global.Conf.MySqlConfig = NewMySqlConfig(cfg)
-	global.Conf.RedisConfig = NewRedisConfig(cfg)
-	global.Conf.EmailConfig = NewEmailConfig(cfg)
-	global.Conf.COSConfig = NewCOSConfig(cfg)
-	global.Conf.FilePathConfig = NewFilePathConfig(cfg)
+	Conf.MySqlConfig = NewMySqlConfig(cfg)
+	Conf.RedisConfig = NewRedisConfig(cfg)
+	Conf.EmailConfig = NewEmailConfig(cfg)
+	Conf.COSConfig = NewCOSConfig(cfg)
+	Conf.FilePathConfig = NewFilePathConfig(cfg)
 	return nil
 }
