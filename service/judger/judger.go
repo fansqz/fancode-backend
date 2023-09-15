@@ -3,11 +3,13 @@ package judger
 import (
 	"FanCode/constants"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"os"
+	"os/exec"
 	"time"
 )
 
@@ -61,7 +63,40 @@ func (j *JudgeCore) Release() {
 	}
 }
 
-func (j *JudgeCore) RunCode(execFile string, input <-chan string, language int) (chan string, chan error, error) {
+// Compile 编译，编译时在容器外进行编译的
+// language: 语言类型
+// compileFiles: 需要编译文件列表
+// outFilePath: 输出位置
+// timeout: 限制编译时间
+func (j *JudgeCore) Compile(language int, compileFiles []string, outFilePath string, timeout time.Duration) error {
+	if language == constants.ProgramC {
+		compileFiles = append([]string{"gcc", "-o", outFilePath}, compileFiles...)
+
+		// 创建一个带有超时时间的上下文
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		// 执行编译命令
+		cmd := exec.CommandContext(ctx, "gcc", compileFiles...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		err := cmd.Run()
+		if err != nil {
+			// 如果是由于超时导致的错误，则返回自定义错误
+			if ctx.Err() == context.DeadlineExceeded {
+				return errors.New("编译超时")
+			}
+			return err
+		}
+
+		return nil
+	} else {
+		return errors.New("不支持该语言")
+	}
+}
+
+func (j *JudgeCore) Execute(language int, execFile string, input <-chan string) (chan string, chan error, error) {
 	execFileReader, err := os.Open(execFile)
 	defer execFileReader.Close()
 	if err != nil {
