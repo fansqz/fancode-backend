@@ -1,8 +1,11 @@
 package po
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
-// problem 结构
+// Problem 结构
 type Problem struct {
 	gorm.Model
 	Name        string `gorm:"column:name" json:"name"`
@@ -13,4 +16,8 @@ type Problem struct {
 	Path       string `gorm:"column:path" json:"path"`
 	Difficulty *int   `gorm:"column:difficulty" json:"difficulty"`
 	Enable     *bool  `gorm:"column:enable" json:"enable"`
+	// 支持的语言用,分割
+	Languages   string        `gorm:"column:languages" json:"languages"`
+	LimitTime   time.Duration `gorm:"column:limit_time" json:"limitTime"`
+	LimitMemory int           `gorm:"column:limit_memory" json:"limitMemory"`
 }
