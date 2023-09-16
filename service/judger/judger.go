@@ -2,6 +2,7 @@ package judger
 
 import (
 	"FanCode/constants"
+	"FanCode/utils"
 	"bytes"
 	"context"
 	"errors"
@@ -9,7 +10,17 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
+	"syscall"
 	"time"
+)
+
+const (
+	// cgorup相关参数，用于限制系统资源
+	memoryLimitFile  = "memory.limit_in_bytes"
+	swapLimitFile    = "memory.swappiness"
+	cgroupMemoryRoot = "/sys/fs/cgroup/memory"
 )
 
 type JudgeCore struct {
@@ -20,10 +31,6 @@ func NewJudgeCore() *JudgeCore {
 }
 
 // Compile 编译，编译时在容器外进行编译的
-// language: 语言类型
-// compileFiles: 需要编译文件列表
-// outFilePath: 输出位置
-// timeout: 限制编译时间
 func (j *JudgeCore) Compile(language int, compileFiles []string, outFilePath string, timeout time.Duration) error {
 	if language == constants.ProgramC {
 		compileFiles = append([]string{"-o", outFilePath}, compileFiles...)
@@ -65,6 +72,25 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 		return fmt.Errorf("不支持该语言")
 	}
 
+	// 创建cgroup限制资源
+	uuid := utils.GetUUID()
+	cgroupPath := path.Join(cgroupMemoryRoot, uuid)
+	err := os.MkdirAll(cgroupPath, 0755)
+	if err != nil {
+		return fmt.Errorf("创建cgroup组出错")
+	}
+	// 设置内存限制
+	limitMemory := fmt.Sprintf("%d", executeOption.LimitMemory)
+	err = os.WriteFile(filepath.Join(cgroupPath, memoryLimitFile), []byte(limitMemory), 0644)
+	if err != nil {
+		return fmt.Errorf("cgroup限制内存出错")
+	}
+	// 限制交换空间
+	err = os.WriteFile(filepath.Join(cgroupPath, swapLimitFile), []byte("0"), 0644)
+	if err != nil {
+		return fmt.Errorf("cgroup限制交换空间")
+	}
+
 	go func() {
 		for {
 			select {
@@ -72,13 +98,25 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 				ctx, cancel := context.WithTimeout(context.Background(), executeOption.LimitTime)
 				defer cancel()
 
-				cmd2 := exec.CommandContext(ctx, cmd)
+				if err != nil {
+					executeOption.OutputCh <- ExecuteResult{
+						Executed: false,
+						Error:    err,
+					}
+					break
+				}
+
+				// 创建子进程，并将其加入cgroup
+				cmd2 := exec.CommandContext(ctx, "cgexec", "-g", fmt.Sprintf("memory:"+uuid), cmd)
 				cmd2.Stdin = bytes.NewReader(inputItem)
 				cmd2.Stdout = &bytes.Buffer{}
 				cmd2.Stderr = &bytes.Buffer{}
+				cmd2.SysProcAttr = &syscall.SysProcAttr{
+					Setpgid: true,
+				}
 				result := ExecuteResult{}
 
-				err := cmd2.Start()
+				err = cmd2.Start()
 				if err != nil {
 					result.Executed = false
 					result.Error = err
@@ -93,7 +131,7 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 						result.Executed = false
 						result.Error = ExecuteTimoutErr
 						executeOption.OutputCh <- result
-						err = cmd2.Process.Kill()
+						err = syscall.Kill(-cmd2.Process.Pid, syscall.SIGKILL)
 						if err != nil {
 							log.Println(err)
 						}
@@ -112,6 +150,11 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 					executeOption.OutputCh <- result
 				}
 			case <-executeOption.ExitCh:
+				// 删除cgroup文件
+				err = os.Remove(cgroupPath)
+				if err != nil {
+					log.Println(err)
+				}
 				return
 			}
 		}
