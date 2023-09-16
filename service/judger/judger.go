@@ -6,29 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"time"
 )
 
-const (
-	// 用于创建judge容器的镜像
-	ImageName = "judge-docker-image"
-)
-
 type JudgeCore struct {
-}
-
-// ExecuteOption 判题需要传递参数
-type ExecuteOption struct {
-	ExecFile    string
-	Language    int
-	InputCh     <-chan []byte
-	OutputCh    chan<- []byte
-	ErrOutPutCh chan<- error
-	ExitCh      <-chan string
-	LimitTime   time.Duration
-	LimitMemory int
 }
 
 func NewJudgeCore() *JudgeCore {
@@ -69,15 +53,7 @@ func (j *JudgeCore) Compile(language int, compileFiles []string, outFilePath str
 }
 
 // Execute 运行
-//
-// input:
-// language: 执行程序是何种语言
-// execFile: 执行程序
-// input: 输入管道
-//
-// output: 正常执行结果输出管道，异常执行结果输出管道，异常
 func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
-
 	// 根据扩展名设置执行命令
 	cmd := ""
 	switch executeOption.Language {
@@ -93,25 +69,47 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 		for {
 			select {
 			case inputItem := <-executeOption.InputCh:
-				cmd2 := exec.Command(cmd)
+				ctx, cancel := context.WithTimeout(context.Background(), executeOption.LimitTime)
+				defer cancel()
+
+				cmd2 := exec.CommandContext(ctx, cmd)
 				cmd2.Stdin = bytes.NewReader(inputItem)
 				cmd2.Stdout = &bytes.Buffer{}
 				cmd2.Stderr = &bytes.Buffer{}
+				result := ExecuteResult{}
+
 				err := cmd2.Start()
 				if err != nil {
-					executeOption.ErrOutPutCh <- err
+					result.Executed = false
+					result.Error = err
+					executeOption.OutputCh <- result
 					break
 				}
+
+				// 等待程序执行
 				err = cmd2.Wait()
 				if err != nil {
-					executeOption.ErrOutPutCh <- err
+					if ctx.Err() == context.DeadlineExceeded {
+						result.Executed = false
+						result.Error = ExecuteTimoutErr
+						executeOption.OutputCh <- result
+						err = cmd2.Process.Kill()
+						if err != nil {
+							log.Println(err)
+						}
+					}
 					break
 				}
+
+				// 读取结果
 				if cmd2.Stderr.(*bytes.Buffer).Len() != 0 {
-					executeOption.ErrOutPutCh <- errors.New(string(cmd2.Stderr.(*bytes.Buffer).Bytes()))
-				}
-				if cmd2.Stdout.(*bytes.Buffer).Len() != 0 {
-					executeOption.OutputCh <- cmd2.Stdout.(*bytes.Buffer).Bytes()
+					result.Executed = false
+					result.Error = errors.New(string(cmd2.Stderr.(*bytes.Buffer).Bytes()))
+					executeOption.OutputCh <- result
+				} else if cmd2.Stdout.(*bytes.Buffer).Len() != 0 {
+					result.Executed = true
+					result.Output = cmd2.Stdout.(*bytes.Buffer).Bytes()
+					executeOption.OutputCh <- result
 				}
 			case <-executeOption.ExitCh:
 				return

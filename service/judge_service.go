@@ -134,7 +134,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 	// 执行编译
 	cmd := exec.Command("gcc", "-o", executePath+"/main",
-		localPath+"/main.c", executePath+"/code.c")
+		localPath+"/test_execute.c", executePath+"/code.c")
 	err = cmd.Run()
 	if err != nil {
 		submission.Status = constants.CompileError
@@ -230,7 +230,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	}
 	// 执行编译
 	cmd := exec.Command("gcc", "-o", executePath+"/main",
-		localPath+"/main.c", executePath+"/code.c")
+		localPath+"/test_execute.c", executePath+"/code.c")
 	err = cmd.Run()
 	if err != nil {
 		return &dto.ExecuteResultDto{
