@@ -38,6 +38,7 @@ func TestJudgeCore_Execute(t *testing.T) {
 		LimitTime:   10 * time.Second,
 		LimitMemory: 100 * 1024,
 	}
+
 	err = judgeCore.Execute(executeOption)
 	if err != nil {
 		log.Println(err)

@@ -20,9 +20,9 @@ type ExecuteOption struct {
 
 // ExecuteResult 程序执行结果
 type ExecuteResult struct {
-	Executed      bool   // 判题是否执行成功
-	Error         error  // 异常
-	Output        []byte // 输出结果（如果有）
-	ExecutionTime int64  // 执行时间（以纳秒为单位）
-	MemoryUsed    int64  // 内存使用量（以字节为单位）
+	Executed      bool          // 判题是否执行成功
+	Error         error         // 异常
+	Output        []byte        // 输出结果（如果有）
+	ExecutionTime time.Duration // 执行时间（以纳秒为单位）
+	MemoryUsed    int64         // 内存使用量（以字节为单位）
 }

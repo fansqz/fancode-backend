@@ -121,7 +121,9 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 					Setpgid: true,
 				}
 
+				beginTime := time.Now()
 				err = cmd2.Start()
+
 				if err != nil {
 					result.Executed = false
 					result.Error = err
@@ -141,6 +143,7 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 
 				// 等待程序执行
 				err = cmd2.Wait()
+				endTime := time.Now()
 				if err != nil {
 					result.Executed = false
 					if ctx.Err() == context.DeadlineExceeded {
@@ -159,6 +162,7 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 					executeOption.OutputCh <- result
 				} else if cmd2.Stdout.(*bytes.Buffer).Len() != 0 {
 					result.Executed = true
+					result.ExecutionTime = endTime.Sub(beginTime)
 					result.Output = cmd2.Stdout.(*bytes.Buffer).Bytes()
 					executeOption.OutputCh <- result
 				}
