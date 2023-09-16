@@ -18,6 +18,7 @@ import (
 
 const (
 	// cgorup相关参数，用于限制系统资源
+	procsFile        = "cgroup.procs"
 	memoryLimitFile  = "memory.limit_in_bytes"
 	swapLimitFile    = "memory.swappiness"
 	cgroupMemoryRoot = "/sys/fs/cgroup/memory"
@@ -44,7 +45,7 @@ func (j *JudgeCore) Compile(language int, compileFiles []string, outFilePath str
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 
-		err := cmd.Run()
+		err := cmd.Start()
 		if err != nil {
 			// 如果是由于超时导致的错误，则返回自定义错误
 			if ctx.Err() == context.DeadlineExceeded {
@@ -53,7 +54,8 @@ func (j *JudgeCore) Compile(language int, compileFiles []string, outFilePath str
 			return err
 		}
 
-		return nil
+		err = cmd.Wait()
+		return err
 	} else {
 		return errors.New("不支持该语言")
 	}
@@ -81,12 +83,14 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 	}
 	// 设置内存限制
 	limitMemory := fmt.Sprintf("%d", executeOption.LimitMemory)
-	err = os.WriteFile(filepath.Join(cgroupPath, memoryLimitFile), []byte(limitMemory), 0644)
+	limitMemoryPath := filepath.Join(cgroupPath, memoryLimitFile)
+	err = os.WriteFile(limitMemoryPath, []byte(limitMemory), 0755)
 	if err != nil {
 		return fmt.Errorf("cgroup限制内存出错")
 	}
-	// 限制交换空间
-	err = os.WriteFile(filepath.Join(cgroupPath, swapLimitFile), []byte("0"), 0644)
+	// 限制交换空
+	limitSwapPath := filepath.Join(cgroupPath, swapLimitFile)
+	err = os.WriteFile(limitSwapPath, []byte("0"), 0755)
 	if err != nil {
 		return fmt.Errorf("cgroup限制交换空间")
 	}
@@ -107,16 +111,27 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 				}
 
 				// 创建子进程，并将其加入cgroup
-				cmd2 := exec.CommandContext(ctx, "cgexec", "-g", fmt.Sprintf("memory:"+uuid), cmd)
+				cmd2 := exec.CommandContext(ctx, cmd)
+				result := ExecuteResult{}
+
 				cmd2.Stdin = bytes.NewReader(inputItem)
 				cmd2.Stdout = &bytes.Buffer{}
 				cmd2.Stderr = &bytes.Buffer{}
 				cmd2.SysProcAttr = &syscall.SysProcAttr{
 					Setpgid: true,
 				}
-				result := ExecuteResult{}
 
 				err = cmd2.Start()
+				if err != nil {
+					result.Executed = false
+					result.Error = err
+					executeOption.OutputCh <- result
+					break
+				}
+
+				// 将进程写入cgroup组
+				pPath := path.Join(cgroupPath, procsFile)
+				err = os.WriteFile(pPath, []byte(fmt.Sprintf("%d", cmd2.Process.Pid)), 0755)
 				if err != nil {
 					result.Executed = false
 					result.Error = err
@@ -127,15 +142,13 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 				// 等待程序执行
 				err = cmd2.Wait()
 				if err != nil {
+					result.Executed = false
 					if ctx.Err() == context.DeadlineExceeded {
-						result.Executed = false
 						result.Error = ExecuteTimoutErr
-						executeOption.OutputCh <- result
-						err = syscall.Kill(-cmd2.Process.Pid, syscall.SIGKILL)
-						if err != nil {
-							log.Println(err)
-						}
+					} else {
+						result.Error = err
 					}
+					executeOption.OutputCh <- result
 					break
 				}
 

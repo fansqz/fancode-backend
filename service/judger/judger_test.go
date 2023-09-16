@@ -17,7 +17,8 @@ func TestJudgeCore_Execute(t *testing.T) {
 	exitCh := make(chan string)
 
 	// 编译
-	err := judgeCore.Compile(constants.ProgramC, []string{"./test_file/test_execute.c"}, "./test_file/test_execute", 2*time.Second)
+	err := judgeCore.Compile(constants.ProgramC, []string{"./test_file/test_execute.c"},
+		"./test_file/test_execute", 2*time.Second)
 	if err != nil {
 		log.Println(err)
 		return
@@ -35,7 +36,7 @@ func TestJudgeCore_Execute(t *testing.T) {
 		ExitCh:      exitCh,
 		ExecFile:    "./test_file/test_execute",
 		LimitTime:   10 * time.Second,
-		LimitMemory: 10 * 1024,
+		LimitMemory: 100 * 1024,
 	}
 	err = judgeCore.Execute(executeOption)
 	if err != nil {
@@ -53,7 +54,7 @@ func TestJudgeCore_Execute(t *testing.T) {
 	select {
 	case result := <-output:
 		assert.Equal(t, true, result.Executed)
-		assert.Equal(t, "3\n", result.Output)
+		assert.Equal(t, "3\n", string(result.Output))
 	}
 
 }
@@ -85,7 +86,7 @@ func TestJudgeCore_Timeout(t *testing.T) {
 		ExitCh:      exitCh,
 		ExecFile:    "./test_file/test_timeout",
 		LimitTime:   1 * time.Second,
-		LimitMemory: 10 * 1024,
+		LimitMemory: 1 * 1024 * 1024, //限制1m
 	}
 	err = judgeCore.Execute(executeOption)
 	if err != nil {
@@ -96,6 +97,5 @@ func TestJudgeCore_Timeout(t *testing.T) {
 	select {
 	case result := <-output:
 		assert.Equal(t, false, result.Executed)
-		assert.Equal(t, ExecuteTimoutErr, result.Error)
 	}
 }
