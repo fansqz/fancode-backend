@@ -8,7 +8,7 @@ import (
 type Problem struct {
 	gorm.Model
 	Name        string `gorm:"column:name" json:"name"`
-	Number      string `gorm:"column:number;unique_index" json:"number"`
+	Number      string `gorm:"column:number;type:varchar(255);unique_index:idx_number" json:"number"`
 	Description string `gorm:"column:description;type:text" json:"description"`
 	Title       string `gorm:"column:title" json:"title"`
 	// 存放题目内容的路径

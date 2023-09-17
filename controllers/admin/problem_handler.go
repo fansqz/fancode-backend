@@ -101,16 +101,18 @@ func (q *problemManagementController) getProblem(ctx *gin.Context) (*po.Problem,
 	difficultyStr := ctx.PostForm("difficulty")
 	problem.Languages = ctx.PostForm("languages")
 	var err error
+	var difficlty int
 	// 难度设置
 	if difficultyStr == "" {
 		// 题目难度默认为1
-		*problem.Difficulty = 1
+		difficlty = 1
 	} else {
-		*problem.Difficulty, err = strconv.Atoi(difficultyStr)
+		difficlty, err = strconv.Atoi(difficultyStr)
 		if err != nil {
 			return nil, e.ErrBadRequest
 		}
 	}
+	problem.Difficulty = &difficlty
 	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
 		return nil, e.ErrBadRequest
 	}

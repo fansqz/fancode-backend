@@ -5,6 +5,7 @@ import (
 	"FanCode/models/po"
 	"FanCode/routers"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -32,14 +33,38 @@ func main() {
 	}
 
 	// 模型绑定
-	global.Mysql.AutoMigrate(&po.SysUser{})
-	global.Mysql.AutoMigrate(&po.SysApi{})
-	global.Mysql.AutoMigrate(&po.SysMenu{})
-	global.Mysql.AutoMigrate(&po.SysRole{})
-	global.Mysql.AutoMigrate(&po.SysUser{})
-	global.Mysql.AutoMigrate(&po.Problem{})
-	global.Mysql.AutoMigrate(&po.Submission{})
-	global.Mysql.AutoMigrate(&po.ProblemAttempt{})
+	err := global.Mysql.AutoMigrate(&po.SysUser{})
+	if err != nil {
+		log.Println(err)
+	}
+	err = global.Mysql.AutoMigrate(&po.SysApi{})
+	if err != nil {
+		log.Println(err)
+	}
+	err = global.Mysql.AutoMigrate(&po.SysMenu{})
+	if err != nil {
+		log.Println(err)
+	}
+	err = global.Mysql.AutoMigrate(&po.SysRole{})
+	if err != nil {
+		log.Println(err)
+	}
+	err = global.Mysql.AutoMigrate(&po.SysUser{})
+	if err != nil {
+		log.Println(err)
+	}
+	err = global.Mysql.AutoMigrate(&po.Problem{})
+	if err != nil {
+		log.Println(err)
+	}
+	err = global.Mysql.AutoMigrate(&po.Submission{})
+	if err != nil {
+		log.Println(err)
+	}
+	err = global.Mysql.AutoMigrate(&po.ProblemAttempt{})
+	if err != nil {
+		log.Println(err)
+	}
 	//注册路由
 	routers.Run()
 }
