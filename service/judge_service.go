@@ -115,6 +115,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 	// 提交结果对象
 	submission := &po.Submission{
+		Language:  judgeRequest.Language,
 		Code:      judgeRequest.Code,
 		ProblemID: judgeRequest.ProblemID,
 		UserID:    ctx.Keys["user"].(*dto.UserInfo).ID,
@@ -137,32 +138,28 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
+	defer os.RemoveAll(executePath)
 
 	// 保存题目文件的路径
-	localPath := getLocalPathByPath(problem.Path)
-
-	// 用户代码加上上下文，写到code.c中
-	var code []byte
-	code, err = os.ReadFile(path.Join(localPath, "code.c"))
-	if err != nil {
-		log.Println(err)
-		return nil, e.ErrExecuteFailed
-	}
-	re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
-	code = re.ReplaceAll(code, []byte(judgeRequest.Code))
-	err = os.WriteFile(path.Join(executePath, "code.c"), code, 0644)
-	if err != nil {
-		log.Println(err)
-		return nil, e.ErrExecuteFailed
+	problemPath := getLocalProblemPath(problem.Path)
+	localCodePath, err2 := getLocalCodePathByLocalProblemPath(problemPath, judgeRequest.Language)
+	if err2 != nil {
+		return nil, err2
 	}
 
-	// 编译的文件
-	compileFiles := []string{path.Join(localPath, "main.c"), path.Join(executePath, "code.c")}
-	// 输出的执行文件路劲
+	// 保存用户代码到用户的执行路径，并获取编译文件列表
+	var compileFiles []string
+	compileFiles, err2 = j.saveUserCode(judgeRequest.Language,
+		judgeRequest.CodeType, judgeRequest.Code, localCodePath, executePath)
+	if err2 != nil {
+		return nil, err2
+	}
+
+	// 输出执行文件路劲
 	executeFilePath := path.Join(executePath, "main")
 
 	// 执行编译
-	err = j.judgeCore.Compile(constants.ProgramC, compileFiles, executeFilePath, LimitCompileTime)
+	err = j.judgeCore.Compile(judgeRequest.Language, compileFiles, executeFilePath, LimitCompileTime)
 	if err != nil {
 		submission.Status = constants.CompileError
 		submission.ErrorMessage = err.Error()
@@ -172,18 +169,17 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 
 	// 运行
-	files, err2 := os.ReadDir(path.Join(localPath, "io"))
-	if err2 != nil {
-		submission.Status = constants.RuntimeError
-		submission.ErrorMessage = err2.Error()
-		_ = dao.InsertSubmission(global.Mysql, submission)
-		submission.Status = constants.RuntimeError
-		submission.ErrorMessage = err2.Error()
-		return submission, nil
+	caseFilePath := getCasePathByLocalProblemPath(problemPath)
+	files, err3 := os.ReadDir(caseFilePath)
+	if err3 != nil {
+		return nil, e.ErrServer
 	}
 	inputCh := make(chan []byte)
 	outputCh := make(chan judger.ExecuteResult)
 	exitCh := make(chan string)
+	defer func() {
+		exitCh <- "exit"
+	}()
 	executeOption := &judger.ExecuteOption{
 		ExecFile:    executeFilePath,
 		Language:    constants.ProgramC,
@@ -206,9 +202,10 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 			}
 
 			// 输入数据
-			input, err3 := os.ReadFile(path.Join(localPath, "io", fileInfo.Name()))
-			if err3 != nil {
-				log.Println(err3)
+			var input []byte
+			input, err = os.ReadFile(path.Join(caseFilePath, fileInfo.Name()))
+			if err != nil {
+				log.Println(err)
 				return nil, e.ErrExecuteFailed
 			}
 			inputCh <- input
@@ -224,10 +221,11 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 			}
 
 			// 读取.out文件
-			outFilePath := path.Join(localPath, "io", strings.ReplaceAll(fileInfo.Name(), ".in", ".out"))
-			outFileContent, err4 := os.ReadFile(outFilePath)
-			if err4 != nil {
-				log.Println(err4)
+			outFilePath := path.Join(caseFilePath, strings.ReplaceAll(fileInfo.Name(), ".in", ".out"))
+			var outFileContent []byte
+			outFileContent, err = os.ReadFile(outFilePath)
+			if err != nil {
+				log.Println(err)
 				return nil, e.ErrExecuteFailed
 			}
 
@@ -244,6 +242,55 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	submission.Status = constants.Accepted
 	submission.TimeUsed = endTime.Sub(beginTime)
 	return submission, nil
+}
+
+// saveUserCode
+// 保存用户代码到用户的executePath，并返回需要编译的文件列表
+func (j *judgeService) saveUserCode(language string, codeType string, codeStr string, localCodePath string, executePath string) ([]string, *e.Error) {
+	var compileFiles []string
+	var mainFile string
+	var solutionFile string
+	var err *e.Error
+	var err2 error
+	if codeType == constants.CodeTypeCore {
+
+		mainFile, err = getMainFileNameByLanguage(language)
+		if err != nil {
+			return nil, err
+		}
+		solutionFile, err = getSolutionFileNameByLanguage(language)
+		if err != nil {
+			return nil, err
+		}
+
+		// 用户代码加上上下文，写到code.c中
+		var code []byte
+		code, err2 = os.ReadFile(path.Join(localCodePath, solutionFile))
+		if err2 != nil {
+			return nil, e.ErrServer
+		}
+		re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
+		code = re.ReplaceAll(code, []byte(codeStr))
+		err2 = os.WriteFile(path.Join(executePath, solutionFile), code, 0644)
+		if err2 != nil {
+			return nil, e.ErrServer
+		}
+		// 将main文件和solution文件一起编译
+		compileFiles = []string{path.Join(localCodePath, mainFile), path.Join(executePath, solutionFile)}
+	} else {
+		// acm
+		mainFile, err = getMainFileNameByLanguage(language)
+		if err != nil {
+			return nil, err
+		}
+		err2 = os.WriteFile(path.Join(executePath, mainFile), []byte(codeStr), 0644)
+		if err2 != nil {
+			return nil, e.ErrServer
+		}
+		// 将main文件进行编译即可
+		compileFiles = []string{path.Join(executePath, mainFile)}
+	}
+	return compileFiles, nil
 }
 
 func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error) {
@@ -265,29 +312,23 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
+	defer os.RemoveAll(executePath)
 
 	// 保存题目文件的目录
-	localPath := getLocalPathByPath(problem.Path)
-
-	// 读取用户输入文件
-	var code []byte
-	code, err = os.ReadFile(path.Join(localPath, "code.c"))
-	if err != nil {
-		log.Println(err)
-		return nil, e.ErrExecuteFailed
-	}
-	re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
-	code = re.ReplaceAll(code, []byte(judgeRequest.Code))
-
-	// 使用空格替换所有非单词字符
-	err = os.WriteFile(path.Join(executePath, "code.c"), code, 0644)
-	if err != nil {
-		log.Println(err)
-		return nil, e.ErrExecuteFailed
+	problemPath := getLocalProblemPath(problem.Path)
+	localCodePath, err2 := getLocalCodePathByLocalProblemPath(problemPath, judgeRequest.Language)
+	if err2 != nil {
+		return nil, err2
 	}
 
-	// 编译的文件
-	compileFiles := []string{path.Join(localPath, "main.c"), path.Join(executePath, "code.c")}
+	// 保存用户代码到用户的执行路径，并获取编译文件列表
+	var compileFiles []string
+	compileFiles, err2 = j.saveUserCode(judgeRequest.Language,
+		judgeRequest.CodeType, judgeRequest.Code, localCodePath, executePath)
+	if err2 != nil {
+		return nil, err2
+	}
+
 	// 输出的执行文件路劲
 	executeFilePath := path.Join(executePath, "main")
 
@@ -305,6 +346,9 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	inputCh := make(chan []byte)
 	outputCh := make(chan judger.ExecuteResult)
 	exitCh := make(chan string)
+	defer func() {
+		exitCh <- "exit"
+	}()
 	executeOption := &judger.ExecuteOption{
 		ExecFile:    executeFilePath,
 		Language:    constants.ProgramC,
@@ -356,12 +400,84 @@ func checkAndDownloadQuestionFile(questionPath string) error {
 	return nil
 }
 
-func getLocalPathByPath(p string) string {
+// 根据题目的相对路径，获取题目的本地路径
+func getLocalProblemPath(p string) string {
 	return path.Join(global.Conf.FilePathConfig.ProblemFileDir, p)
 }
 
+// 给用户的此次运行生成一个临时目录
 func getExecutePath() string {
 	uuid := utils.GetUUID()
 	executePath := path.Join(global.Conf.FilePathConfig.TempDir, uuid)
 	return executePath
+}
+
+const (
+	/* 一道题目的结构如下：
+	// problemFile:
+	//	c     //保存c代码
+	//	java // 保存java代码
+	//	go    // 保存go代码
+	//	io    //保存用例
+	*/
+	CCodePath    = "c"
+	JavaCodePath = "java"
+	GoCodePath   = "go"
+	CaseFilePath = "io"
+)
+
+const (
+	CMainFile        = "main.c"
+	CSolutionFile    = "solution.c"
+	JavaMainFile     = "Main.java"
+	JavaSolutionFile = "Solution.java"
+	GoMainFile       = "main.go"
+	GoSolutionFile   = "solution.go"
+)
+
+// 根据题目的路径获取题目中编程语言的路径
+func getLocalCodePathByLocalProblemPath(localProblemPath string, language string) (string, *e.Error) {
+	switch language {
+	case constants.ProgramC:
+		return path.Join(localProblemPath, CCodePath), nil
+	case constants.ProgramJava:
+		return path.Join(localProblemPath, JavaCodePath), nil
+	case constants.ProgramGo:
+		return path.Join(localProblemPath, GoCodePath), nil
+	default:
+		return "", e.ErrLanguageNotSupported
+	}
+}
+
+// 根据编程语言获取该编程语言的Main文件名称
+func getMainFileNameByLanguage(language string) (string, *e.Error) {
+	switch language {
+	case constants.ProgramC:
+		return CMainFile, nil
+	case constants.ProgramJava:
+		return JavaMainFile, nil
+	case constants.ProgramGo:
+		return GoMainFile, nil
+	default:
+		return "", e.ErrLanguageNotSupported
+	}
+}
+
+// 根据编程语言获取该编程语言的Solution文件名称
+func getSolutionFileNameByLanguage(language string) (string, *e.Error) {
+	switch language {
+	case constants.ProgramC:
+		return CSolutionFile, nil
+	case constants.ProgramJava:
+		return JavaSolutionFile, nil
+	case constants.ProgramGo:
+		return GoSolutionFile, nil
+	default:
+		return "", e.ErrLanguageNotSupported
+	}
+}
+
+// 根据题目的路径获取题目中用例的路径
+func getCasePathByLocalProblemPath(localProblemPath string) string {
+	return path.Join(localProblemPath, CaseFilePath)
 }

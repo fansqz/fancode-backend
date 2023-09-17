@@ -74,12 +74,14 @@ const (
 	CodeSubmitFailed = 12000 + iota //题目编号已存在
 	CodeExecuteFailed
 	CodeCompileFailed
+	CodeLanguageNotSupported
 )
 
 var (
-	ErrSubmitFailed  = NewError(CodeSubmitFailed, "Submit error", ErrTypeBus)
-	ErrExecuteFailed = NewError(CodeExecuteFailed, "Execute error", ErrTypeServer)
-	ErrCompileFailed = NewError(CodeCompileFailed, "Compilation error", ErrTypeBus)
+	ErrSubmitFailed         = NewError(CodeSubmitFailed, "Submit error", ErrTypeBus)
+	ErrExecuteFailed        = NewError(CodeExecuteFailed, "Execute error", ErrTypeServer)
+	ErrCompileFailed        = NewError(CodeCompileFailed, "Compilation error", ErrTypeBus)
+	ErrLanguageNotSupported = NewError(CodeLanguageNotSupported, "This language is not supported", ErrTypeBus)
 )
 
 /************api相关错误**************/

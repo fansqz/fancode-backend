@@ -9,6 +9,8 @@ import (
 type SubmitRequestDto struct {
 	ProblemID uint
 	Code      string
+	Language  string
+	CodeType  string
 }
 
 type SubmitResultDto struct {
@@ -42,6 +44,8 @@ type ExecuteRequestDto struct {
 	ProblemID uint   // 题目id
 	Code      string // 代码
 	Input     string // 自测用例
+	Language  string // 编程语言
+	CodeType  string // acm或核心代码
 }
 
 // ExecuteResultDto 执行的响应结果

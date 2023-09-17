@@ -32,33 +32,46 @@ func NewJudgeCore() *JudgeCore {
 }
 
 // Compile 编译，编译时在容器外进行编译的
-func (j *JudgeCore) Compile(language int, compileFiles []string, outFilePath string, timeout time.Duration) error {
-	if language == constants.ProgramC {
+func (j *JudgeCore) Compile(language string, compileFiles []string, outFilePath string, timeout time.Duration) error {
+	var cmd *exec.Cmd
+	var ctx context.Context
+	switch language {
+	case constants.ProgramC:
 		compileFiles = append([]string{"-o", outFilePath}, compileFiles...)
-
 		// 创建一个带有超时时间的上下文
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
 		defer cancel()
-
-		// 执行编译命令
-		cmd := exec.CommandContext(ctx, "gcc", compileFiles...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		err := cmd.Start()
-		if err != nil {
-			// 如果是由于超时导致的错误，则返回自定义错误
-			if ctx.Err() == context.DeadlineExceeded {
-				return errors.New("编译超时")
-			}
-			return err
-		}
-
-		err = cmd.Wait()
-		return err
-	} else {
+		cmd = exec.CommandContext(ctx, "gcc", compileFiles...)
+	case constants.ProgramJava:
+		compileFiles = append([]string{"-d", outFilePath}, compileFiles...)
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		cmd = exec.CommandContext(ctx, "javac", compileFiles...)
+	case constants.ProgramGo:
+		compileFiles = append([]string{"build", "-o", outFilePath}, compileFiles...)
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		cmd = exec.CommandContext(ctx, "go", compileFiles...)
+	default:
 		return errors.New("不支持该语言")
 	}
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Start()
+	if err != nil {
+		// 如果是由于超时导致的错误，则返回自定义错误
+		if ctx.Err() == context.DeadlineExceeded {
+			return errors.New("编译超时")
+		}
+		return err
+	}
+
+	err = cmd.Wait()
+	return err
 }
 
 // Execute 运行
@@ -71,6 +84,8 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 		cmd = fmt.Sprintf("%s", executeOption.ExecFile)
 	case constants.ProgramJava:
 		cmd = fmt.Sprintf("java -jar %s", executeOption.ExecFile)
+	case constants.ProgramGo:
+		cmd = fmt.Sprintf("%s", executeOption.ExecFile)
 	default:
 		return fmt.Errorf("不支持该语言")
 	}

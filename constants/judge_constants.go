@@ -12,3 +12,14 @@ const (
 	// RuntimeError 运行出错
 	RuntimeError
 )
+
+const (
+	ProgramC    = "c"
+	ProgramJava = "java"
+	ProgramGo   = "go"
+)
+
+const (
+	CodeTypeAcm  = "acm"
+	CodeTypeCore = "core_code"
+)

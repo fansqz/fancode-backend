@@ -5,7 +5,7 @@ import "time"
 // ExecuteOption 程序请求参数
 type ExecuteOption struct {
 	ExecFile string
-	Language int
+	Language string
 
 	// 用例输入管道
 	InputCh <-chan []byte
