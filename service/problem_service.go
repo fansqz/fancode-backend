@@ -20,8 +20,8 @@ import (
 )
 
 type ProblemService interface {
-	// CheckProblemCode 检测题目编码
-	CheckProblemCode(problemCode string) (bool, *e.Error)
+	// CheckProblemNumber 检测题目编码
+	CheckProblemNumber(problemCode string) (bool, *e.Error)
 	// InsertProblem 添加题目
 	InsertProblem(problem *po.Problem) (uint, *e.Error)
 	// UpdateProblem 更新题目
@@ -58,7 +58,7 @@ func NewProblemService() ProblemService {
 	return &problemService{}
 }
 
-func (q *problemService) CheckProblemCode(problemCode string) (bool, *e.Error) {
+func (q *problemService) CheckProblemNumber(problemCode string) (bool, *e.Error) {
 	b, err := dao.CheckProblemNumberExists(global.Mysql, problemCode)
 	if err != nil {
 		return !b, e.ErrProblemCodeCheckFailed
@@ -151,7 +151,7 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 			return e.ErrProblemDeleteFailed
 		}
 		// 删除本地文件
-		localPath := getLocalPathByPath(problem.Path)
+		localPath := getLocalProblemPath(problem.Path)
 		err = utils.CheckAndDeletePath(localPath)
 		if err != nil {
 			log.Println(err)
@@ -259,7 +259,7 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 		log.Println(err)
 	}
 	// 删除本地题目的文件
-	localPath := getLocalPathByPath(path)
+	localPath := getLocalProblemPath(path)
 	err = utils.CheckAndDeletePath(localPath)
 	if err != nil {
 		_ = utils.CheckAndDeletePath(localPath)
@@ -330,7 +330,7 @@ func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Err
 		return nil, e.ErrProblemGetFailed
 	}
 	// 读取文件,仅会读取一个层级的文件
-	localPath := getLocalPathByPath(problem.Path)
+	localPath := getLocalProblemPath(problem.Path)
 	files, err2 := os.ReadDir(localPath)
 	if err2 != nil {
 		return nil, e.ErrExecuteFailed
@@ -404,7 +404,7 @@ func (q *problemService) UpdateProblemField(id uint, field string, value string)
 }
 
 func getCaseFolderByPath(path string) string {
-	localpath := getLocalPathByPath(path)
+	localpath := getLocalProblemPath(path)
 	return localpath + "/io"
 }
 

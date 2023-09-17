@@ -12,7 +12,7 @@ import (
 // ProblemController
 // @Description: 题目管理相关功能
 type ProblemManagementController interface {
-	CheckProblemCode(ctx *gin.Context)
+	CheckProblemNumber(ctx *gin.Context)
 	InsertProblem(ctx *gin.Context)
 	DeleteProblem(ctx *gin.Context)
 	GetProblemList(ctx *gin.Context)
@@ -38,10 +38,10 @@ func NewProblemManagementController() ProblemManagementController {
 	}
 }
 
-func (q *problemManagementController) CheckProblemCode(ctx *gin.Context) {
+func (q *problemManagementController) CheckProblemNumber(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	code := ctx.Param("code")
-	b, err := q.problemService.CheckProblemCode(code)
+	code := ctx.Param("number")
+	b, err := q.problemService.CheckProblemNumber(code)
 	if err != nil {
 		result.Error(err)
 	}

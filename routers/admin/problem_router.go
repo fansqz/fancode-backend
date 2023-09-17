@@ -10,7 +10,7 @@ func SetupProblemRoutes(r *gin.Engine) {
 	problem := r.Group("/manage/problem")
 	{
 		problemController := admin.NewProblemManagementController()
-		problem.GET("/code/check/:code", problemController.CheckProblemCode)
+		problem.GET("/code/check/:number", problemController.CheckProblemNumber)
 		problem.POST("", problemController.InsertProblem)
 		problem.PUT("", problemController.UpdateProblem)
 		problem.DELETE("/:id", problemController.DeleteProblem)
