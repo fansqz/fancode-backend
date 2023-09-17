@@ -17,10 +17,10 @@ type ProblemDtoForGet struct {
 	Path        string `json:"path"`
 	Difficulty  *int   `json:"difficulty"`
 	// 支持的语言用,分割
-	Languages   []string      `json:"languages"`
-	LimitTime   time.Duration `json:"limitTime"`
-	LimitMemory int           `json:"limitMemory"`
-	Enable      *bool         `json:"enable"`
+	Languages   []string       `json:"languages"`
+	LimitTime   *time.Duration `json:"limitTime"`
+	LimitMemory *int           `json:"limitMemory"`
+	Enable      *bool          `json:"enable"`
 }
 
 func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
