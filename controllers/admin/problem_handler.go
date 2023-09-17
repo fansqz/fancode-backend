@@ -7,7 +7,6 @@ import (
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
 	"strconv"
-	"time"
 )
 
 // ProblemController
@@ -101,8 +100,6 @@ func (q *problemManagementController) getProblem(ctx *gin.Context) (*po.Problem,
 	problem.Title = ctx.PostForm("title")
 	difficultyStr := ctx.PostForm("difficulty")
 	problem.Languages = ctx.PostForm("languages")
-	limitTimeStr := ctx.PostForm("limitTime")
-	limitMemoryStr := ctx.PostForm("limitMemory")
 	var err error
 	// 难度设置
 	if difficultyStr == "" {
@@ -116,25 +113,6 @@ func (q *problemManagementController) getProblem(ctx *gin.Context) (*po.Problem,
 	}
 	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
 		return nil, e.ErrBadRequest
-	}
-	// 时间限制设置
-	if limitTimeStr == "" {
-		*problem.LimitTime = 20 * time.Second
-	} else {
-		limitTime2, err2 := strconv.Atoi(limitTimeStr)
-		*problem.LimitTime = time.Duration(limitTime2)
-		if err2 != nil {
-			return nil, e.ErrBadRequest
-		}
-	}
-	// 空间限制设置
-	if limitMemoryStr == "" {
-		*problem.LimitMemory = 50 * 1024 * 1024
-	} else {
-		*problem.LimitMemory, err = strconv.Atoi(limitMemoryStr)
-		if err != nil {
-			return nil, e.ErrBadRequest
-		}
 	}
 	enableStr := ctx.PostForm("enable")
 	var enable bool

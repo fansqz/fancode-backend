@@ -4,7 +4,6 @@ import (
 	"FanCode/models/po"
 	"FanCode/utils"
 	"strings"
-	"time"
 )
 
 // ProblemDtoForGet 获取题目详细信息
@@ -17,10 +16,8 @@ type ProblemDtoForGet struct {
 	Path        string `json:"path"`
 	Difficulty  *int   `json:"difficulty"`
 	// 支持的语言用,分割
-	Languages   []string       `json:"languages"`
-	LimitTime   *time.Duration `json:"limitTime"`
-	LimitMemory *int           `json:"limitMemory"`
-	Enable      *bool          `json:"enable"`
+	Languages []string `json:"languages"`
+	Enable    *bool    `json:"enable"`
 }
 
 func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
@@ -34,8 +31,6 @@ func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
 		Path:        problem.Path,
 		Difficulty:  problem.Difficulty,
 		Languages:   languages,
-		LimitTime:   problem.LimitTime,
-		LimitMemory: problem.LimitMemory,
 		Enable:      problem.Enable,
 	}
 	return response
