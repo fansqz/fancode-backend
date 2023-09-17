@@ -7,6 +7,7 @@ import (
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
 	"strconv"
+	"time"
 )
 
 // ProblemController
@@ -54,26 +55,9 @@ func (q *problemManagementController) CheckProblemNumber(ctx *gin.Context) {
 
 func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problem := &po.Problem{}
-	problem.Number = ctx.PostForm("number")
-	problem.Name = ctx.PostForm("name")
-	problem.Description = ctx.PostForm("description")
-	problem.Title = ctx.PostForm("title")
-	difficultyStr := ctx.PostForm("difficulty")
-	var err error
-	if difficultyStr == "" {
-		// 题目难度默认为1
-		*problem.Difficulty = 1
-	} else {
-		*problem.Difficulty, err = strconv.Atoi(difficultyStr)
-	}
+	problem, err := q.getProblem(ctx)
 	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
-		result.SimpleErrorMessage("题目难度必须在1-5之间")
-		return
+		result.Error(err)
 	}
 	//插入
 	pID, err2 := q.problemService.InsertProblem(problem)
@@ -86,42 +70,77 @@ func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 
 func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
+	problem, err2 := q.getProblem(ctx)
+	if err2 != nil {
+		result.Error(err2)
+		return
+	}
+	// 读取id
 	problemIDString := ctx.PostForm("id")
 	problemID, err := strconv.Atoi(problemIDString)
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	problem := &po.Problem{}
 	problem.ID = uint(problemID)
-	problem.Number = ctx.PostForm("number")
-	problem.Name = ctx.PostForm("name")
-	problem.Description = ctx.PostForm("description")
-	problem.Title = ctx.PostForm("title")
-	problem.Path = ctx.PostForm("path")
-	difficultyStr := ctx.PostForm("difficulty")
-	var difficulty int
-	difficulty, err = strconv.Atoi(difficultyStr)
-	problem.Difficulty = &difficulty
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
-		result.SimpleErrorMessage("题目难度必须在1-5之间")
-		return
-	}
-	enableStr := ctx.PostForm("enable")
-	var enable bool
-	enable = enableStr == "true"
-	problem.Enable = &(enable)
+	// 读取文件
 	file, _ := ctx.FormFile("file")
-	err2 := q.problemService.UpdateProblem(problem, ctx, file)
+	err2 = q.problemService.UpdateProblem(problem, ctx, file)
 	if err2 != nil {
 		result.Error(err2)
 		return
 	}
 	result.SuccessData("修改成功")
+}
+
+func (q *problemManagementController) getProblem(ctx *gin.Context) (*po.Problem, *e.Error) {
+	problem := &po.Problem{}
+	problem.Number = ctx.PostForm("number")
+	problem.Name = ctx.PostForm("name")
+	problem.Description = ctx.PostForm("description")
+	problem.Title = ctx.PostForm("title")
+	difficultyStr := ctx.PostForm("difficulty")
+	problem.Languages = ctx.PostForm("languages")
+	limitTimeStr := ctx.PostForm("limitTime")
+	limitMemoryStr := ctx.PostForm("limitMemory")
+	var err error
+	// 难度设置
+	if difficultyStr == "" {
+		// 题目难度默认为1
+		*problem.Difficulty = 1
+	} else {
+		*problem.Difficulty, err = strconv.Atoi(difficultyStr)
+		if err != nil {
+			return nil, e.ErrBadRequest
+		}
+	}
+	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
+		return nil, e.ErrBadRequest
+	}
+	// 时间限制设置
+	if limitTimeStr == "" {
+		*problem.LimitTime = 20 * time.Second
+	} else {
+		limitTime2, err2 := strconv.Atoi(limitTimeStr)
+		*problem.LimitTime = time.Duration(limitTime2)
+		if err2 != nil {
+			return nil, e.ErrBadRequest
+		}
+	}
+	// 空间限制设置
+	if limitMemoryStr == "" {
+		*problem.LimitMemory = 50 * 1024 * 1024
+	} else {
+		*problem.LimitMemory, err = strconv.Atoi(limitMemoryStr)
+		if err != nil {
+			return nil, e.ErrBadRequest
+		}
+	}
+	enableStr := ctx.PostForm("enable")
+	var enable bool
+	enable = enableStr == "true"
+	problem.Enable = &(enable)
+	return problem, nil
 }
 
 func (q *problemManagementController) DeleteProblem(ctx *gin.Context) {

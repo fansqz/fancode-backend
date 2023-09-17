@@ -42,12 +42,15 @@ func GetProblemByID(db *gorm.DB, problemID uint) (*po.Problem, error) {
 // 不修改path
 func UpdateProblem(db *gorm.DB, problem *po.Problem) error {
 	return db.Model(&po.Problem{}).Where("id = ?", problem.ID).Updates(map[string]interface{}{
-		"number":      problem.Number,
-		"name":        problem.Name,
-		"description": problem.Description,
-		"difficulty":  problem.Difficulty,
-		"title":       problem.Title,
-		"enable":      problem.Enable,
+		"number":       problem.Number,
+		"name":         problem.Name,
+		"description":  problem.Description,
+		"difficulty":   problem.Difficulty,
+		"title":        problem.Title,
+		"languages":    problem.Languages,
+		"limit_time":   problem.LimitTime,
+		"limit_memory": problem.LimitMemory,
+		"enable":       problem.Enable,
 	}).Error
 }
 
