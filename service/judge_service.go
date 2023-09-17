@@ -143,23 +143,23 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 	// 用户代码加上上下文，写到code.c中
 	var code []byte
-	code, err = os.ReadFile(localPath + "/code.c")
+	code, err = os.ReadFile(path.Join(localPath, "code.c"))
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
 	re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
 	code = re.ReplaceAll(code, []byte(judgeRequest.Code))
-	err = os.WriteFile(executePath+"/code.c", code, 0644)
+	err = os.WriteFile(path.Join(executePath, "code.c"), code, 0644)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
 
 	// 编译的文件
-	compileFiles := []string{localPath + "/main.c", executePath + "/code.c"}
+	compileFiles := []string{path.Join(localPath, "main.c"), path.Join(executePath, "code.c")}
 	// 输出的执行文件路劲
-	executeFilePath := executePath + "/main"
+	executeFilePath := path.Join(executePath, "main")
 
 	// 执行编译
 	err = j.judgeCore.Compile(constants.ProgramC, compileFiles, executeFilePath, LimitCompileTime)
@@ -206,7 +206,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 			}
 
 			// 输入数据
-			input, err3 := os.ReadFile(localPath + "/" + fileInfo.Name())
+			input, err3 := os.ReadFile(path.Join(localPath, "io", fileInfo.Name()))
 			if err3 != nil {
 				log.Println(err3)
 				return nil, e.ErrExecuteFailed
@@ -224,7 +224,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 			}
 
 			// 读取.out文件
-			outFilePath := localPath + "/" + strings.ReplaceAll(fileInfo.Name(), ".in", ".out")
+			outFilePath := path.Join(localPath, "io", strings.ReplaceAll(fileInfo.Name(), ".in", ".out"))
 			outFileContent, err4 := os.ReadFile(outFilePath)
 			if err4 != nil {
 				log.Println(err4)
@@ -271,7 +271,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 
 	// 读取用户输入文件
 	var code []byte
-	code, err = os.ReadFile(localPath + "/code.c")
+	code, err = os.ReadFile(path.Join(localPath, "code.c"))
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
@@ -280,16 +280,16 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	code = re.ReplaceAll(code, []byte(judgeRequest.Code))
 
 	// 使用空格替换所有非单词字符
-	err = os.WriteFile(executePath+"/code.c", code, 0644)
+	err = os.WriteFile(path.Join(executePath, "code.c"), code, 0644)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
 
 	// 编译的文件
-	compileFiles := []string{localPath + "/main.c", executePath + "/code.c"}
+	compileFiles := []string{path.Join(localPath, "main.c"), path.Join(executePath, "code.c")}
 	// 输出的执行文件路劲
-	executeFilePath := executePath + "/main"
+	executeFilePath := path.Join(executePath, "main")
 
 	// 执行编译
 	err = j.judgeCore.Compile(constants.ProgramC, compileFiles, executeFilePath, LimitCompileTime)
@@ -344,7 +344,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 }
 
 func checkAndDownloadQuestionFile(questionPath string) error {
-	localPath := global.Conf.FilePathConfig.ProblemFileDir + "/" + questionPath
+	localPath := path.Join(global.Conf.FilePathConfig.ProblemFileDir, questionPath)
 	if !utils.CheckFolderExists(localPath) {
 		// 拉取文件
 		store := file_store.NewProblemCOS()
@@ -356,12 +356,12 @@ func checkAndDownloadQuestionFile(questionPath string) error {
 	return nil
 }
 
-func getLocalPathByPath(path string) string {
-	return global.Conf.FilePathConfig.ProblemFileDir + "/" + path
+func getLocalPathByPath(p string) string {
+	return path.Join(global.Conf.FilePathConfig.ProblemFileDir, p)
 }
 
 func getExecutePath() string {
 	uuid := utils.GetUUID()
-	executePath := global.Conf.FilePathConfig.TempDir + "/" + uuid
+	executePath := path.Join(global.Conf.FilePathConfig.TempDir, uuid)
 	return executePath
 }
