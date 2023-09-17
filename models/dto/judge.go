@@ -18,8 +18,11 @@ type SubmitResultDto struct {
 	// 预期输出
 	ExpectedOutput string `json:"expectedOutput"`
 	// 用户输出
-	UserOutput string     `json:"userOutput"`
-	Timestamp  *time.Time `json:"timestamp"`
+	UserOutput string `json:"userOutput"`
+	// 判题使用时间
+	TimeUsed time.Duration `json:"timeUsed"`
+	// 内存使用量（以字节为单位）
+	MemoryUsed int64 `json:"memoryUsed"`
 }
 
 func NewSubmitResultDto(submission *po.Submission) *SubmitResultDto {
@@ -29,6 +32,8 @@ func NewSubmitResultDto(submission *po.Submission) *SubmitResultDto {
 		ErrorMessage:   submission.ErrorMessage,
 		ExpectedOutput: submission.ExpectedOutput,
 		UserOutput:     submission.UserOutput,
+		TimeUsed:       submission.TimeUsed,
+		MemoryUsed:     submission.MemoryUsed,
 	}
 }
 
@@ -41,9 +46,8 @@ type ExecuteRequestDto struct {
 
 // ExecuteResultDto 执行的响应结果
 type ExecuteResultDto struct {
-	ProblemID    uint       `json:"problemID"`
-	Status       uint       `json:"status"`
-	ErrorMessage string     `json:"errorMessage"`
-	UserOutput   string     `json:"userOutput"` //用户输出
-	Timestamp    *time.Time `json:"timestamp"`
+	ProblemID    uint   `json:"problemID"`
+	Status       uint   `json:"status"`
+	ErrorMessage string `json:"errorMessage"`
+	UserOutput   string `json:"userOutput"` //用户输出
 }

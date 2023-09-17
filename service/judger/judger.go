@@ -62,6 +62,7 @@ func (j *JudgeCore) Compile(language int, compileFiles []string, outFilePath str
 }
 
 // Execute 运行
+// todo: 计算空间的使用
 func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 	// 根据扩展名设置执行命令
 	cmd := ""
@@ -162,7 +163,7 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 					executeOption.OutputCh <- result
 				} else if cmd2.Stdout.(*bytes.Buffer).Len() != 0 {
 					result.Executed = true
-					result.ExecutionTime = endTime.Sub(beginTime)
+					result.TimeUsed = endTime.Sub(beginTime)
 					result.Output = cmd2.Stdout.(*bytes.Buffer).Bytes()
 					executeOption.OutputCh <- result
 				}

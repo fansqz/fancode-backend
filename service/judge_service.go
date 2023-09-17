@@ -8,14 +8,24 @@ import (
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
+	"FanCode/service/judger"
 	"FanCode/utils"
 	"bytes"
 	"github.com/gin-gonic/gin"
 	"log"
 	"os"
-	"os/exec"
+	"path"
 	"regexp"
 	"strings"
+	time "time"
+)
+
+const (
+	// 限制时间和内存
+	LimitExecuteTime   = 15 * time.Second
+	LimitExecuteMemory = 20 * 1024 * 1024
+	// 限制编译时间
+	LimitCompileTime = 10 * time.Second
 )
 
 type JudgeService interface {
@@ -26,25 +36,34 @@ type JudgeService interface {
 }
 
 type judgeService struct {
+	judgeCore *judger.JudgeCore
 }
 
 func NewJudgeService() JudgeService {
-	return &judgeService{}
+	return &judgeService{
+		judgeCore: judger.NewJudgeCore(),
+	}
 }
 
 func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*dto.SubmitResultDto, *e.Error) {
+	// 提交获取结果
 	submission, err := j.submit(ctx, judgeRequest)
 	if err != nil {
 		return nil, err
 	}
+
+	// 插入提交数据
 	tx := global.Mysql.Begin()
 	_ = dao.InsertSubmission(tx, submission)
+
+	// 检测用户是否保存了attempt
 	userId := ctx.Keys["user"].(*dto.UserInfo).ID
 	problemAttempt, err2 := dao.GetProblemAttempt(tx, userId, judgeRequest.ProblemID)
 	if err2 != nil {
 		log.Println(err2)
 		return nil, e.ErrSubmitFailed
 	}
+
 	// 如果本身就没有记录，就插入
 	if problemAttempt.ID == 0 {
 		problemAttempt = &po.ProblemAttempt{
@@ -93,14 +112,15 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 }
 
 func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*po.Submission, *e.Error) {
-	uuid := utils.GetUUID()
+
 	// 提交结果对象
 	submission := &po.Submission{
 		Code:      judgeRequest.Code,
 		ProblemID: judgeRequest.ProblemID,
 		UserID:    ctx.Keys["user"].(*dto.UserInfo).ID,
 	}
-	//读取题目到本地，并编译
+
+	//读取题目到本地
 	problem, err := dao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
 	if err != nil {
 		return nil, e.ErrExecuteFailed
@@ -109,15 +129,19 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
-	// executePath
-	executePath := global.Conf.FilePathConfig.TempDir + "/" + uuid
+
+	// executePath 执行路径，用户的临时文件
+	executePath := getExecutePath()
 	err = os.MkdirAll(executePath, os.ModePerm)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
-	// 保存code文件
-	localPath := global.Conf.FilePathConfig.ProblemFileDir + "/" + problem.Path
+
+	// 保存题目文件的路径
+	localPath := getLocalPathByPath(problem.Path)
+
+	// 用户代码加上上下文，写到code.c中
 	var code []byte
 	code, err = os.ReadFile(localPath + "/code.c")
 	if err != nil {
@@ -126,16 +150,19 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 	re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
 	code = re.ReplaceAll(code, []byte(judgeRequest.Code))
-	// 使用空格替换所有非单词字符
 	err = os.WriteFile(executePath+"/code.c", code, 0644)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
+
+	// 编译的文件
+	compileFiles := []string{localPath + "/main.c", executePath + "/code.c"}
+	// 输出的执行文件路劲
+	executeFilePath := executePath + "/main"
+
 	// 执行编译
-	cmd := exec.Command("gcc", "-o", executePath+"/main",
-		localPath+"/test_execute.c", executePath+"/code.c")
-	err = cmd.Run()
+	err = j.judgeCore.Compile(constants.ProgramC, compileFiles, executeFilePath, LimitCompileTime)
 	if err != nil {
 		submission.Status = constants.CompileError
 		submission.ErrorMessage = err.Error()
@@ -143,8 +170,9 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		submission.ErrorMessage = err.Error()
 		return submission, nil
 	}
+
 	// 运行
-	files, err2 := os.ReadDir(localPath)
+	files, err2 := os.ReadDir(path.Join(localPath, "io"))
 	if err2 != nil {
 		submission.Status = constants.RuntimeError
 		submission.ErrorMessage = err2.Error()
@@ -153,24 +181,48 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		submission.ErrorMessage = err2.Error()
 		return submission, nil
 	}
-	i := 0
+	inputCh := make(chan []byte)
+	outputCh := make(chan judger.ExecuteResult)
+	exitCh := make(chan string)
+	executeOption := &judger.ExecuteOption{
+		ExecFile:    executeFilePath,
+		Language:    constants.ProgramC,
+		InputCh:     inputCh,
+		OutputCh:    outputCh,
+		ExitCh:      exitCh,
+		LimitTime:   LimitExecuteTime,
+		LimitMemory: LimitExecuteMemory,
+	}
+
+	beginTime := time.Now()
 	for _, fileInfo := range files {
 		if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".in") {
-			i++
-			input, err3 := os.Open(localPath + "/" + fileInfo.Name())
+			// 运行可执行文件
+			err = j.judgeCore.Execute(executeOption)
+			if err != nil {
+				submission.Status = constants.RuntimeError
+				submission.ExpectedOutput = err.Error()
+				return submission, nil
+			}
+
+			// 输入数据
+			input, err3 := os.ReadFile(localPath + "/" + fileInfo.Name())
 			if err3 != nil {
 				log.Println(err3)
 				return nil, e.ErrExecuteFailed
 			}
-			//执行
-			cmd2 := exec.Command(executePath + "/main")
-			cmd2.Stdin = input
-			cmd2.Stdout = &bytes.Buffer{}
-			err = cmd2.Run()
-			if err != nil {
-				log.Println(err)
-				return nil, e.ErrExecuteFailed
+			inputCh <- input
+
+			// 读取输出数据
+			executeResult := <-outputCh
+
+			// 运行出错
+			if !executeResult.Executed {
+				submission.Status = constants.RuntimeError
+				submission.ErrorMessage = executeResult.Error.Error()
+				return submission, nil
 			}
+
 			// 读取.out文件
 			outFilePath := localPath + "/" + strings.ReplaceAll(fileInfo.Name(), ".in", ".out")
 			outFileContent, err4 := os.ReadFile(outFilePath)
@@ -178,19 +230,19 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 				log.Println(err4)
 				return nil, e.ErrExecuteFailed
 			}
-			// 将输出结果与.out文件对比
-			if !bytes.Equal(cmd2.Stdout.(*bytes.Buffer).Bytes(), outFileContent) {
+
+			// 结果不正确则结束
+			if !bytes.Equal(executeResult.Output, outFileContent) {
 				submission.Status = constants.WrongAnswer
 				submission.ExpectedOutput = string(outFileContent)
-				submission.UserOutput = string(cmd2.Stdout.(*bytes.Buffer).Bytes())
-				cmd2.Stdout.(*bytes.Buffer).Reset()
+				submission.UserOutput = string(executeResult.Output)
 				return submission, nil
 			}
-			// 释放buffer
-			cmd2.Stdout.(*bytes.Buffer).Reset()
 		}
 	}
+	endTime := time.Now()
 	submission.Status = constants.Accepted
+	submission.TimeUsed = endTime.Sub(beginTime)
 	return submission, nil
 }
 
@@ -205,15 +257,19 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
-	// executePath
+
+	// executePath 用户执行目录
 	executePath := getExecutePath()
 	err = os.MkdirAll(executePath, os.ModePerm)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
-	// 保存code文件
+
+	// 保存题目文件的目录
 	localPath := getLocalPathByPath(problem.Path)
+
+	// 读取用户输入文件
 	var code []byte
 	code, err = os.ReadFile(localPath + "/code.c")
 	if err != nil {
@@ -222,41 +278,68 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	}
 	re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
 	code = re.ReplaceAll(code, []byte(judgeRequest.Code))
+
 	// 使用空格替换所有非单词字符
 	err = os.WriteFile(executePath+"/code.c", code, 0644)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
+
+	// 编译的文件
+	compileFiles := []string{localPath + "/main.c", executePath + "/code.c"}
+	// 输出的执行文件路劲
+	executeFilePath := executePath + "/main"
+
 	// 执行编译
-	cmd := exec.Command("gcc", "-o", executePath+"/main",
-		localPath+"/test_execute.c", executePath+"/code.c")
-	err = cmd.Run()
+	err = j.judgeCore.Compile(constants.ProgramC, compileFiles, executeFilePath, LimitCompileTime)
 	if err != nil {
 		return &dto.ExecuteResultDto{
 			ProblemID:    problem.ID,
 			Status:       constants.CompileError,
 			ErrorMessage: err.Error(),
-			Timestamp:    nil,
 		}, nil
 	}
+
 	//执行
-	cmd2 := exec.Command(executePath + "/main")
-	cmd2.Stdin = strings.NewReader(judgeRequest.Input)
-	cmd2.Stdout = &bytes.Buffer{}
-	err = cmd2.Run()
-	if err != nil {
-		log.Println(err)
-		return nil, e.ErrExecuteFailed
+	inputCh := make(chan []byte)
+	outputCh := make(chan judger.ExecuteResult)
+	exitCh := make(chan string)
+	executeOption := &judger.ExecuteOption{
+		ExecFile:    executeFilePath,
+		Language:    constants.ProgramC,
+		InputCh:     inputCh,
+		OutputCh:    outputCh,
+		ExitCh:      exitCh,
+		LimitTime:   LimitExecuteTime,
+		LimitMemory: LimitExecuteMemory,
 	}
-	output := cmd2.Stdout.(*bytes.Buffer).Bytes()
-	cmd2.Stdout.(*bytes.Buffer).Reset()
+
+	err = j.judgeCore.Execute(executeOption)
+	if err != nil {
+		return &dto.ExecuteResultDto{
+			ProblemID:    problem.ID,
+			Status:       constants.RuntimeError,
+			ErrorMessage: err.Error(),
+		}, nil
+	}
+
+	inputCh <- []byte(judgeRequest.Input)
+	output := <-outputCh
+
+	if !output.Executed {
+		return &dto.ExecuteResultDto{
+			ProblemID:    problem.ID,
+			Status:       constants.RuntimeError,
+			ErrorMessage: output.Error.Error(),
+		}, nil
+	}
+
 	return &dto.ExecuteResultDto{
 		ProblemID:    problem.ID,
 		Status:       constants.RunSuccess,
 		ErrorMessage: "",
-		UserOutput:   string(output),
-		Timestamp:    nil,
+		UserOutput:   string(output.Output),
 	}, nil
 }
 

@@ -7,7 +7,6 @@ const (
 	RunSuccess
 	// WrongAnswer 答案错误
 	WrongAnswer
-	TimeLimitExceeded
 	// CompileError 编译出错
 	CompileError
 	// RuntimeError 运行出错
