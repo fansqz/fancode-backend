@@ -3,7 +3,6 @@ package dto
 import (
 	"FanCode/models/po"
 	"FanCode/utils"
-	"strings"
 )
 
 // ProblemDtoForGet 获取题目详细信息
@@ -16,12 +15,11 @@ type ProblemDtoForGet struct {
 	Path        string `json:"path"`
 	Difficulty  *int   `json:"difficulty"`
 	// 支持的语言用,分割
-	Languages []string `json:"languages"`
-	Enable    *bool    `json:"enable"`
+	Languages string `json:"languages"`
+	Enable    *bool  `json:"enable"`
 }
 
 func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
-	languages := strings.Split(problem.Languages, ",")
 	response := &ProblemDtoForGet{
 		ID:          problem.ID,
 		Name:        problem.Name,
@@ -30,7 +28,7 @@ func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
 		Title:       problem.Title,
 		Path:        problem.Path,
 		Difficulty:  problem.Difficulty,
-		Languages:   languages,
+		Languages:   problem.Languages,
 		Enable:      problem.Enable,
 	}
 	return response
