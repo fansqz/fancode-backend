@@ -115,6 +115,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 	// 提交结果对象
 	submission := &po.Submission{
+		CodeType:  judgeRequest.CodeType,
 		Language:  judgeRequest.Language,
 		Code:      judgeRequest.Code,
 		ProblemID: judgeRequest.ProblemID,
@@ -142,7 +143,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 	// 保存题目文件的路径
 	problemPath := getLocalProblemPath(problem.Path)
-	localCodePath, err2 := getLocalCodePathByLocalProblemPath(problemPath, judgeRequest.Language)
+	localCodePath, err2 := getCodePathByProblemPath(problemPath, judgeRequest.Language)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -316,7 +317,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 
 	// 保存题目文件的目录
 	problemPath := getLocalProblemPath(problem.Path)
-	localCodePath, err2 := getLocalCodePathByLocalProblemPath(problemPath, judgeRequest.Language)
+	localCodePath, err2 := getCodePathByProblemPath(problemPath, judgeRequest.Language)
 	if err2 != nil {
 		return nil, err2
 	}
@@ -436,14 +437,14 @@ const (
 )
 
 // 根据题目的路径获取题目中编程语言的路径
-func getLocalCodePathByLocalProblemPath(localProblemPath string, language string) (string, *e.Error) {
+func getCodePathByProblemPath(problemPath string, language string) (string, *e.Error) {
 	switch language {
 	case constants.ProgramC:
-		return path.Join(localProblemPath, CCodePath), nil
+		return path.Join(problemPath, CCodePath), nil
 	case constants.ProgramJava:
-		return path.Join(localProblemPath, JavaCodePath), nil
+		return path.Join(problemPath, JavaCodePath), nil
 	case constants.ProgramGo:
-		return path.Join(localProblemPath, GoCodePath), nil
+		return path.Join(problemPath, GoCodePath), nil
 	default:
 		return "", e.ErrLanguageNotSupported
 	}

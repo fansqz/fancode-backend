@@ -11,6 +11,8 @@ type Submission struct {
 	UserID uint `gorm:"column:user_id"`
 	// 题目id
 	ProblemID uint `gorm:"column:problem_id"`
+	// 提交的方式
+	CodeType string `gorm:"column:code_type"`
 	// 使用的编程语言
 	Language string `gorm:"column:language"`
 	// 用户代码

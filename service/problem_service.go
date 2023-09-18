@@ -1,6 +1,7 @@
 package service
 
 import (
+	"FanCode/constants"
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/file_store"
@@ -14,9 +15,17 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
+)
+
+const (
+	AcmCCodeFilePath    = "./resources/acmTemplate/main.c"
+	AcmGoCodeFilePath   = "./resources/acmTemplate/main.go"
+	AcmJavaCodeFilePath = "./resource/acmTemplate/Main.java"
 )
 
 type ProblemService interface {
@@ -40,8 +49,8 @@ type ProblemService interface {
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
 	// GetProblemByNumber 根据题目编号获取题目信息
 	GetProblemByNumber(number string) (*dto.ProblemDtoForGet, *e.Error)
-	// GetUserCodeByNumber 获取用户编程文件
-	GetUserCodeByNumber(ctx *gin.Context, number string) (string, *e.Error)
+	// GetProblemTemplateCode 获取题目的模板代码
+	GetProblemTemplateCode(ctx *gin.Context, number string, language string, codeType string) (string, *e.Error)
 	// UpdateProblemEnable 设置题目可用
 	UpdateProblemEnable(id uint, enable bool) *e.Error
 
@@ -285,34 +294,47 @@ func (q *problemService) GetProblemByNumber(number string) (*dto.ProblemDtoForGe
 	return dto.NewProblemDtoForGet(problem), nil
 }
 
-func (q *problemService) GetUserCodeByNumber(ctx *gin.Context, number string) (string, *e.Error) {
+func (q *problemService) GetProblemTemplateCode(ctx *gin.Context, number string, language string, codeType string) (string, *e.Error) {
 	// 读取获取题目id
 	id, err := dao.GetProblemIDByNumber(global.Mysql, number)
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrProblemGetFailed
 	}
-	// 判断用户是否编辑过该题目
-	userId := ctx.Keys["user"].(*dto.UserInfo).ID
-	var problemAttempt *po.ProblemAttempt
-	problemAttempt, err = dao.GetProblemAttempt(global.Mysql, userId, id)
-	if err != nil {
-		log.Println(err)
-		return "", e.ErrProblemGetFailed
+
+	// 读取acm模板
+	if codeType == constants.CodeTypeAcm {
+		code, err := getAcmCodeTemplate(language)
+		if err != nil {
+			return "", e.ErrProblemGetFailed
+		}
+		return code, nil
 	}
-	if problemAttempt.ID != 0 {
-		return problemAttempt.Code, nil
-	}
-	// 读取文件地址
-	path, err := dao.GetProblemFilePathByID(global.Mysql, id)
+
+	// 读取核心代码模板
+	p, err := dao.GetProblemFilePathByID(global.Mysql, id)
 	store := file_store.NewProblemCOS()
 	var content []byte
-	content, err = store.ReadFile(path + "/code.c")
+	codePath, err2 := getCodePathByProblemPath(p, language)
+	if err2 != nil {
+		return "", err2
+	}
+	solutionFileName, err2 := getSolutionFileNameByLanguage(language)
+	if err2 != nil {
+		return "", err2
+	}
+	content, err = store.ReadFile(path.Join(codePath, solutionFileName))
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrProblemGetFailed
 	}
-	return string(content), nil
+	// 读取begin和end中的数据
+	re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
+	matchArr := re.FindStringSubmatch(string(content))
+	if len(matchArr) == 0 {
+		return "//暂无模板", nil
+	}
+	return matchArr[0], nil
 }
 
 func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error) {
@@ -497,4 +519,18 @@ func getTempDir() string {
 	uuid := utils.GetUUID()
 	executePath := global.Conf.FilePathConfig.TempDir + "/" + uuid
 	return executePath
+}
+
+func getAcmCodeTemplate(language string) (string, error) {
+	var filePath string
+	switch language {
+	case constants.ProgramC:
+		filePath = AcmCCodeFilePath
+	case constants.ProgramGo:
+		filePath = AcmGoCodeFilePath
+	case constants.ProgramJava:
+		filePath = AcmJavaCodeFilePath
+	}
+	code, err := os.ReadFile(filePath)
+	return string(code), err
 }

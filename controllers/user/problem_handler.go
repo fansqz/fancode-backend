@@ -13,8 +13,8 @@ type ProblemController interface {
 	GetProblemList(ctx *gin.Context)
 	// GetProblem 读取题目详细信息
 	GetProblem(ctx *gin.Context)
-	// GetUserCode 读取题目编程文件
-	GetUserCode(ctx *gin.Context)
+	// GetProblemTemplateCode 读取题目编程文件
+	GetProblemTemplateCode(ctx *gin.Context)
 }
 
 type problemController struct {
@@ -66,10 +66,12 @@ func (p *problemController) GetProblem(ctx *gin.Context) {
 	result.SuccessData(problem)
 }
 
-func (p *problemController) GetUserCode(ctx *gin.Context) {
+func (p *problemController) GetProblemTemplateCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	number := ctx.Param("number")
-	code, err := p.problemService.GetUserCodeByNumber(ctx, number)
+	language := ctx.Param("language")
+	codeType := ctx.Param("codeType")
+	code, err := p.problemService.GetProblemTemplateCode(ctx, number, language, codeType)
 	if err != nil {
 		result.Error(err)
 		return
