@@ -37,6 +37,8 @@ func (j *judgeController) Execute(ctx *gin.Context) {
 	judgeRequest := &dto.ExecuteRequestDto{
 		Code:      ctx.PostForm("code"),
 		Input:     ctx.PostForm("input"),
+		CodeType:  ctx.PostForm("codeType"),
+		Language:  ctx.PostForm("language"),
 		ProblemID: uint(problemID),
 	}
 	// 读取题目id
@@ -58,6 +60,8 @@ func (j *judgeController) Submit(ctx *gin.Context) {
 	}
 	judgeRequest := &dto.SubmitRequestDto{
 		Code:      ctx.PostForm("code"),
+		CodeType:  ctx.PostForm("codeType"),
+		Language:  ctx.PostForm("language"),
 		ProblemID: uint(problemID),
 	}
 	// 读取题目id

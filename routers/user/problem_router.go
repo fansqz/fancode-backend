@@ -12,6 +12,6 @@ func SetupProblemRoutes(r *gin.Engine) {
 		problemController := user.NewProblemController()
 		problem.GET("/list/:page/:pageSize", problemController.GetProblemList)
 		problem.GET("/:number", problemController.GetProblem)
-		problem.GET("/code/:number/:language", problemController.GetProblemTemplateCode)
+		problem.GET("/code/:number/:language/:codeType", problemController.GetProblemTemplateCode)
 	}
 }
