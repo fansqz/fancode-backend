@@ -14,7 +14,7 @@ type FileService interface {
 	// Upload 上传分片
 	Upload(path string, ctx *gin.Context, file *multipart.FileHeader) *e.Error
 	// CheckChunkSet 检测分片的文件名称集合
-	CheckChunkSet(ctx *gin.Context)
+	CheckChunkSet(path string) ([]string, *e.Error)
 	// CancelUpload 取消上传
 	CancelUpload(ctx *gin.Context)
 	// CompleteUpload 完成大文件上传功能
@@ -39,4 +39,16 @@ func (f *fileService) Upload(path string, ctx *gin.Context, file *multipart.File
 		return e.ErrServer
 	}
 	return nil
+}
+
+func (f *fileService) CheckChunkSet(path string) ([]string, *e.Error) {
+	dirs, err := os.ReadDir(path)
+	if err != nil {
+		return nil, e.ErrServer
+	}
+	answer := make([]string, len(dirs))
+	for i, a := range dirs {
+		answer[i] = a.Name()
+	}
+	return answer, nil
 }

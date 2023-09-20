@@ -49,3 +49,14 @@ func (f *fileController) Upload(ctx *gin.Context) {
 	}
 	result.SuccessMessage("success upload")
 }
+
+func (f *fileController) CheckChunkSet(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	path := ctx.PostForm("path")
+	set, err := f.fileService.CheckChunkSet(path)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(set)
+}
