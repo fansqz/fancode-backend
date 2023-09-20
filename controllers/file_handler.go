@@ -60,3 +60,14 @@ func (f *fileController) CheckChunkSet(ctx *gin.Context) {
 	}
 	result.SuccessData(set)
 }
+
+func (f *fileController) CancelUpload(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	path := ctx.PostForm("path")
+	err := f.fileService.CancelUpload(path)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessMessage("取消成功")
+}

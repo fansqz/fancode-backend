@@ -16,7 +16,7 @@ type FileService interface {
 	// CheckChunkSet 检测分片的文件名称集合
 	CheckChunkSet(path string) ([]string, *e.Error)
 	// CancelUpload 取消上传
-	CancelUpload(ctx *gin.Context)
+	CancelUpload(path string) *e.Error
 	// CompleteUpload 完成大文件上传功能
 	CompleteUpload(ctx *gin.Context)
 }
@@ -51,4 +51,13 @@ func (f *fileService) CheckChunkSet(path string) ([]string, *e.Error) {
 		answer[i] = a.Name()
 	}
 	return answer, nil
+}
+
+// CancelUpload 取消上传
+func CancelUpload(path string) *e.Error {
+	err := os.RemoveAll(path)
+	if err != nil {
+		return e.ErrServer
+	}
+	return nil
 }
