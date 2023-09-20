@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	e "FanCode/error"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
@@ -31,4 +32,20 @@ func (f *fileController) StartUpload(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData(temp)
+}
+
+// Upload 上传分片
+func (f *fileController) Upload(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	path := ctx.PostForm("path")
+	fileHead, err2 := ctx.FormFile("chunk")
+	if err2 != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	err := f.fileService.Upload(path, ctx, fileHead)
+	if err != nil {
+		result.Error(err)
+	}
+	result.SuccessMessage("success upload")
 }

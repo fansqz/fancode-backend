@@ -3,6 +3,7 @@ package service
 import (
 	e "FanCode/error"
 	"github.com/gin-gonic/gin"
+	"mime/multipart"
 	"os"
 )
 
@@ -11,7 +12,7 @@ type FileService interface {
 	// StartUpload 启动上传命令
 	StartUpload() (string, *e.Error)
 	// Upload 上传分片
-	Upload(ctx *gin.Context)
+	Upload(path string, ctx *gin.Context, file *multipart.FileHeader) *e.Error
 	// CheckChunkSet 检测分片的文件名称集合
 	CheckChunkSet(ctx *gin.Context)
 	// CancelUpload 取消上传
@@ -30,4 +31,12 @@ func (f *fileService) StartUpload() (string, *e.Error) {
 		return "", e.ErrServer
 	}
 	return tempPath, nil
+}
+
+func (f *fileService) Upload(path string, ctx *gin.Context, file *multipart.FileHeader) *e.Error {
+	err := ctx.SaveUploadedFile(file, path)
+	if err != nil {
+		return e.ErrServer
+	}
+	return nil
 }
