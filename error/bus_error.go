@@ -117,9 +117,20 @@ var (
 
 /************用户管理**************/
 const (
-	CodeSysUserUnknownError = 13500 + iota
+	CodeSysUserUnknownError = 14000 + iota
 )
 
 var (
 	ErrSysUserUnknownError = NewError(CodeSysUserUnknownError, "Unknown error", ErrTypeServer)
+)
+
+/*************文件上传*****************/
+const (
+	CodeHashTypeNotSupportError = 14500 + iota
+	CodeHashMissMatchError
+)
+
+var (
+	ErrHashTypeNotSupport = NewError(CodeHashTypeNotSupportError, "hash type not support", ErrTypeBadReq)
+	ErrHashMissMatch      = NewError(CodeHashMissMatchError, "hash miss match", ErrTypeBus)
 )

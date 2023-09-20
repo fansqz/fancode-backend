@@ -5,6 +5,7 @@ import (
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
+	"path"
 )
 
 type FileController interface {
@@ -22,6 +23,12 @@ type FileController interface {
 
 type fileController struct {
 	fileService service.FileService
+}
+
+func NewFileController() FileController {
+	return &fileController{
+		fileService: service.NewFileService(),
+	}
 }
 
 func (f *fileController) StartUpload(ctx *gin.Context) {
@@ -70,4 +77,18 @@ func (f *fileController) CancelUpload(ctx *gin.Context) {
 		return
 	}
 	result.SuccessMessage("取消成功")
+}
+
+func (f *fileController) CompleteUpload(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	p := ctx.PostForm("path")
+	fileName := ctx.PostForm("fileName")
+	hash := ctx.PostForm("hash")
+	hashType := ctx.PostForm("hashType")
+	err := f.fileService.CompleteUpload(p, fileName, hash, hashType)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(path.Join(p, fileName))
 }
