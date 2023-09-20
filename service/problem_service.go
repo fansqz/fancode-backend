@@ -514,13 +514,6 @@ func (q *problemService) UpdateProblemEnable(id uint, enable bool) *e.Error {
 	return nil
 }
 
-// getTempDir 获取一个随机的临时文件夹
-func getTempDir() string {
-	uuid := utils.GetUUID()
-	executePath := global.Conf.FilePathConfig.TempDir + "/" + uuid
-	return executePath
-}
-
 func getAcmCodeTemplate(language string) (string, error) {
 	var filePath string
 	switch language {

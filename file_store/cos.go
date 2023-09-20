@@ -101,11 +101,13 @@ func (c *cosStore) DownloadFolder(storePath, localPath string) error {
 			return err
 		}
 
-		// 将文件内容写入本地文件
-		err = os.WriteFile(filePathInLocal, data, 0644)
-		if err != nil {
-			fmt.Println("Failed to save file:", err)
-			return err
+		if object.Size != 0 {
+			// 将文件内容写入本地文件
+			err = os.WriteFile(filePathInLocal, data, 0644)
+			if err != nil {
+				fmt.Println("Failed to save file:", err)
+				return err
+			}
 		}
 
 		fmt.Println("File downloaded:", localPath)
