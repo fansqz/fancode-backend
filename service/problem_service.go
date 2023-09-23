@@ -25,7 +25,7 @@ import (
 const (
 	AcmCCodeFilePath    = "./resources/acmTemplate/main.c"
 	AcmGoCodeFilePath   = "./resources/acmTemplate/main.go"
-	AcmJavaCodeFilePath = "./resource/acmTemplate/Main.java"
+	AcmJavaCodeFilePath = "./resources/acmTemplate/Main.java"
 )
 
 type ProblemService interface {
