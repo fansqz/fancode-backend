@@ -111,6 +111,9 @@ func GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	if problem != nil && problem.Difficulty != nil {
 		db2 = db2.Where("difficulty = ?", *problem.Difficulty)
 	}
+	if problem != nil && problem.BankID != 0 {
+		db2 = db2.Where("bank_id = ?", problem.BankID)
+	}
 	if problem != nil && problem.Enable != nil {
 		db2 = db2.Where("enable = ?", *problem.Enable)
 	}

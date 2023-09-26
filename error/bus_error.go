@@ -22,7 +22,6 @@ const (
 )
 
 var (
-	ErrUserNameIsExist               = NewError(CodeUserNameIsExist, "username already exist", ErrTypeBus)
 	ErrUserPasswordNotEnoughAccuracy = NewError(CodeUserPasswordNotEnoughAccuracy, "The password is not accurate enough", ErrTypeBus)
 	ErrUserCreationFailed            = NewError(CodeUserCreationFailed, "Failed to create user", ErrTypeServer)
 	ErrPasswordEncodeFailed          = NewError(CodePasswordEncodeFailed, "Failed to encode password", ErrTypeServer)
@@ -71,7 +70,7 @@ var (
 
 /************judge错误**************/
 const (
-	CodeSubmitFailed = 12000 + iota //题目编号已存在
+	CodeSubmitFailed = 12500 + iota //题目编号已存在
 	CodeExecuteFailed
 	CodeCompileFailed
 	CodeLanguageNotSupported
@@ -86,7 +85,7 @@ var (
 
 /************api相关错误**************/
 const (
-	CodeApiUnknownError = 12500 + iota //题目编号已存在
+	CodeApiUnknownError = 13000 + iota //题目编号已存在
 	CodeApiNotExist
 )
 
@@ -97,7 +96,7 @@ var (
 
 /************菜单管理**************/
 const (
-	CodeMenuUnknownError = 13000 + iota //题目编号已存在
+	CodeMenuUnknownError = 13500 + iota //题目编号已存在
 	CodeMenuNotExist
 )
 
@@ -108,7 +107,7 @@ var (
 
 /************菜单管理**************/
 const (
-	CodeRoleUnknownError = 13500 + iota
+	CodeRoleUnknownError = 14000 + iota
 )
 
 var (
@@ -117,7 +116,7 @@ var (
 
 /************用户管理**************/
 const (
-	CodeSysUserUnknownError = 14000 + iota
+	CodeSysUserUnknownError = 14500 + iota
 )
 
 var (
@@ -126,7 +125,7 @@ var (
 
 /*************文件上传*****************/
 const (
-	CodeHashTypeNotSupportError = 14500 + iota
+	CodeHashTypeNotSupportError = 15000 + iota
 	CodeHashMissMatchError
 )
 

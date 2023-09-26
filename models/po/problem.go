@@ -19,5 +19,5 @@ type Problem struct {
 	// 支持的语言用,分割
 	Languages string `gorm:"column:languages" json:"languages"`
 	// 所属题库id
-	BankID string `gorm:"column:bank_id" json:"bankID"`
+	BankID uint `gorm:"column:bank_id" json:"bankID"`
 }

@@ -8,6 +8,6 @@ type ProblemBank struct {
 	Name        string    `gorm:"column:name"`
 	Icon        string    `gorm:"column:icon"`
 	Description string    `gorm:"column:description"`
-	CreatorID   string    `gorm:"column:creator_id"`
+	CreatorID   uint      `gorm:"column:creator_id"`
 	Problems    []Problem `gorm:"foreignKey:id"`
 }
