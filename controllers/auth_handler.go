@@ -2,7 +2,6 @@ package controllers
 
 import (
 	e "FanCode/error"
-	"FanCode/models/dto"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
@@ -17,8 +16,6 @@ type AuthController interface {
 	SendAuthCode(ctx *gin.Context)
 	// UserRegister 用户注册
 	UserRegister(ctx *gin.Context)
-	// GetUserInfo 根据token获取用户信息
-	GetUserInfo(ctx *gin.Context)
 }
 
 type authController struct {
@@ -98,10 +95,4 @@ func (u *authController) Login(ctx *gin.Context) {
 	}
 	result.SuccessData(token)
 
-}
-
-func (u *authController) GetUserInfo(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	user := ctx.Keys["user"].(*dto.UserInfo)
-	result.SuccessData(user)
 }
