@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-// ProblemController
+// ProblemManagementController
 // @Description: 题目管理相关功能
 type ProblemManagementController interface {
 	CheckProblemNumber(ctx *gin.Context)
