@@ -201,9 +201,14 @@ func (q *problemService) GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e
 
 func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQuery) (*dto.PageInfo, *e.Error) {
 	userId := ctx.Keys["user"].(*dto.UserInfo).ID
-	p := &po.Problem{}
 	enable := true
-	p.Enable = &(enable)
+	if query.Query != nil {
+		query.Query.(*po.Problem).Enable = &(enable)
+	} else {
+		query.Query = &po.Problem{
+			Enable: &(enable),
+		}
+	}
 	// 获取题目列表
 	problems, err := dao.GetProblemList(global.Mysql, query)
 	if err != nil {
@@ -222,7 +227,7 @@ func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQue
 	}
 	// 获取所有题目总数目
 	var count int64
-	count, err = dao.GetProblemCount(global.Mysql, p)
+	count, err = dao.GetProblemCount(global.Mysql, query.Query.(*po.Problem))
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}

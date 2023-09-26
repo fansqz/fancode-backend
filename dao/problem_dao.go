@@ -71,7 +71,10 @@ func SetProblemEnable(db *gorm.DB, id uint, enable bool) error {
 }
 
 func GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Problem, error) {
-	problem := pageQuery.Query.(*po.Problem)
+	var problem *po.Problem
+	if pageQuery.Query != nil {
+		problem = pageQuery.Query.(*po.Problem)
+	}
 	db2 := db
 	if problem != nil && problem.Number != "" {
 		db2 = db2.Where("number like ?", "%"+problem.Number+"%")
