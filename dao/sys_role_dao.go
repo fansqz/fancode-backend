@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"FanCode/models/dto"
 	"FanCode/models/po"
 	"gorm.io/gorm"
 )
@@ -35,10 +36,12 @@ func GetRoleByID(db *gorm.DB, roleID uint) (*po.SysRole, error) {
 }
 
 // GetRoleList 获取角色列表
-func GetRoleList(db *gorm.DB, roleName string, page int, pageSize int) ([]*po.SysRole, error) {
-	offset := (page - 1) * pageSize
+func GetRoleList(db *gorm.DB, pageQuery dto.PageQuery) ([]*po.SysRole, error) {
+	role := pageQuery.Query.(*po.SysRole)
+	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var roles []*po.SysRole
-	err := db.Where("name LIKE ?", "%"+roleName+"%").Limit(pageSize).Offset(offset).Find(&roles).Error
+	err := db.Where("name LIKE ?", "%"+role.Name+"%").
+		Limit(pageQuery.PageSize).Offset(offset).Find(&roles).Error
 	return roles, err
 }
 

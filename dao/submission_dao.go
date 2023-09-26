@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"FanCode/models/dto"
 	"FanCode/models/po"
 	"gorm.io/gorm"
 	"time"
@@ -16,7 +17,8 @@ func GetLastSubmission(db *gorm.DB, userID uint, problemID uint) (*po.Submission
 	return submission, err
 }
 
-func GetSubmissionList(db *gorm.DB, page int, pageSize int, submission *po.Submission) ([]*po.Submission, error) {
+func GetSubmissionList(db *gorm.DB, pageQuery dto.PageQuery) ([]*po.Submission, error) {
+	submission := pageQuery.Query.(*po.Submission)
 	var submissions []*po.Submission
 	db2 := db
 	if submission.UserID != 0 {
@@ -25,8 +27,8 @@ func GetSubmissionList(db *gorm.DB, page int, pageSize int, submission *po.Submi
 	if submission.ProblemID != 0 {
 		db2 = db2.Where("problem_id = ?", submission.ProblemID)
 	}
-	offset := (page - 1) * pageSize
-	err := db2.Limit(pageSize).Offset(offset).Find(&submissions).Error
+	offset := (pageQuery.Page - 1) * pageQuery.PageSize
+	err := db2.Limit(pageQuery.PageSize).Offset(offset).Find(&submissions).Error
 	return submissions, err
 }
 

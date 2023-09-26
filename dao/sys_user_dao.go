@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"FanCode/models/dto"
 	"FanCode/models/po"
 	"errors"
 	"gorm.io/gorm"
@@ -32,10 +33,12 @@ func GetUserByID(db *gorm.DB, id uint) (*po.SysUser, error) {
 }
 
 // GetUserList 获取用户列表
-func GetUserList(db *gorm.DB, username string, page int, pageSize int) ([]*po.SysUser, error) {
-	offset := (page - 1) * pageSize
+func GetUserList(db *gorm.DB, pageQuery dto.PageQuery) ([]*po.SysUser, error) {
+	user := pageQuery.Query.(*po.SysUser)
+	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var users []*po.SysUser
-	err := db.Where("username LIKE ?", "%"+username+"%").Limit(pageSize).Offset(offset).Find(&users).Error
+	err := db.Where("username LIKE ?", "%"+user.Username+"%").
+		Limit(pageQuery.PageSize).Offset(offset).Find(&users).Error
 	return users, err
 }
 

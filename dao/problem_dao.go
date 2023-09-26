@@ -1,6 +1,7 @@
 package dao
 
 import (
+	"FanCode/models/dto"
 	"FanCode/models/po"
 	"gorm.io/gorm"
 )
@@ -69,7 +70,8 @@ func SetProblemEnable(db *gorm.DB, id uint, enable bool) error {
 	return db.Model(&po.Problem{}).Where("id = ?", id).Update("enable", enable).Error
 }
 
-func GetProblemList(db *gorm.DB, page int, pageSize int, problem *po.Problem) ([]*po.Problem, error) {
+func GetProblemList(db *gorm.DB, pageQuery dto.PageQuery) ([]*po.Problem, error) {
+	problem := pageQuery.Query.(*po.Problem)
 	db2 := db
 	if problem != nil && problem.Number != "" {
 		db2 = db2.Where("number like ?", "%"+problem.Number+"%")
@@ -83,9 +85,14 @@ func GetProblemList(db *gorm.DB, page int, pageSize int, problem *po.Problem) ([
 	if problem != nil && problem.Enable != nil {
 		db2 = db2.Where("enable = ?", *problem.Enable)
 	}
-	offset := (page - 1) * pageSize
+	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var problems []*po.Problem
-	err := db2.Limit(pageSize).Offset(offset).Find(&problems).Error
+	db2 = db2.Offset(offset).Limit(pageQuery.PageSize)
+	if pageQuery.SortProperty != "" && pageQuery.SortRule != "" {
+		order := pageQuery.SortProperty + " " + pageQuery.SortRule
+		db2 = db2.Order(order)
+	}
+	err := db2.Find(&problems).Error
 	return problems, err
 }
 
