@@ -94,6 +94,10 @@ func (s *sysRoleController) DeleteSysRole(ctx *gin.Context) {
 func (s *sysRoleController) GetSysRoleList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	if err != nil {
+		result.Error(err)
+		return
+	}
 	role := &po.SysRole{
 		Name: ctx.Query("roleName"),
 	}

@@ -33,7 +33,7 @@ func GetUserByID(db *gorm.DB, id uint) (*po.SysUser, error) {
 }
 
 // GetUserList 获取用户列表
-func GetUserList(db *gorm.DB, pageQuery dto.PageQuery) ([]*po.SysUser, error) {
+func GetUserList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysUser, error) {
 	user := pageQuery.Query.(*po.SysUser)
 	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var users []*po.SysUser

@@ -20,7 +20,7 @@ type SysUserService interface {
 	// DeleteSysUser 删除用户
 	DeleteSysUser(id uint) *e.Error
 	// GetSysUserList 获取用户列表
-	GetSysUserList(userName string, page int, pageSize int) (*dto.PageInfo, *e.Error)
+	GetSysUserList(pageQuery *dto.PageQuery) (*dto.PageInfo, *e.Error)
 	// UpdateUserRoles 更新角色roleIDs
 	UpdateUserRoles(userID uint, roleIDs []uint) *e.Error
 	// GetRoleIDsByUserID 通过用户id获取所有角色id
@@ -84,10 +84,10 @@ func (s *sysUserService) DeleteSysUser(id uint) *e.Error {
 	return nil
 }
 
-func (s *sysUserService) GetSysUserList(userName string, page int, pageSize int) (*dto.PageInfo, *e.Error) {
+func (s *sysUserService) GetSysUserList(pageQuery *dto.PageQuery) (*dto.PageInfo, *e.Error) {
 	var pageInfo *dto.PageInfo
 	err := global.Mysql.Transaction(func(tx *gorm.DB) error {
-		userList, err := dao.GetUserList(global.Mysql, userName, page, pageSize)
+		userList, err := dao.GetUserList(global.Mysql, pageQuery)
 		if err != nil {
 			return err
 		}

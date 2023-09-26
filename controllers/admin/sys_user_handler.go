@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"FanCode/controllers"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
@@ -103,21 +104,16 @@ func (s *sysUserController) DeleteSysUser(ctx *gin.Context) {
 
 func (s *sysUserController) GetSysUserList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	username := ctx.Query("username")
-	pageStr := ctx.Query("page")
-	pageSizeStr := ctx.Query("pageSize")
-	page, err := strconv.Atoi(pageStr)
+	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
 	if err != nil {
-		result.Error(e.ErrBadRequest)
+		result.Error(err)
 		return
 	}
-	var pageSize int
-	pageSize, err = strconv.Atoi(pageSizeStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
+	user := &po.SysUser{
+		Username: ctx.Query("username"),
 	}
-	pageInfo, err2 := s.sysUserService.GetSysUserList(username, page, pageSize)
+	pageQuery.Query = user
+	pageInfo, err2 := s.sysUserService.GetSysUserList(pageQuery)
 	if err2 != nil {
 		result.Error(err2)
 		return
