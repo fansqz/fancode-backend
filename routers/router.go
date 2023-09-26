@@ -42,6 +42,7 @@ func Run() {
 	admin.SetupSysMenuRoutes(r)
 	admin.SetupSysRoleRoutes(r)
 	admin.SetupSysUserRoutes(r)
+	admin.SetupProblemBankRoutes(r)
 	user.SetupJudgeRoutes(r)
 	user.SetupProblemRoutes(r)
 	user.SetupSubmissionRoutes(r)
