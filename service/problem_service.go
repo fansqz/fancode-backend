@@ -38,9 +38,9 @@ type ProblemService interface {
 	// DeleteProblem 删除题目
 	DeleteProblem(id uint) *e.Error
 	// GetProblemList 获取题目列表
-	GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error)
+	GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e.Error)
 	// GetUserProblemList 用户获取题目列表
-	GetUserProblemList(ctx *gin.Context, page int, pageSize int) (*dto.PageInfo, *e.Error)
+	GetUserProblemList(ctx *gin.Context, query *dto.PageQuery) (*dto.PageInfo, *e.Error)
 	// DownloadProblemZipFile 下载题目压缩文件
 	DownloadProblemZipFile(ctx *gin.Context, problemID uint)
 	// DownloadProblemTemplateFile 获取题目模板文件
@@ -175,9 +175,9 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 	return nil
 }
 
-func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, *e.Error) {
+func (q *problemService) GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e.Error) {
 	// 获取题目列表
-	problems, err := dao.GetProblemList(global.Mysql, page, pageSize, nil)
+	problems, err := dao.GetProblemList(global.Mysql, query)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
@@ -199,13 +199,13 @@ func (q *problemService) GetProblemList(page int, pageSize int) (*dto.PageInfo, 
 	return pageInfo, nil
 }
 
-func (q *problemService) GetUserProblemList(ctx *gin.Context, page int, pageSize int) (*dto.PageInfo, *e.Error) {
+func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQuery) (*dto.PageInfo, *e.Error) {
 	userId := ctx.Keys["user"].(*dto.UserInfo).ID
 	p := &po.Problem{}
 	enable := true
 	p.Enable = &(enable)
 	// 获取题目列表
-	problems, err := dao.GetProblemList(global.Mysql, page, pageSize, p)
+	problems, err := dao.GetProblemList(global.Mysql, query)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}

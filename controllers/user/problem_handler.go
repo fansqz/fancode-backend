@@ -1,11 +1,10 @@
 package user
 
 import (
-	e "FanCode/error"
+	"FanCode/controllers"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 type ProblemController interface {
@@ -29,25 +28,12 @@ func NewProblemController() ProblemController {
 
 func (p *problemController) GetProblemList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageStr := ctx.Param("page")
-	pageSizeStr := ctx.Param("pageSize")
-	var page int
-	var pageSize int
-	var convertErr error
-	page, convertErr = strconv.Atoi(pageStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
+	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	if err != nil {
+		result.Error(err)
 		return
 	}
-	pageSize, convertErr = strconv.Atoi(pageSizeStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	if pageSize > 50 {
-		pageSize = 50
-	}
-	pageInfo, err := p.problemService.GetUserProblemList(ctx, page, pageSize)
+	pageInfo, err := p.problemService.GetUserProblemList(ctx, pageQuery)
 	if err != nil {
 		result.Error(err)
 		return

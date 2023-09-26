@@ -1,6 +1,7 @@
 package user
 
 import (
+	"FanCode/controllers"
 	e "FanCode/error"
 	r "FanCode/models/vo"
 	"FanCode/service"
@@ -63,25 +64,12 @@ func (a *submissionHandler) GetUserActivityYear(ctx *gin.Context) {
 
 func (a *submissionHandler) GetUserSubmissionList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageStr := ctx.Param("page")
-	pageSizeStr := ctx.Param("pageSize")
-	var page int
-	var pageSize int
-	var convertErr error
-	page, convertErr = strconv.Atoi(pageStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
+	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	if err != nil {
+		result.Error(err)
 		return
 	}
-	pageSize, convertErr = strconv.Atoi(pageSizeStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	if pageSize > 50 {
-		pageSize = 50
-	}
-	pageInfo, err := a.submissionService.GetUserSubmissionList(ctx, page, pageSize)
+	pageInfo, err := a.submissionService.GetUserSubmissionList(ctx, pageQuery)
 	if err != nil {
 		result.Error(err)
 		return

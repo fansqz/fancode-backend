@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"FanCode/controllers"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
@@ -142,25 +143,12 @@ func (q *problemManagementController) DeleteProblem(ctx *gin.Context) {
 // GetProblemList 读取一个列表的题目
 func (q *problemManagementController) GetProblemList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageStr := ctx.Param("page")
-	pageSizeStr := ctx.Param("pageSize")
-	var page int
-	var pageSize int
-	var convertErr error
-	page, convertErr = strconv.Atoi(pageStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
+	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	if err != nil {
+		result.Error(err)
 		return
 	}
-	pageSize, convertErr = strconv.Atoi(pageSizeStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	if pageSize > 50 {
-		pageSize = 50
-	}
-	pageInfo, err := q.problemService.GetProblemList(page, pageSize)
+	pageInfo, err := q.problemService.GetProblemList(pageQuery)
 	if err != nil {
 		result.Error(err)
 		return

@@ -70,7 +70,7 @@ func SetProblemEnable(db *gorm.DB, id uint, enable bool) error {
 	return db.Model(&po.Problem{}).Where("id = ?", id).Update("enable", enable).Error
 }
 
-func GetProblemList(db *gorm.DB, pageQuery dto.PageQuery) ([]*po.Problem, error) {
+func GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Problem, error) {
 	problem := pageQuery.Query.(*po.Problem)
 	db2 := db
 	if problem != nil && problem.Number != "" {

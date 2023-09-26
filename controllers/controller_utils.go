@@ -21,6 +21,9 @@ func GetPageQueryByQuery(ctx *gin.Context) (*dto.PageQuery, *e.Error) {
 	if convertErr != nil {
 		return nil, e.ErrBadRequest
 	}
+	if pageSize > 50 {
+		pageSize = 50
+	}
 	sortProperty := ctx.Query("sortProperty")
 	sortRule := ctx.Query("sortRule")
 	answer := &dto.PageQuery{

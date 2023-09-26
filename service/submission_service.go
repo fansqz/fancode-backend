@@ -18,7 +18,7 @@ type SubmissionService interface {
 	// GetActivityYear 获取用户有活动的年份
 	GetActivityYear(ctx *gin.Context) ([]string, *e.Error)
 	// GetUserSubmissionList 获取用户
-	GetUserSubmissionList(ctx *gin.Context, page int, pageSize int) (*dto.PageInfo, *e.Error)
+	GetUserSubmissionList(ctx *gin.Context, pageQuery *dto.PageQuery) (*dto.PageInfo, *e.Error)
 }
 
 func NewSubmissionService() SubmissionService {
@@ -80,12 +80,13 @@ func (u *submissionService) GetActivityYear(ctx *gin.Context) ([]string, *e.Erro
 	return answer, nil
 }
 
-func (u *submissionService) GetUserSubmissionList(ctx *gin.Context, page int, pageSize int) (*dto.PageInfo, *e.Error) {
+func (u *submissionService) GetUserSubmissionList(ctx *gin.Context, pageQuery *dto.PageQuery) (*dto.PageInfo, *e.Error) {
 	user := ctx.Keys["user"].(*dto.UserInfo)
 	submission := &po.Submission{
 		UserID: user.ID,
 	}
-	submissions, err := dao.GetSubmissionList(global.Mysql, page, pageSize, submission)
+	pageQuery.Query = submission
+	submissions, err := dao.GetSubmissionList(global.Mysql, pageQuery)
 	submissions2 := make([]*dto.SubmissionDtoForList, len(submissions))
 	for i := 0; i < len(submissions); i++ {
 		submissions2[i] = dto.NewSubmissionDtoForList(submissions[i])

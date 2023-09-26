@@ -17,7 +17,7 @@ func GetLastSubmission(db *gorm.DB, userID uint, problemID uint) (*po.Submission
 	return submission, err
 }
 
-func GetSubmissionList(db *gorm.DB, pageQuery dto.PageQuery) ([]*po.Submission, error) {
+func GetSubmissionList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Submission, error) {
 	submission := pageQuery.Query.(*po.Submission)
 	var submissions []*po.Submission
 	db2 := db
