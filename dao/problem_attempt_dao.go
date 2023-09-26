@@ -16,7 +16,7 @@ func UpdateProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error 
 		"success_count":    problemAttempt.SuccessCount,
 		"err_count":        problemAttempt.ErrCount,
 		"code":             problemAttempt.Code,
-		"state":            problemAttempt.State,
+		"status":           problemAttempt.Status,
 		"updated_at":       problemAttempt.UpdatedAt,
 	}).Error
 }
@@ -30,7 +30,7 @@ func GetProblemAttempt(db *gorm.DB, userId uint, problemId uint) (*po.ProblemAtt
 
 func GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, error) {
 	var problemAttempt po.ProblemAttempt
-	err := db.Model(&po.ProblemAttempt{}).Select("state", "id").
+	err := db.Model(&po.ProblemAttempt{}).Select("status", "id").
 		Where("user_id = ? and problem_id = ?", userId, problemID).Find(&problemAttempt).Error
 	if err != nil {
 		return 0, err
@@ -38,5 +38,5 @@ func GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, erro
 	if problemAttempt.ID == 0 {
 		return constants.NotStarted, nil
 	}
-	return problemAttempt.State, nil
+	return problemAttempt.Status, nil
 }

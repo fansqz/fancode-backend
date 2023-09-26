@@ -77,8 +77,8 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 			problemAttempt.ErrCount++
 		}
 		problemAttempt.Code = judgeRequest.Code
-		if problemAttempt.State == 0 && submission.Status == constants.Accepted {
-			problemAttempt.State = 1
+		if problemAttempt.Status == 0 && submission.Status == constants.Accepted {
+			problemAttempt.Status = 1
 		}
 		err2 = dao.InsertProblemAttempt(tx, problemAttempt)
 		if err2 != nil {
@@ -98,8 +98,8 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		problemAttempt.ErrCount++
 	}
 	problemAttempt.Code = judgeRequest.Code
-	if problemAttempt.State == 0 && submission.Status == constants.Accepted {
-		problemAttempt.State = 1
+	if problemAttempt.Status == 0 && submission.Status == constants.Accepted {
+		problemAttempt.Status = 1
 	}
 	err2 = dao.UpdateProblemAttempt(tx, problemAttempt)
 	if err2 != nil {

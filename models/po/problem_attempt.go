@@ -13,5 +13,5 @@ type ProblemAttempt struct {
 	// 最近一次提交的代码
 	Code string `gorm:"column:code"`
 	// 0 进行中， 1 提交成功
-	State int `gorm:"column:state"`
+	Status int `gorm:"column:Status"`
 }
