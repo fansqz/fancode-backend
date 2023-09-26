@@ -60,7 +60,7 @@ func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 		result.Error(err)
 	}
 	//插入
-	pID, err2 := q.problemService.InsertProblem(problem)
+	pID, err2 := q.problemService.InsertProblem(problem, ctx)
 	if err2 != nil {
 		result.Error(err2)
 		return

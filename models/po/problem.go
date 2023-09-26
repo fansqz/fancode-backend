@@ -7,7 +7,7 @@ import (
 // Problem 结构
 type Problem struct {
 	gorm.Model
-	CreatorID   string `gorm:"column:creator_id" json:"creatorID"`
+	CreatorID   uint   `gorm:"column:creator_id" json:"creatorID"`
 	Name        string `gorm:"column:name" json:"name"`
 	Number      string `gorm:"column:number;type:varchar(255);unique_index:idx_number" json:"number"`
 	Description string `gorm:"column:description;type:text" json:"description"`

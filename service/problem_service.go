@@ -32,7 +32,7 @@ type ProblemService interface {
 	// CheckProblemNumber 检测题目编码
 	CheckProblemNumber(problemCode string) (bool, *e.Error)
 	// InsertProblem 添加题目
-	InsertProblem(problem *po.Problem) (uint, *e.Error)
+	InsertProblem(problem *po.Problem, ctx *gin.Context) (uint, *e.Error)
 	// UpdateProblem 更新题目
 	UpdateProblem(Problem *po.Problem, ctx *gin.Context, file *multipart.FileHeader) *e.Error
 	// DeleteProblem 删除题目
@@ -75,7 +75,8 @@ func (q *problemService) CheckProblemNumber(problemCode string) (bool, *e.Error)
 	return !b, nil
 }
 
-func (q *problemService) InsertProblem(problem *po.Problem) (uint, *e.Error) {
+func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (uint, *e.Error) {
+	problem.CreatorID = ctx.Keys["user"].(*dto.UserInfo).ID
 	// 对设置值的数据设置默认值
 	if problem.Name == "" {
 		problem.Name = "未命名题目"
