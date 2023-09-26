@@ -36,7 +36,7 @@ func GetRoleByID(db *gorm.DB, roleID uint) (*po.SysRole, error) {
 }
 
 // GetRoleList 获取角色列表
-func GetRoleList(db *gorm.DB, pageQuery dto.PageQuery) ([]*po.SysRole, error) {
+func GetRoleList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysRole, error) {
 	role := pageQuery.Query.(*po.SysRole)
 	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var roles []*po.SysRole
@@ -46,9 +46,10 @@ func GetRoleList(db *gorm.DB, pageQuery dto.PageQuery) ([]*po.SysRole, error) {
 }
 
 // GetRoleCount 获取所有角色数量
-func GetRoleCount(db *gorm.DB) (int64, error) {
+func GetRoleCount(db *gorm.DB, role *po.SysRole) (int64, error) {
 	var count int64
-	err := db.Model(&po.SysRole{}).Count(&count).Error
+	err := db.Model(&po.SysRole{}).
+		Where("name LIKE ?", "%"+role.Name+"%").Count(&count).Error
 	return count, err
 }
 

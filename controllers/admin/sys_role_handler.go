@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"FanCode/controllers"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
@@ -92,23 +93,12 @@ func (s *sysRoleController) DeleteSysRole(ctx *gin.Context) {
 // GetSysRoleList 读取一个列表的角色
 func (s *sysRoleController) GetSysRoleList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageStr := ctx.Query("page")
-	pageSizeStr := ctx.Query("pageSize")
-	var page int
-	var pageSize int
-	var convertErr error
-	page, convertErr = strconv.Atoi(pageStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
+	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	role := &po.SysRole{
+		Name: ctx.Query("roleName"),
 	}
-	pageSize, convertErr = strconv.Atoi(pageSizeStr)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	roleName := ctx.Query("roleName")
-	pageInfo, err := s.sysRoleService.GetSysRoleList(roleName, page, pageSize)
+	pageQuery.Query = role
+	pageInfo, err := s.sysRoleService.GetSysRoleList(pageQuery)
 	if err != nil {
 		result.Error(err)
 		return

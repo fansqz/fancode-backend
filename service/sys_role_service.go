@@ -17,7 +17,7 @@ type SysRoleService interface {
 	// DeleteSysRole 删除角色
 	DeleteSysRole(id uint) *e.Error
 	// GetSysRoleList 获取角色列表
-	GetSysRoleList(roleName string, page int, pageSize int) (*dto.PageInfo, *e.Error)
+	GetSysRoleList(pageQuery *dto.PageQuery) (*dto.PageInfo, *e.Error)
 	// UpdateRoleApis 更新角色apis
 	UpdateRoleApis(roleID uint, apiIDs []uint) *e.Error
 	// UpdateRoleMenus 更新角色menu
@@ -70,9 +70,9 @@ func (r *sysRoleService) DeleteSysRole(id uint) *e.Error {
 	return nil
 }
 
-func (r *sysRoleService) GetSysRoleList(roleName string, page int, pageSize int) (*dto.PageInfo, *e.Error) {
+func (r *sysRoleService) GetSysRoleList(query *dto.PageQuery) (*dto.PageInfo, *e.Error) {
 	// 获取角色列表
-	sysSysRoles, err := dao.GetRoleList(global.Mysql, roleName, page, pageSize)
+	sysSysRoles, err := dao.GetRoleList(global.Mysql, query)
 	if err != nil {
 		return nil, e.ErrRoleUnknownError
 	}
@@ -82,7 +82,7 @@ func (r *sysRoleService) GetSysRoleList(roleName string, page int, pageSize int)
 	}
 	// 获取所有角色总数目
 	var count int64
-	count, err = dao.GetRoleCount(global.Mysql)
+	count, err = dao.GetRoleCount(global.Mysql, query.Query.(*po.SysRole))
 	if err != nil {
 		return nil, e.ErrRoleUnknownError
 	}
