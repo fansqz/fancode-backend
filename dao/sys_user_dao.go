@@ -32,6 +32,16 @@ func GetUserByID(db *gorm.DB, id uint) (*po.SysUser, error) {
 	return &user, nil
 }
 
+// GetUserNameByID 通过用户id获取用户名称
+func GetUserNameByID(db *gorm.DB, id uint) (string, error) {
+	var user po.SysUser
+	err := db.Select("username").First(&user, id).Error
+	if err != nil {
+		return "", err
+	}
+	return user.Username, nil
+}
+
 // GetUserList 获取用户列表
 func GetUserList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysUser, error) {
 	user := pageQuery.Query.(*po.SysUser)

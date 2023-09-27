@@ -33,35 +33,14 @@ func main() {
 	}
 
 	// 模型绑定
-	err := global.Mysql.AutoMigrate(&po.SysUser{})
-	if err != nil {
-		log.Println(err)
-	}
-	err = global.Mysql.AutoMigrate(&po.SysApi{})
-	if err != nil {
-		log.Println(err)
-	}
-	err = global.Mysql.AutoMigrate(&po.SysMenu{})
-	if err != nil {
-		log.Println(err)
-	}
-	err = global.Mysql.AutoMigrate(&po.SysRole{})
-	if err != nil {
-		log.Println(err)
-	}
-	err = global.Mysql.AutoMigrate(&po.SysUser{})
-	if err != nil {
-		log.Println(err)
-	}
-	err = global.Mysql.AutoMigrate(&po.Problem{})
-	if err != nil {
-		log.Println(err)
-	}
-	err = global.Mysql.AutoMigrate(&po.Submission{})
-	if err != nil {
-		log.Println(err)
-	}
-	err = global.Mysql.AutoMigrate(&po.ProblemAttempt{})
+	err := global.Mysql.AutoMigrate(&po.SysUser{},
+		&po.SysApi{},
+		&po.SysMenu{},
+		&po.SysRole{},
+		&po.SysUser{},
+		&po.ProblemBank{},
+		&po.Problem{},
+		&po.ProblemAttempt{})
 	if err != nil {
 		log.Println(err)
 	}

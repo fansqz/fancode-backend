@@ -9,5 +9,5 @@ type ProblemBank struct {
 	Icon        string    `gorm:"column:icon"`
 	Description string    `gorm:"column:description"`
 	CreatorID   uint      `gorm:"column:creator_id"`
-	Problems    []Problem `gorm:"foreignKey:id"`
+	Problems    []Problem `gorm:"foreignKey:bank_id"`
 }

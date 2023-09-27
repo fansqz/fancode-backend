@@ -93,6 +93,14 @@ func (p *problemBankService) GetProblemBankList(query *dto.PageQuery) (*dto.Page
 	newProblemBanks := make([]*dto.ProblemBankDtoForList, len(banks))
 	for i := 0; i < len(banks); i++ {
 		newProblemBanks[i] = dto.NewProblemBankDtoForList(banks[i])
+		// 读取题库中的题目总数还有作者
+		newProblemBanks[i].ProblemCount, err = dao.GetProblemCount(global.Mysql, &po.Problem{
+			BankID: newProblemBanks[i].ID,
+		})
+		if err != nil {
+			return nil, e.ErrMysql
+		}
+		newProblemBanks[i].CreatorName, err = dao.GetUserNameByID(global.Mysql, banks[i].CreatorID)
 	}
 	// 获取所有题库总数目
 	var count int64

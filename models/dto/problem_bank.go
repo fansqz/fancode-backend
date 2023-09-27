@@ -7,11 +7,13 @@ import (
 
 // ProblemBankDtoForList 获取题目列表
 type ProblemBankDtoForList struct {
-	ID          uint       `json:"id"`
-	CreatedAt   utils.Time `json:"createdAt"`
-	UpdatedAt   utils.Time `json:"updatedAt"`
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
+	ID           uint       `json:"id"`
+	Name         string     `json:"name"`
+	Description  string     `json:"description"`
+	CreatedAt    utils.Time `json:"createdAt"`
+	UpdatedAt    utils.Time `json:"updatedAt"`
+	CreatorName  string     `json:"creatorName"`
+	ProblemCount int64      `json:"problemCount"`
 }
 
 func NewProblemBankDtoForList(bank *po.ProblemBank) *ProblemBankDtoForList {
