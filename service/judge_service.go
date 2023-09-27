@@ -190,17 +190,17 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		LimitTime:   LimitExecuteTime,
 		LimitMemory: LimitExecuteMemory,
 	}
+	// 运行可执行文件
+	err = j.judgeCore.Execute(executeOption)
+	if err != nil {
+		submission.Status = constants.RuntimeError
+		submission.ExpectedOutput = err.Error()
+		return submission, nil
+	}
 
 	beginTime := time.Now()
 	for _, fileInfo := range files {
 		if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".in") {
-			// 运行可执行文件
-			err = j.judgeCore.Execute(executeOption)
-			if err != nil {
-				submission.Status = constants.RuntimeError
-				submission.ExpectedOutput = err.Error()
-				return submission, nil
-			}
 
 			// 输入数据
 			var input []byte
