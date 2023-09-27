@@ -6,6 +6,7 @@ import (
 
 type UserInfo struct {
 	ID        uint     `json:"id"`
+	Avatar    string   `json:"avatar"`
 	LoginName string   `json:"loginName"`
 	Username  string   `json:"username"`
 	Email     string   `json:"email"`
@@ -17,6 +18,7 @@ type UserInfo struct {
 func NewUserInfo(user *po.SysUser) *UserInfo {
 	userInfo := &UserInfo{
 		ID:        user.ID,
+		Avatar:    user.Avatar,
 		LoginName: user.LoginName,
 		Username:  user.Username,
 		Email:     user.Email,

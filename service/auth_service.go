@@ -67,6 +67,7 @@ func (u *authService) PasswordLogin(account string, password string) (string, *e
 	userInfo := dto.NewUserInfo(user)
 	token, err := utils.GenerateToken(utils.Claims{
 		ID:        userInfo.ID,
+		Avatar:    userInfo.Avatar,
 		Username:  userInfo.Username,
 		LoginName: userInfo.LoginName,
 		Phone:     userInfo.Phone,
