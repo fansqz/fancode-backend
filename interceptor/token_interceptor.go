@@ -30,6 +30,7 @@ func TokenAuthorize() gin.HandlerFunc {
 		claims, err := utils.ParseToken(token)
 		userInfo := &dto.UserInfo{
 			ID:        claims.ID,
+			Avatar:    claims.Avatar,
 			LoginName: claims.LoginName,
 			Username:  claims.Username,
 			Email:     claims.Email,
