@@ -8,6 +8,7 @@ import (
 	"FanCode/models/po"
 	"FanCode/utils"
 	"github.com/Chain-Zhang/pinyin"
+	"gorm.io/gorm"
 	"log"
 	"time"
 )
@@ -44,12 +45,12 @@ func (u *authService) PasswordLogin(account string, password string) (string, *e
 	} else {
 		user, userErr = dao.GetUserByLoginName(global.Mysql, account)
 	}
+	if user == nil || userErr == gorm.ErrRecordNotFound {
+		return "", e.ErrUserNotExist
+	}
 	if userErr != nil {
 		log.Println(userErr)
 		return "", e.ErrUserUnknownError
-	}
-	if user == nil {
-		return "", e.ErrUserNotExist
 	}
 	// 比较密码
 	if !utils.ComparePwd(user.Password, password) {

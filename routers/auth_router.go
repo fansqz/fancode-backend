@@ -13,5 +13,6 @@ func SetupAuthRoutes(r *gin.Engine) {
 		auth.POST("/login", authController.Login)
 		auth.POST("/register", authController.UserRegister)
 		auth.POST("/code/send", authController.SendAuthCode)
+		auth.GET("/get/info", authController.GetUserInfo)
 	}
 }
