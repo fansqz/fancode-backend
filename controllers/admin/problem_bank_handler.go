@@ -48,7 +48,7 @@ func (p *problemBankManagementController) UploadProblemBankIcon(ctx *gin.Context
 		result.SimpleErrorMessage("文件大小不能超过2m")
 		return
 	}
-	path, err2 := p.problemBankService..UploadAvatar(file)
+	path, err2 := p.problemBankService.UploadProblemBankIcon(file)
 	if err2 != nil {
 		result.Error(err2)
 		return
