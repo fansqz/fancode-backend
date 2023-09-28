@@ -7,6 +7,7 @@ import (
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
+	r "FanCode/models/vo"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -23,6 +24,8 @@ const (
 type ProblemBankService interface {
 	// UploadProblemBankIcon 上传题库图标
 	UploadProblemBankIcon(file *multipart.FileHeader) (string, *e.Error)
+	// ReadProblemBankIcon 读取题库图标
+	ReadProblemBankIcon(ctx *gin.Context, iconName string)
 	// InsertProblemBank 添加题库
 	InsertProblemBank(problemBank *po.ProblemBank, ctx *gin.Context) (uint, *e.Error)
 	// UpdateProblemBank 更新题库
@@ -55,7 +58,18 @@ func (p *problemBankService) UploadProblemBankIcon(file *multipart.FileHeader) (
 		log.Println(err)
 		return "", e.ErrServer
 	}
-	return global.Conf.ProUrl + path.Join(ProblemBankIconPath, fileName), nil
+	return global.Conf.ProUrl + path.Join("/manage/problemBank/icon", fileName), nil
+}
+
+func (p *problemBankService) ReadProblemBankIcon(ctx *gin.Context, iconName string) {
+	result := r.NewResult(ctx)
+	cos := file_store.NewImageCOS()
+	bytes, err := cos.ReadFile(path.Join(ProblemBankIconPath, iconName))
+	if err != nil {
+		result.Error(e.ErrServer)
+		return
+	}
+	_, _ = ctx.Writer.Write(bytes)
 }
 
 func (p *problemBankService) InsertProblemBank(problemBank *po.ProblemBank, ctx *gin.Context) (uint, *e.Error) {

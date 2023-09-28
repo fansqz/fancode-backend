@@ -15,6 +15,8 @@ import (
 type ProblemBankManagementController interface {
 	// UploadProblemBankIcon 上传题库图标
 	UploadProblemBankIcon(ctx *gin.Context)
+	// ReadProblemBankIcon 读取题库图标
+	ReadProblemBankIcon(ctx *gin.Context)
 	// InsertProblemBank 添加题库
 	InsertProblemBank(ctx *gin.Context)
 	// UpdateProblemBank 更新题库
@@ -54,6 +56,11 @@ func (p *problemBankManagementController) UploadProblemBankIcon(ctx *gin.Context
 		return
 	}
 	result.SuccessData(path)
+}
+
+func (p *problemBankManagementController) ReadProblemBankIcon(ctx *gin.Context) {
+	avatarName := ctx.Param("iconName")
+	p.problemBankService.ReadProblemBankIcon(ctx, avatarName)
 }
 
 func (p *problemBankManagementController) InsertProblemBank(ctx *gin.Context) {
