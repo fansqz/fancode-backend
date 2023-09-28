@@ -3,14 +3,26 @@ package service
 import (
 	"FanCode/dao"
 	e "FanCode/error"
+	"FanCode/file_store"
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
+	"FanCode/utils"
 	"github.com/gin-gonic/gin"
+	"log"
+	"mime/multipart"
+	"path"
+)
+
+const (
+	// ProblemBankIconPath cos中，题库图标存储位置
+	ProblemBankIconPath = "/icon/problemBank"
 )
 
 // ProblemBankService 题库管理的service
 type ProblemBankService interface {
+	// UploadProblemBankIcon 上传题库图标
+	UploadProblemBankIcon(file *multipart.FileHeader) (string, *e.Error)
 	// InsertProblemBank 添加题库
 	InsertProblemBank(problemBank *po.ProblemBank, ctx *gin.Context) (uint, *e.Error)
 	// UpdateProblemBank 更新题库
@@ -28,6 +40,22 @@ type problemBankService struct {
 
 func NewProblemBankService() ProblemBankService {
 	return &problemBankService{}
+}
+
+func (p *problemBankService) UploadProblemBankIcon(file *multipart.FileHeader) (string, *e.Error) {
+	cos := file_store.NewImageCOS()
+	fileName := file.Filename
+	fileName = utils.GetUUID() + "." + path.Base(fileName)
+	file2, err := file.Open()
+	if err != nil {
+		return "", e.ErrBadRequest
+	}
+	err = cos.SaveFile(path.Join(ProblemBankIconPath, fileName), file2)
+	if err != nil {
+		log.Println(err)
+		return "", e.ErrServer
+	}
+	return global.Conf.ProUrl + path.Join(ProblemBankIconPath, fileName), nil
 }
 
 func (p *problemBankService) InsertProblemBank(problemBank *po.ProblemBank, ctx *gin.Context) (uint, *e.Error) {

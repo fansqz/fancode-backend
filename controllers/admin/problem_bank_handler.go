@@ -13,6 +13,8 @@ import (
 // ProblemBankManagementController
 // @Description: 题库管理相关功能
 type ProblemBankManagementController interface {
+	// UploadProblemBankIcon 上传题库图标
+	UploadProblemBankIcon(ctx *gin.Context)
 	// InsertProblemBank 添加题库
 	InsertProblemBank(ctx *gin.Context)
 	// UpdateProblemBank 更新题库
@@ -33,6 +35,25 @@ func NewProblemBankManagementController() ProblemBankManagementController {
 	return &problemBankManagementController{
 		problemBankService: service.NewProblemBankService(),
 	}
+}
+
+func (p *problemBankManagementController) UploadProblemBankIcon(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	file, err := ctx.FormFile("icon")
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	if file.Size > 2<<20 {
+		result.SimpleErrorMessage("文件大小不能超过2m")
+		return
+	}
+	path, err2 := p.problemBankService..UploadAvatar(file)
+	if err2 != nil {
+		result.Error(err2)
+		return
+	}
+	result.SuccessData(path)
 }
 
 func (p *problemBankManagementController) InsertProblemBank(ctx *gin.Context) {
