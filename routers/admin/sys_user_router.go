@@ -10,6 +10,7 @@ func SetupSysUserRoutes(r *gin.Engine) {
 	user := r.Group("/manage/user")
 	{
 		userController := admin.NewSysUserController()
+		user.GET("/:id", userController.GetUserByID)
 		user.POST("", userController.InsertSysUser)
 		user.PUT("", userController.UpdateSysUser)
 		user.DELETE("/:id", userController.DeleteSysUser)

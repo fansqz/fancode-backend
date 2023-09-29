@@ -11,6 +11,8 @@ import (
 )
 
 type SysUserController interface {
+	// GetUserByID 根据id获取user
+	GetUserByID(ctx *gin.Context)
 	// InsertSysUser 添加用户
 	InsertSysUser(ctx *gin.Context)
 	// UpdateSysUser 更新用户，但是不更新密码
@@ -35,6 +37,22 @@ func NewSysUserController() SysUserController {
 	return &sysUserController{
 		sysUserService: service.NewSysUserService(),
 	}
+}
+
+func (s *sysUserController) GetUserByID(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	userIDStr := ctx.Param("id")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	user, err2 := s.sysUserService.GetUserByID(uint(userID))
+	if err2 != nil {
+		result.Error(err2)
+		return
+	}
+	result.SuccessData(user)
 }
 
 func (s *sysUserController) InsertSysUser(ctx *gin.Context) {

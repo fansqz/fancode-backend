@@ -13,6 +13,8 @@ import (
 )
 
 type SysUserService interface {
+	// GetUserByID 根据用户id获取用户信息
+	GetUserByID(userID uint) (*po.SysUser, *e.Error)
 	// InsertSysUser 添加用户
 	InsertSysUser(sysSysUser *po.SysUser) (uint, *e.Error)
 	// UpdateSysUser 更新用户，但是不更新密码
@@ -34,6 +36,14 @@ type sysUserService struct {
 
 func NewSysUserService() SysUserService {
 	return &sysUserService{}
+}
+
+func (s *sysUserService) GetUserByID(userID uint) (*po.SysUser, *e.Error) {
+	user, err := dao.GetUserByID(global.Mysql, userID)
+	if err != nil {
+		return nil, e.ErrMysql
+	}
+	return user, nil
 }
 
 func (s *sysUserService) InsertSysUser(sysUser *po.SysUser) (uint, *e.Error) {
