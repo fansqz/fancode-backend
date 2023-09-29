@@ -129,8 +129,8 @@ func (p *problemBankManagementController) GetProblemBankList(ctx *gin.Context) {
 	}
 	// 读取名称和描述
 	bank := &po.ProblemBank{
-		Name:        ctx.PostForm("name"),
-		Description: ctx.PostForm("description"),
+		Name:        ctx.Query("name"),
+		Description: ctx.Query("description"),
 	}
 	pageQuery.Query = bank
 	pageInfo, err := p.problemBankService.GetProblemBankList(pageQuery)
