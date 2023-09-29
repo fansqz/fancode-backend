@@ -14,6 +14,7 @@ func SetupProblemBankRoutes(r *gin.Engine) {
 		bank.PUT("", problemBankController.UpdateProblemBank)
 		bank.DELETE("/:id/:forceDelete", problemBankController.DeleteProblemBank)
 		bank.GET("/list", problemBankController.GetProblemBankList)
+		bank.GET("/simple/list", problemBankController.GetSimpleProblemBankList)
 		bank.GET("/:id", problemBankController.GetProblemBankByID)
 		bank.POST("/icon", problemBankController.UploadProblemBankIcon)
 		bank.GET("/icon/:iconName", problemBankController.ReadProblemBankIcon)

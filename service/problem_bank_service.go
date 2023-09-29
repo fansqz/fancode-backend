@@ -34,6 +34,8 @@ type ProblemBankService interface {
 	DeleteProblemBank(id uint, forceDelete bool) *e.Error
 	// GetProblemBankList 获取题目列表
 	GetProblemBankList(query *dto.PageQuery) (*dto.PageInfo, *e.Error)
+	// GetSimpleProblemBankList 获取简单的题库列表
+	GetSimpleProblemBankList() ([]*dto.ProblemBankDtoForSimpleList, *e.Error)
 	// GetProblemBankByID 获取题目信息
 	GetProblemBankByID(id uint) (*po.ProblemBank, *e.Error)
 }
@@ -156,6 +158,18 @@ func (p *problemBankService) GetProblemBankList(query *dto.PageQuery) (*dto.Page
 		List:  newProblemBanks,
 	}
 	return pageInfo, nil
+}
+
+func (p *problemBankService) GetSimpleProblemBankList() ([]*dto.ProblemBankDtoForSimpleList, *e.Error) {
+	banks, err := dao.GetSimpleProblemBankList(global.Mysql)
+	if err != nil {
+		return nil, e.ErrMysql
+	}
+	newBanks := make([]*dto.ProblemBankDtoForSimpleList, len(banks))
+	for i := 0; i < len(banks); i++ {
+		newBanks[i] = dto.NewProblemBankDtoForSimpleList(banks[i])
+	}
+	return newBanks, nil
 }
 
 func (p *problemBankService) GetProblemBankByID(id uint) (*po.ProblemBank, *e.Error) {

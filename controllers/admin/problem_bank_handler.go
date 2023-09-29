@@ -25,6 +25,8 @@ type ProblemBankManagementController interface {
 	DeleteProblemBank(ctx *gin.Context)
 	// GetProblemBankList 读取题库列表
 	GetProblemBankList(ctx *gin.Context)
+	// GetSimpleProblemBankList 读取简单的题库列表
+	GetSimpleProblemBankList(ctx *gin.Context)
 	// GetProblemBankByID 读取题库信息
 	GetProblemBankByID(ctx *gin.Context)
 }
@@ -137,6 +139,16 @@ func (p *problemBankManagementController) GetProblemBankList(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData(pageInfo)
+}
+
+func (p *problemBankManagementController) GetSimpleProblemBankList(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	banks, err := p.problemBankService.GetSimpleProblemBankList()
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(banks)
 }
 
 func (p *problemBankManagementController) GetProblemBankByID(ctx *gin.Context) {

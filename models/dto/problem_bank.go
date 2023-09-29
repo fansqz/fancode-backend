@@ -26,3 +26,17 @@ func NewProblemBankDtoForList(bank *po.ProblemBank) *ProblemBankDtoForList {
 	}
 	return response
 }
+
+// ProblemBankDtoForSimpleList 获取简单题目列表
+type ProblemBankDtoForSimpleList struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+func NewProblemBankDtoForSimpleList(bank *po.ProblemBank) *ProblemBankDtoForSimpleList {
+	response := &ProblemBankDtoForSimpleList{
+		ID:   bank.ID,
+		Name: bank.Name,
+	}
+	return response
+}
