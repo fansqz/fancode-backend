@@ -55,7 +55,7 @@ func (q *problemManagementController) CheckProblemNumber(ctx *gin.Context) {
 
 func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problem, err := q.getProblem(ctx)
+	problem, err := q.getProblemByForm(ctx)
 	if err != nil {
 		result.Error(err)
 	}
@@ -70,7 +70,7 @@ func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 
 func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problem, err2 := q.getProblem(ctx)
+	problem, err2 := q.getProblemByForm(ctx)
 	if err2 != nil {
 		result.Error(err2)
 		return
@@ -91,37 +91,6 @@ func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData("修改成功")
-}
-
-func (q *problemManagementController) getProblem(ctx *gin.Context) (*po.Problem, *e.Error) {
-	problem := &po.Problem{}
-	problem.Number = ctx.PostForm("number")
-	problem.Name = ctx.PostForm("name")
-	problem.Description = ctx.PostForm("description")
-	problem.Title = ctx.PostForm("title")
-	difficultyStr := ctx.PostForm("difficulty")
-	problem.Languages = ctx.PostForm("languages")
-	var err error
-	var difficlty int
-	// 难度设置
-	if difficultyStr == "" {
-		// 题目难度默认为1
-		difficlty = 1
-	} else {
-		difficlty, err = strconv.Atoi(difficultyStr)
-		if err != nil {
-			return nil, e.ErrBadRequest
-		}
-	}
-	problem.Difficulty = &difficlty
-	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
-		return nil, e.ErrBadRequest
-	}
-	enableStr := ctx.PostForm("enable")
-	var enable bool
-	enable = enableStr == "true"
-	problem.Enable = &(enable)
-	return problem, nil
 }
 
 func (q *problemManagementController) DeleteProblem(ctx *gin.Context) {
@@ -148,6 +117,12 @@ func (q *problemManagementController) GetProblemList(ctx *gin.Context) {
 		result.Error(err)
 		return
 	}
+	problem, err := q.getProblemByQuery(ctx)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	pageQuery.Query = problem
 	pageInfo, err := q.problemService.GetProblemList(pageQuery)
 	if err != nil {
 		result.Error(err)
@@ -203,4 +178,84 @@ func (q *problemManagementController) UpdateProblemEnable(ctx *gin.Context) {
 		return
 	}
 	result.SuccessMessage("操作成功")
+}
+
+func (q *problemManagementController) getProblemByForm(ctx *gin.Context) (*po.Problem, *e.Error) {
+	problem := &po.Problem{}
+	problem.Number = ctx.PostForm("number")
+	problem.Name = ctx.PostForm("name")
+	problem.Description = ctx.PostForm("description")
+	problem.Title = ctx.PostForm("title")
+	difficultyStr := ctx.PostForm("difficulty")
+	bankIDStr := ctx.PostForm("bankID")
+	problem.Languages = ctx.PostForm("languages")
+	var err error
+	var difficlty int
+	// 难度设置
+	if difficultyStr == "" {
+		// 题目难度默认为1
+		difficlty = 0
+	} else {
+		difficlty, err = strconv.Atoi(difficultyStr)
+		if err != nil {
+			return nil, e.ErrBadRequest
+		}
+	}
+	var bankID int
+	if bankIDStr != "" {
+		bankID, err = strconv.Atoi(bankIDStr)
+		if err != nil {
+			return nil, e.ErrBadRequest
+		}
+	}
+	problem.Difficulty = &difficlty
+	problem.BankID = uint(bankID)
+	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
+		return nil, e.ErrBadRequest
+	}
+	enableStr := ctx.PostForm("enable")
+	var enable bool
+	enable = enableStr == "true"
+	problem.Enable = &(enable)
+	return problem, nil
+}
+
+func (q *problemManagementController) getProblemByQuery(ctx *gin.Context) (*po.Problem, *e.Error) {
+	problem := &po.Problem{}
+	problem.Number = ctx.Query("number")
+	problem.Name = ctx.Query("name")
+	problem.Description = ctx.Query("description")
+	problem.Title = ctx.Query("title")
+	difficultyStr := ctx.Query("difficulty")
+	bankIDStr := ctx.Query("bankID")
+	problem.Languages = ctx.Query("languages")
+	var err error
+	var difficlty int
+	// 难度设置
+	if difficultyStr == "" {
+		// 题目难度默认为1
+		difficlty = 0
+	} else {
+		difficlty, err = strconv.Atoi(difficultyStr)
+		if err != nil {
+			return nil, e.ErrBadRequest
+		}
+	}
+	var bankID int
+	if bankIDStr != "" {
+		bankID, err = strconv.Atoi(bankIDStr)
+		if err != nil {
+			return nil, e.ErrBadRequest
+		}
+	}
+	problem.Difficulty = &difficlty
+	problem.BankID = uint(bankID)
+	if *problem.Difficulty > 5 || *problem.Difficulty < 0 {
+		return nil, e.ErrBadRequest
+	}
+	enableStr := ctx.PostForm("enable")
+	var enable bool
+	enable = enableStr == "true"
+	problem.Enable = &(enable)
+	return problem, nil
 }
