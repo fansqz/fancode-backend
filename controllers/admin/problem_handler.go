@@ -216,9 +216,9 @@ func (q *problemManagementController) getProblemByForm(ctx *gin.Context) (*po.Pr
 		if err != nil {
 			return nil, e.ErrBadRequest
 		}
+		uintBankID := uint(bankID)
+		problem.BankID = &uintBankID
 	}
-	var uintBankID = uint(bankID)
-	problem.BankID = &uintBankID
 	// 是否启用
 	if enableStr == "1" {
 		problem.Enable = 1
@@ -259,9 +259,9 @@ func (q *problemManagementController) getProblemByQuery(ctx *gin.Context) (*po.P
 		if err != nil {
 			return nil, e.ErrBadRequest
 		}
+		uintBankID := uint(bankID)
+		problem.BankID = &uintBankID
 	}
-	var uintBankID = uint(bankID)
-	problem.BankID = &uintBankID
 	// 是否启用
 	if enableStr == "1" {
 		problem.Enable = 1
