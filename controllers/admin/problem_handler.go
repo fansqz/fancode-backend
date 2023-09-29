@@ -216,7 +216,7 @@ func (q *problemManagementController) getProblemByForm(ctx *gin.Context) (*po.Pr
 	// 是否启用
 	if enableStr == "1" {
 		problem.Enable = 1
-	} else {
+	} else if enableStr == "-1 " {
 		problem.Enable = -1
 	}
 	return problem, nil
@@ -258,7 +258,7 @@ func (q *problemManagementController) getProblemByQuery(ctx *gin.Context) (*po.P
 	// 是否启用
 	if enableStr == "1" {
 		problem.Enable = 1
-	} else {
+	} else if enableStr == "-1" {
 		problem.Enable = -1
 	}
 	return problem, nil
