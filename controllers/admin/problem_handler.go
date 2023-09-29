@@ -189,18 +189,22 @@ func (q *problemManagementController) getProblemByForm(ctx *gin.Context) (*po.Pr
 	difficultyStr := ctx.PostForm("difficulty")
 	bankIDStr := ctx.PostForm("bankID")
 	problem.Languages = ctx.PostForm("languages")
+	enableStr := ctx.PostForm("enable")
 	var err error
-	var difficlty int
 	// 难度设置
 	if difficultyStr == "" {
 		// 题目难度默认为1
-		difficlty = 0
+		problem.Difficulty = 0
 	} else {
-		difficlty, err = strconv.Atoi(difficultyStr)
+		problem.Difficulty, err = strconv.Atoi(difficultyStr)
 		if err != nil {
 			return nil, e.ErrBadRequest
 		}
 	}
+	if problem.Difficulty > 5 || problem.Difficulty < 0 {
+		return nil, e.ErrBadRequest
+	}
+	// 题库id设置
 	var bankID int
 	if bankIDStr != "" {
 		bankID, err = strconv.Atoi(bankIDStr)
@@ -208,15 +212,13 @@ func (q *problemManagementController) getProblemByForm(ctx *gin.Context) (*po.Pr
 			return nil, e.ErrBadRequest
 		}
 	}
-	problem.Difficulty = &difficlty
 	problem.BankID = uint(bankID)
-	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
-		return nil, e.ErrBadRequest
+	// 是否启用
+	if enableStr == "1" {
+		problem.Enable = 1
+	} else {
+		problem.Enable = -1
 	}
-	enableStr := ctx.PostForm("enable")
-	var enable bool
-	enable = enableStr == "true"
-	problem.Enable = &(enable)
 	return problem, nil
 }
 
@@ -229,18 +231,22 @@ func (q *problemManagementController) getProblemByQuery(ctx *gin.Context) (*po.P
 	difficultyStr := ctx.Query("difficulty")
 	bankIDStr := ctx.Query("bankID")
 	problem.Languages = ctx.Query("languages")
+	enableStr := ctx.Query("enable")
 	var err error
-	var difficlty int
 	// 难度设置
 	if difficultyStr == "" {
 		// 题目难度默认为1
-		difficlty = 0
+		problem.Difficulty = 0
 	} else {
-		difficlty, err = strconv.Atoi(difficultyStr)
+		problem.Difficulty, err = strconv.Atoi(difficultyStr)
 		if err != nil {
 			return nil, e.ErrBadRequest
 		}
 	}
+	if problem.Difficulty > 5 || problem.Difficulty < 0 {
+		return nil, e.ErrBadRequest
+	}
+	// 题库id设置
 	var bankID int
 	if bankIDStr != "" {
 		bankID, err = strconv.Atoi(bankIDStr)
@@ -248,14 +254,12 @@ func (q *problemManagementController) getProblemByQuery(ctx *gin.Context) (*po.P
 			return nil, e.ErrBadRequest
 		}
 	}
-	problem.Difficulty = &difficlty
 	problem.BankID = uint(bankID)
-	if *problem.Difficulty > 5 || *problem.Difficulty < 0 {
-		return nil, e.ErrBadRequest
+	// 是否启用
+	if enableStr == "1" {
+		problem.Enable = 1
+	} else {
+		problem.Enable = -1
 	}
-	enableStr := ctx.PostForm("enable")
-	var enable bool
-	enable = enableStr == "true"
-	problem.Enable = &(enable)
 	return problem, nil
 }

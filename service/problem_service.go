@@ -106,10 +106,10 @@ func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (u
 		}
 	}
 	// 题目难度不在范围，那么都设置为1
-	if *problem.Difficulty > 5 || *problem.Difficulty < 1 {
-		*problem.Difficulty = 1
+	if problem.Difficulty > 5 || problem.Difficulty < 1 {
+		problem.Difficulty = 1
 	}
-	*problem.Enable = false
+	problem.Enable = -1
 	// 添加
 	err := dao.InsertProblem(global.Mysql, problem)
 	if err != nil {
@@ -124,7 +124,7 @@ func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, fi
 		log.Println(err)
 		return e.ErrProblemUpdateFailed
 	}
-	if problem.Enable != nil && *problem.Enable && (path == "" && file == nil) {
+	if problem.Enable == 1 && (path == "" && file == nil) {
 		return e.NewCustomMsg("该题目没有上传编程文件，不可启动")
 	}
 	if file != nil {
@@ -202,12 +202,11 @@ func (q *problemService) GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e
 
 func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQuery) (*dto.PageInfo, *e.Error) {
 	userId := ctx.Keys["user"].(*dto.UserInfo).ID
-	enable := true
 	if query.Query != nil {
-		query.Query.(*po.Problem).Enable = &(enable)
+		query.Query.(*po.Problem).Enable = 1
 	} else {
 		query.Query = &po.Problem{
-			Enable: &(enable),
+			Enable: 1,
 		}
 	}
 	// 获取题目列表

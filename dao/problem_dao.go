@@ -82,11 +82,11 @@ func GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Problem, error
 	if problem != nil && problem.Name != "" {
 		db2 = db2.Where("name like ?", "%"+problem.Name+"%")
 	}
-	if problem != nil && problem.Difficulty != nil {
-		db2 = db2.Where("difficulty = ?", *problem.Difficulty)
+	if problem != nil && problem.Difficulty != 0 {
+		db2 = db2.Where("difficulty = ?", problem.Difficulty)
 	}
-	if problem != nil && problem.Enable != nil {
-		db2 = db2.Where("enable = ?", *problem.Enable)
+	if problem != nil && problem.Enable != 0 {
+		db2 = db2.Where("enable = ?", problem.Enable)
 	}
 	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var problems []*po.Problem
@@ -108,14 +108,14 @@ func GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	if problem != nil && problem.Number != "" {
 		db2 = db2.Where("number = ?", problem.Number)
 	}
-	if problem != nil && problem.Difficulty != nil {
-		db2 = db2.Where("difficulty = ?", *problem.Difficulty)
+	if problem != nil && problem.Difficulty != 0 {
+		db2 = db2.Where("difficulty = ?", problem.Difficulty)
 	}
 	if problem != nil && problem.BankID != 0 {
 		db2 = db2.Where("bank_id = ?", problem.BankID)
 	}
-	if problem != nil && problem.Enable != nil {
-		db2 = db2.Where("enable = ?", *problem.Enable)
+	if problem != nil && problem.Enable != 0 {
+		db2 = db2.Where("enable = ?", problem.Enable)
 	}
 	err := db2.Model(&po.Problem{}).Count(&count).Error
 	return count, err

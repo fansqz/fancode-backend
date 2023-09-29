@@ -13,10 +13,10 @@ type ProblemDtoForGet struct {
 	Description string `json:"description"`
 	Title       string `json:"title"`
 	Path        string `json:"path"`
-	Difficulty  *int   `json:"difficulty"`
+	Difficulty  int    `json:"difficulty"`
 	// 支持的语言用,分割
 	Languages string `json:"languages"`
-	Enable    *bool  `json:"enable"`
+	Enable    int    `json:"enable"`
 }
 
 func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
@@ -43,8 +43,8 @@ type ProblemDtoForList struct {
 	Number     string     `json:"number"`
 	Title      string     `json:"title"`
 	Path       string     `json:"path"`
-	Difficulty *int       `json:"difficulty"`
-	Enable     *bool      `json:"enable"`
+	Difficulty int        `json:"difficulty"`
+	Enable     int        `json:"enable"`
 }
 
 func NewProblemDtoForList(problem *po.Problem) *ProblemDtoForList {
@@ -79,7 +79,7 @@ type ProblemDtoForUserList struct {
 	Number      string `json:"number"`
 	Description string `json:"description"`
 	Title       string `json:"title"`
-	Difficulty  *int   `json:"difficulty"`
+	Difficulty  int    `json:"difficulty"`
 	// 学生做题状态
 	State int `json:"state"`
 }
