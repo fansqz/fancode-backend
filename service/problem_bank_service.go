@@ -102,7 +102,7 @@ func (p *problemBankService) DeleteProblemBank(id uint, forceDelete bool) *e.Err
 	if !forceDelete {
 		var count int64
 		count, err = dao.GetProblemCount(global.Mysql, &po.Problem{
-			BankID: id,
+			BankID: &id,
 		})
 		if count != 0 {
 			return e.NewCustomMsg("题库不为空，请问是否需要强制删除")
@@ -137,7 +137,7 @@ func (p *problemBankService) GetProblemBankList(query *dto.PageQuery) (*dto.Page
 		newProblemBanks[i] = dto.NewProblemBankDtoForList(banks[i])
 		// 读取题库中的题目总数还有作者
 		newProblemBanks[i].ProblemCount, err = dao.GetProblemCount(global.Mysql, &po.Problem{
-			BankID: newProblemBanks[i].ID,
+			BankID: &newProblemBanks[i].ID,
 		})
 		if err != nil {
 			return nil, e.ErrMysql

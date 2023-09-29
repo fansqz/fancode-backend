@@ -171,7 +171,12 @@ func (q *problemManagementController) UpdateProblemEnable(ctx *gin.Context) {
 		return
 	}
 	enableStr := ctx.PostForm("enable")
-	enable := enableStr == "true"
+	var enable int
+	if enableStr == "1" {
+		enable = 1
+	} else {
+		enable = -1
+	}
 	err2 := q.problemService.UpdateProblemEnable(uint(problemID), enable)
 	if err2 != nil {
 		result.Error(err2)
@@ -212,7 +217,8 @@ func (q *problemManagementController) getProblemByForm(ctx *gin.Context) (*po.Pr
 			return nil, e.ErrBadRequest
 		}
 	}
-	problem.BankID = uint(bankID)
+	var uintBankID = uint(bankID)
+	problem.BankID = &uintBankID
 	// 是否启用
 	if enableStr == "1" {
 		problem.Enable = 1
@@ -254,7 +260,8 @@ func (q *problemManagementController) getProblemByQuery(ctx *gin.Context) (*po.P
 			return nil, e.ErrBadRequest
 		}
 	}
-	problem.BankID = uint(bankID)
+	var uintBankID = uint(bankID)
+	problem.BankID = &uintBankID
 	// 是否启用
 	if enableStr == "1" {
 		problem.Enable = 1

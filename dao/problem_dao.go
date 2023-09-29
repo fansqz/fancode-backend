@@ -66,7 +66,7 @@ func CheckProblemNumberExists(db *gorm.DB, problemCode string) (bool, error) {
 }
 
 // SetProblemEnable 让一个题目可用
-func SetProblemEnable(db *gorm.DB, id uint, enable bool) error {
+func SetProblemEnable(db *gorm.DB, id uint, enable int) error {
 	return db.Model(&po.Problem{}).Where("id = ?", id).Update("enable", enable).Error
 }
 
@@ -111,7 +111,7 @@ func GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	if problem != nil && problem.Difficulty != 0 {
 		db2 = db2.Where("difficulty = ?", problem.Difficulty)
 	}
-	if problem != nil && problem.BankID != 0 {
+	if problem != nil && problem.BankID != nil {
 		db2 = db2.Where("bank_id = ?", problem.BankID)
 	}
 	if problem != nil && problem.Enable != 0 {

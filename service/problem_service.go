@@ -52,7 +52,7 @@ type ProblemService interface {
 	// GetProblemTemplateCode 获取题目的模板代码
 	GetProblemTemplateCode(ctx *gin.Context, number string, language string, codeType string) (string, *e.Error)
 	// UpdateProblemEnable 设置题目可用
-	UpdateProblemEnable(id uint, enable bool) *e.Error
+	UpdateProblemEnable(id uint, enable int) *e.Error
 
 	// todo: 支持线上编辑题目
 	GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error)
@@ -501,7 +501,7 @@ func (q *problemService) DownloadProblemTemplateFile(ctx *gin.Context) {
 }
 
 // todo: 是否要加事务
-func (q *problemService) UpdateProblemEnable(id uint, enable bool) *e.Error {
+func (q *problemService) UpdateProblemEnable(id uint, enable int) *e.Error {
 	//检测题目文件是否存在
 	problem, err := dao.GetProblemByID(global.Mysql, id)
 	if err != nil {
