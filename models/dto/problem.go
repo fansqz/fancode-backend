@@ -8,6 +8,7 @@ import (
 // ProblemDtoForGet 获取题目详细信息
 type ProblemDtoForGet struct {
 	ID          uint   `json:"id"`
+	BankID      *uint  `json:"bankID"`
 	Name        string `json:"name"`
 	Number      string `json:"number"`
 	Description string `json:"description"`
@@ -22,6 +23,7 @@ type ProblemDtoForGet struct {
 func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
 	response := &ProblemDtoForGet{
 		ID:          problem.ID,
+		BankID:      problem.BankID,
 		Name:        problem.Name,
 		Number:      problem.Number,
 		Description: problem.Description,

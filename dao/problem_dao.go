@@ -43,6 +43,7 @@ func GetProblemByID(db *gorm.DB, problemID uint) (*po.Problem, error) {
 // 不修改path
 func UpdateProblem(db *gorm.DB, problem *po.Problem) error {
 	return db.Model(&po.Problem{}).Where("id = ?", problem.ID).Updates(map[string]interface{}{
+		"bank_id":     problem.BankID,
 		"number":      problem.Number,
 		"name":        problem.Name,
 		"description": problem.Description,
@@ -87,6 +88,9 @@ func GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Problem, error
 	}
 	if problem != nil && problem.Enable != 0 {
 		db2 = db2.Where("enable = ?", problem.Enable)
+	}
+	if problem != nil && problem.BankID != nil {
+		db2 = db2.Where("bank_id = ?", problem.BankID)
 	}
 	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var problems []*po.Problem

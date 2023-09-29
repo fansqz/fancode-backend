@@ -177,6 +177,10 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 }
 
 func (q *problemService) GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e.Error) {
+	var bankQuery *po.Problem
+	if query.Query != nil {
+		bankQuery = query.Query.(*po.Problem)
+	}
 	// 获取题目列表
 	problems, err := dao.GetProblemList(global.Mysql, query)
 	if err != nil {
@@ -188,7 +192,7 @@ func (q *problemService) GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e
 	}
 	// 获取所有题目总数目
 	var count int64
-	count, err = dao.GetProblemCount(global.Mysql, nil)
+	count, err = dao.GetProblemCount(global.Mysql, bankQuery)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
