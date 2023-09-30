@@ -117,7 +117,8 @@ func (s *sysRoleController) GetSysRoleList(ctx *gin.Context) {
 		return
 	}
 	role := &po.SysRole{
-		Name: ctx.Query("roleName"),
+		Name:        ctx.Query("name"),
+		Description: ctx.Query("description"),
 	}
 	pageQuery.Query = role
 	pageInfo, err := s.sysRoleService.GetSysRoleList(pageQuery)
