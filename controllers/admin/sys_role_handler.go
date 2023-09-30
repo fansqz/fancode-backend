@@ -12,6 +12,8 @@ import (
 
 // SysRoleController 角色管理相关功能
 type SysRoleController interface {
+	// GetRoleByID 根据id获取role
+	GetRoleByID(ctx *gin.Context)
 	// InsertSysRole 添加角色
 	InsertSysRole(ctx *gin.Context)
 	// DeleteSysRole 删除角色
@@ -38,6 +40,22 @@ func NewSysRoleController() SysRoleController {
 	return &sysRoleController{
 		sysRoleService: service.NewSysRoleService(),
 	}
+}
+
+func (s *sysRoleController) GetRoleByID(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	roleIDStr := ctx.Param("id")
+	roleID, err := strconv.Atoi(roleIDStr)
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	user, err2 := s.sysRoleService.GetRoleByID(uint(roleID))
+	if err2 != nil {
+		result.Error(err2)
+		return
+	}
+	result.SuccessData(user)
 }
 
 func (s *sysRoleController) InsertSysRole(ctx *gin.Context) {

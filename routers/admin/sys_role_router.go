@@ -10,6 +10,7 @@ func SetupSysRoleRoutes(r *gin.Engine) {
 	role := r.Group("/manage/role")
 	{
 		roleController := admin.NewSysRoleController()
+		role.GET("", roleController.GetRoleByID)
 		role.POST("", roleController.InsertSysRole)
 		role.PUT("", roleController.UpdateSysRole)
 		role.DELETE("/:id", roleController.DeleteSysRole)

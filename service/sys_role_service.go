@@ -10,6 +10,9 @@ import (
 )
 
 type SysRoleService interface {
+
+	// GetRoleByID 根角色户id获取角色信息
+	GetRoleByID(roleID uint) (*po.SysRole, *e.Error)
 	// InsertSysRole 添加角色
 	InsertSysRole(sysSysRole *po.SysRole) (uint, *e.Error)
 	// UpdateSysRole 更新角色
@@ -33,6 +36,14 @@ type sysRoleService struct {
 
 func NewSysRoleService() SysRoleService {
 	return &sysRoleService{}
+}
+
+func (r *sysRoleService) GetRoleByID(roleID uint) (*po.SysRole, *e.Error) {
+	role, err := dao.GetRoleByID(global.Mysql, roleID)
+	if err != nil {
+		return nil, e.ErrMysql
+	}
+	return role, nil
 }
 
 func (r *sysRoleService) InsertSysRole(sysRole *po.SysRole) (uint, *e.Error) {

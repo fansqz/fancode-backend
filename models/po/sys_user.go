@@ -8,7 +8,7 @@ import (
 type SysUser struct {
 	gorm.Model
 	LoginName    string `gorm:"column:login_name" json:"loginName"`
-	Password     string `gorm:"column:password" json:"password"`
+	Password     string `gorm:"column:password" json:""`
 	Username     string `gorm:"column:username" json:"username"`
 	Email        string `gorm:"column:email" json:"email"`
 	Phone        string `gorm:"column:phone" json:"phone"`
