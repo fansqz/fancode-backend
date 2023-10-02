@@ -6,7 +6,6 @@ package global
 
 import (
 	"gopkg.in/ini.v1"
-	"strings"
 )
 
 // InitSetting
@@ -21,10 +20,6 @@ func InitSetting(file string) error {
 	}
 	Conf = new(AppConfig)
 	cfg.MapTo(Conf)
-	//遍历releasePath
-	startPaths := strings.Split(Conf.ReleaseStartPath, ",")
-	releasePathConfig := &ReleasePathConfig{StartWith: startPaths}
-	Conf.ReleasePathConfig = releasePathConfig
 
 	Conf.MySqlConfig = NewMySqlConfig(cfg)
 	Conf.RedisConfig = NewRedisConfig(cfg)
