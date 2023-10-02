@@ -108,6 +108,7 @@ func InsertProblem(db *gorm.DB, problem *po.Problem) error {
 // 不修改path
 func UpdateProblem(db *gorm.DB, problem *po.Problem) error {
 	return db.Model(&po.Problem{}).Where("id = ?", problem.ID).Updates(map[string]interface{}{
+		"updated_at":  problem.UpdatedAt,
 		"bank_id":     problem.BankID,
 		"number":      problem.Number,
 		"name":        problem.Name,

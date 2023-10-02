@@ -62,7 +62,7 @@ func InsertApi(db *gorm.DB, api *po.SysApi) error {
 
 // UpdateApi 修改api
 func UpdateApi(db *gorm.DB, api *po.SysApi) error {
-	return db.Model(&po.SysApi{}).Updates(api).Error
+	return db.Model(api).Updates(api).Error
 }
 
 // DeleteApiByID 根据api的id进行删除

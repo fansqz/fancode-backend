@@ -20,6 +20,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -132,7 +133,7 @@ func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, fi
 		err2 := q.UploadProblemFile(ctx, file, problem.ID)
 		return err2
 	}
-
+	problem.UpdatedAt = time.Now()
 	// 更新题目
 	err2 := dao.UpdateProblem(global.Mysql, problem)
 	if err2 != nil {
