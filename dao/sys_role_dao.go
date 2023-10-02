@@ -93,7 +93,7 @@ func GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 }
 
 // GetMenusByRoleID 通过用户角色获取菜单列表
-func GetMenusByRoleID(db *gorm.DB, roleID uint) ([]po.SysMenu, error) {
+func GetMenusByRoleID(db *gorm.DB, roleID uint) ([]*po.SysMenu, error) {
 	var role po.SysRole
 	role.ID = roleID
 	if err := db.Model(&role).Association("Menus").Find(&role.Menus); err != nil {
@@ -139,6 +139,16 @@ func GetApiIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 		apiIDs[i] = api.ID
 	}
 	return apiIDs, nil
+}
+
+// GetApisByRoleID 获取用户关联的所有api
+func GetApisByRoleID(db *gorm.DB, roleID uint) ([]*po.SysApi, error) {
+	var role po.SysRole
+	role.ID = roleID
+	if err := db.Model(&role).Association("Apis").Find(&role.Apis); err != nil {
+		return nil, err
+	}
+	return role.Apis, nil
 }
 
 // GetAllSimpleRoleList 获取所有角色列表，只含有id和name

@@ -1,8 +1,7 @@
 package constants
 
 const (
-	// Normal 普通用户
-	Normal = 1
-	// Admin 管理员
-	Admin = 5
+	// 规定的，管理员id为1，游客id为2
+	AdminID   = uint(1)
+	TouristID = uint(2)
 )

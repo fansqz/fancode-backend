@@ -10,6 +10,7 @@ import (
 	"FanCode/interceptor"
 	"FanCode/routers/admin"
 	"FanCode/routers/user"
+	"FanCode/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +28,7 @@ func Run() {
 	r.Use(interceptor.Cors())
 
 	// 拦截非法用户
-	r.Use(interceptor.TokenAuthorize())
+	r.Use(interceptor.TokenAuthorize(service.NewSysRoleService(), service.NewSysUserService()))
 
 	//设置静态文件位置
 	r.Static("/static", "/")

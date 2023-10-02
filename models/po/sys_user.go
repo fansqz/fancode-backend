@@ -15,7 +15,7 @@ type SysUser struct {
 	Avatar       string `gorm:"column:avatar" json:"avatar"`
 	Introduction string `gorm:"column:introduction" json:"introduction"`
 	// 1表示男 0表示女
-	Sex      *int      `gorm:"column:sex" json:"sex"`
-	BirthDay time.Time `gorm:"column:birth_day" json:"birthDay"`
-	Roles    []SysRole `gorm:"many2many:user_roles;" json:"roles"`
+	Sex      *int       `gorm:"column:sex" json:"sex"`
+	BirthDay time.Time  `gorm:"column:birth_day" json:"birthDay"`
+	Roles    []*SysRole `gorm:"many2many:user_roles;" json:"roles"`
 }

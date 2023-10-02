@@ -29,6 +29,8 @@ type SysRoleService interface {
 	GetApiIDsByRoleID(roleID uint) ([]uint, *e.Error)
 	// GetMenuIDsByRoleID 通过角色id获取该角色拥有的menuID
 	GetMenuIDsByRoleID(roleID uint) ([]uint, *e.Error)
+	// GetApisByRoleID 通过角色id获取该角色的所有api
+	GetApisByRoleID(roleID uint) ([]*po.SysApi, *e.Error)
 }
 
 type sysRoleService struct {
@@ -151,4 +153,12 @@ func (r *sysRoleService) GetMenuIDsByRoleID(roleID uint) ([]uint, *e.Error) {
 		return nil, e.ErrRoleUnknownError
 	}
 	return menuIDs, nil
+}
+
+func (r *sysRoleService) GetApisByRoleID(roleID uint) ([]*po.SysApi, *e.Error) {
+	apis, err := dao.GetApisByRoleID(global.Mysql, roleID)
+	if err != nil {
+		return nil, e.ErrMysql
+	}
+	return apis, nil
 }
