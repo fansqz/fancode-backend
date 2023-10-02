@@ -19,10 +19,36 @@ func TokenAuthorize(roleService service.SysRoleService, userService service.SysU
 	return func(c *gin.Context) {
 		// 检验是否携带token
 		result := r.NewResult(c)
+		// 读取token
+		token := c.Request.Header.Get("token")
+		var userInfo *dto.UserInfo
+		if token != "" {
+			claims, err2 := utils.ParseToken(token)
+			userInfo = &dto.UserInfo{
+				ID:        claims.ID,
+				Avatar:    claims.Avatar,
+				LoginName: claims.LoginName,
+				Username:  claims.Username,
+				Email:     claims.Email,
+				Phone:     claims.Phone,
+				Roles:     claims.Roles,
+				Menus:     claims.Menus,
+			}
+			if err2 != nil || userInfo == nil {
+				result.Error(e.ErrSessionInvalid)
+				c.Abort()
+				return
+			}
+			if c.Keys == nil {
+				c.Keys = make(map[string]interface{}, 1)
+			}
+			c.Keys["user"] = userInfo
+		}
 		// 检验是否在放行名单
 		apis, err := roleService.GetApisByRoleID(constants.TouristID)
 		if err != nil {
 			result.Error(e.ErrServer)
+			c.Abort()
 			return
 		}
 		path := c.Request.URL.Path
@@ -31,34 +57,18 @@ func TokenAuthorize(roleService service.SysRoleService, userService service.SysU
 			if matchPath(path, api.Path) {
 				if strings.EqualFold(method, constants.AllMethod) {
 					c.Next()
+					return
 				} else if strings.EqualFold(method, api.Method) {
 					c.Next()
+					return
 				}
 			}
 		}
-		// 读取token
-		token := c.Request.Header.Get("token")
-		claims, err2 := utils.ParseToken(token)
-		userInfo := &dto.UserInfo{
-			ID:        claims.ID,
-			Avatar:    claims.Avatar,
-			LoginName: claims.LoginName,
-			Username:  claims.Username,
-			Email:     claims.Email,
-			Phone:     claims.Phone,
-			Roles:     claims.Roles,
-			Menus:     claims.Menus,
-		}
-		if err2 != nil || userInfo == nil {
-			result.Error(e.ErrSessionInvalid)
+		// 判断用户是否有权限访问该接口
+		if userInfo == nil {
 			c.Abort()
 			return
 		}
-		if c.Keys == nil {
-			c.Keys = make(map[string]interface{}, 1)
-		}
-		c.Keys["user"] = userInfo
-		// 判断用户是否有权限访问该接口
 		rules, err := userService.GetRoleIDsByUserID(userInfo.ID)
 		if err != nil {
 			result.Error(err)
@@ -71,12 +81,15 @@ func TokenAuthorize(roleService service.SysRoleService, userService service.SysU
 				if matchPath(path, api.Path) {
 					if strings.EqualFold(method, constants.AllMethod) {
 						c.Next()
+						return
 					} else if strings.EqualFold(method, api.Method) {
 						c.Next()
+						return
 					}
 				}
 			}
 		}
+		rejectRequest(c)
 	}
 }
 
@@ -98,4 +111,10 @@ func matchPath(requestPath, pattern string) bool {
 	}
 
 	return true
+}
+
+func rejectRequest(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	result.Error(e.ErrPermissionInvalid)
+	ctx.Abort()
 }
