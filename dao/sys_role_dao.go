@@ -13,11 +13,7 @@ func InsertRole(db *gorm.DB, role *po.SysRole) error {
 
 // UpdateRole 更新角色
 func UpdateRole(db *gorm.DB, role *po.SysRole) error {
-	return db.Model(role).UpdateColumns(map[string]interface{}{
-		"name":        role.Name,
-		"description": role.Description,
-		"updated_at":  role.UpdatedAt,
-	}).Error
+	return db.Model(role).Updates(role).Error
 }
 
 // DeleteRoleByID 删除角色

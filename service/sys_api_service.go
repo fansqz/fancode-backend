@@ -8,6 +8,7 @@ import (
 	"FanCode/models/po"
 	"gorm.io/gorm"
 	"log"
+	"time"
 )
 
 type SysApiService interface {
@@ -77,9 +78,12 @@ func (s *sysApiService) deleteApisRecursive(db *gorm.DB, parentID uint) error {
 }
 
 func (s *sysApiService) UpdateApi(api *po.SysApi) *e.Error {
+	api.UpdatedAt = time.Now()
 	err := dao.UpdateApi(global.Mysql, api)
 	if gorm.ErrRecordNotFound == err {
 		return e.ErrApiNotExist
+	} else if err != nil {
+		return e.ErrMysql
 	}
 	return nil
 }

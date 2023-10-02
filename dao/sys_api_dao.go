@@ -5,11 +5,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// InsertApi 创建角色
-func InsertApi(db *gorm.DB, api *po.SysApi) error {
-	return db.Create(api).Error
-}
-
 // GetApiByID 通过api的id获取api
 func GetApiByID(db *gorm.DB, id uint) (*po.SysApi, error) {
 	var api po.SysApi
@@ -44,16 +39,6 @@ func GetApiListByPathKeyword(db *gorm.DB, keyword string, page int, pageSize int
 	return sysApis, nil
 }
 
-// DeleteApiByID 根据api的id进行删除
-func DeleteApiByID(db *gorm.DB, id uint) error {
-	return db.Delete(&po.SysApi{}, id).Error
-}
-
-// UpdateApi 修改api
-func UpdateApi(db *gorm.DB, api *po.SysApi) error {
-	return db.Save(api).Error
-}
-
 // GetChildApisByParentID 根据父API的ID获取所有子API
 func GetChildApisByParentID(db *gorm.DB, parentID uint) ([]*po.SysApi, error) {
 	var childApis []*po.SysApi
@@ -68,4 +53,19 @@ func GetAllApi(db *gorm.DB) ([]*po.SysApi, error) {
 	var apiList []*po.SysApi
 	err := db.Find(&apiList).Error
 	return apiList, err
+}
+
+// InsertApi 创建角色
+func InsertApi(db *gorm.DB, api *po.SysApi) error {
+	return db.Create(api).Error
+}
+
+// UpdateApi 修改api
+func UpdateApi(db *gorm.DB, api *po.SysApi) error {
+	return db.Model(&po.SysApi{}).Updates(api).Error
+}
+
+// DeleteApiByID 根据api的id进行删除
+func DeleteApiByID(db *gorm.DB, id uint) error {
+	return db.Delete(&po.SysApi{}, id).Error
 }

@@ -14,7 +14,7 @@ func InsertUser(db *gorm.DB, user *po.SysUser) error {
 
 // UpdateUser
 func UpdateUser(db *gorm.DB, id uint, m map[string]interface{}) error {
-	return db.Model(&po.SysUser{}).Where("id = ?", id).Updates(m).Error
+	return db.Model(&po.SysUser{}).Updates(m).Error
 }
 
 // DeleteUserByID 删除用户

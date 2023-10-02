@@ -51,13 +51,7 @@ func DeleteMenuByID(db *gorm.DB, id uint) error {
 
 // UpdateMenu 修改menu
 func UpdateMenu(db *gorm.DB, menu *po.SysMenu) error {
-	return db.Model(menu).UpdateColumns(map[string]interface{}{
-		"updated_at":     menu.UpdatedAt,
-		"parent_menu_id": menu.ParentMenuID,
-		"name":           menu.Name,
-		"code":           menu.Code,
-		"description":    menu.Description,
-	}).Error
+	return db.Model(menu).Updates(menu).Error
 }
 
 // GetChildMenusByParentID 根据父API的ID获取所有子API

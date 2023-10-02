@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-func InsertSubmission(db *gorm.DB, submission *po.Submission) error {
-	return db.Create(submission).Error
-}
-
 func GetLastSubmission(db *gorm.DB, userID uint, problemID uint) (*po.Submission, error) {
 	var submission *po.Submission
 	err := db.Where("user_id = ? and problem_id = ?", userID, problemID).Last(submission).Error
@@ -68,4 +64,8 @@ func CheckUserIsSubmittedByTime(db *gorm.DB, userID uint, begin time.Time, end t
 		}
 	}
 	return true, nil
+}
+
+func InsertSubmission(db *gorm.DB, submission *po.Submission) error {
+	return db.Create(submission).Error
 }
