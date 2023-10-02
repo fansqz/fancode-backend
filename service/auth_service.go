@@ -1,6 +1,7 @@
 package service
 
 import (
+	"FanCode/constants"
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/global"
@@ -194,15 +195,15 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 		return nil
 	}
 	// 生成用户名称，唯一
-	loginName, err2 := pinyin.New(user.Username).Split("").Convert()
-	if err2 != nil {
+	loginName, err := pinyin.New(user.Username).Split("").Convert()
+	if err != nil {
 		return e.ErrUserUnknownError
 	}
 	loginName = loginName + utils.GetRandomNumber(3)
 	for i := 0; i < 5; i++ {
-		b, err3 := dao.CheckLoginName(global.Mysql, user.LoginName)
-		if err3 != nil {
-			log.Println(err3)
+		b, err := dao.CheckLoginName(global.Mysql, user.LoginName)
+		if err != nil {
+			log.Println(err)
 			return e.ErrUserUnknownError
 		}
 		if b {
@@ -222,12 +223,16 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	}
 	user.Password = string(newPassword)
 
-	//插入
-	err = dao.InsertUser(global.Mysql, user)
+	err = global.Mysql.Transaction(func(tx *gorm.DB) error {
+		err2 := dao.InsertUser(tx, user)
+		if err2 != nil {
+			return err
+		}
+		err2 = dao.InsertRolesToUser(tx, user.ID, []uint{constants.UserID})
+		return err2
+	})
 	if err != nil {
-		log.Println(err)
-		return e.ErrUserCreationFailed
-	} else {
-		return nil
+		return e.ErrMysql
 	}
+	return nil
 }
