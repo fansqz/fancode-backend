@@ -45,3 +45,7 @@ func TestProblemBankService_InsertProblemBank(t *testing.T) {
 	assert.Equal(t, id, resultID)
 	assert.Nil(t, err)
 }
+
+func TestProblemBankService_UpdateProblemBank(t *testing.T) {
+
+}

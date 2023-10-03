@@ -98,6 +98,7 @@ func (p *problemBankService) InsertProblemBank(problemBank *po.ProblemBank, ctx 
 }
 
 func (p *problemBankService) UpdateProblemBank(problemBank *po.ProblemBank) *e.Error {
+	problemBank.CreatorID = 0
 	err := p.problemBankDao.UpdateProblemBank(global.Mysql, problemBank)
 	if err != nil {
 		return e.ErrMysql
