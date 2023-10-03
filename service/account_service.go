@@ -91,7 +91,6 @@ func (a *accountService) UpdateAccountInfo(ctx *gin.Context, user *po.SysUser) *
 	user.Password = ""
 	err := a.sysUserDao.UpdateUser(global.Mysql, user)
 	if err != nil {
-		log.Panicln(err)
 		return e.ErrMysql
 	}
 	return nil
