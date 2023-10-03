@@ -73,3 +73,33 @@ func TestProblemBankService_UpdateProblemBank(t *testing.T) {
 	err := bankService.UpdateProblemBank(bank)
 	assert.Nil(t, err)
 }
+
+func TestProblemBankService_DeleteProblemBank(t *testing.T) {
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+	problemDao := dao.NewMockProblemDao(mockCtl)
+	problemBankDao := dao.NewMockProblemBankDao(mockCtl)
+
+	problemDao.EXPECT().GetProblemCount(global.Mysql, gomock.Any()).DoAndReturn(
+		func(db *gorm.DB, problem *po.Problem) (int64, error) {
+			assert.NotEqual(t, problem.BankID, nil)
+			if *problem.BankID == 1 {
+				return 1, nil
+			} else {
+				return 0, nil
+			}
+		}).MaxTimes(4)
+
+	problemBankDao.EXPECT().DeleteProblemBankByID(global.Mysql, gomock.Any()).Return(nil).MaxTimes(4)
+
+	bankService := NewProblemBankService(problemBankDao, problemDao, nil)
+	err := bankService.DeleteProblemBank(1, false)
+	assert.NotNil(t, err)
+	assert.Equal(t, err.Message, "题库不为空，请问是否需要强制删除")
+	err = bankService.DeleteProblemBank(1, true)
+	assert.Nil(t, err)
+	err = bankService.DeleteProblemBank(2, false)
+	assert.Nil(t, err)
+	err = bankService.DeleteProblemBank(2, true)
+	assert.Nil(t, err)
+}
