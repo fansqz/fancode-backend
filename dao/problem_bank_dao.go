@@ -41,12 +41,7 @@ func (p *problemBankDao) GetProblemBankByID(db *gorm.DB, bankID uint) (*po.Probl
 }
 
 func (p *problemBankDao) UpdateProblemBank(db *gorm.DB, bank *po.ProblemBank) error {
-	return db.Model(&po.ProblemBank{}).Where("id = ?", bank.ID).Updates(map[string]interface{}{
-		"name":        bank.Name,
-		"icon":        bank.Icon,
-		"description": bank.Description,
-		"creator_id":  bank.CreatorID,
-	}).Error
+	return db.Model(bank).Updates(bank).Error
 }
 
 func (p *problemBankDao) DeleteProblemBankByID(db *gorm.DB, id uint) error {
