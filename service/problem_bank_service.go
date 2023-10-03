@@ -13,6 +13,7 @@ import (
 	"log"
 	"mime/multipart"
 	"path"
+	"time"
 )
 
 const (
@@ -99,6 +100,7 @@ func (p *problemBankService) InsertProblemBank(problemBank *po.ProblemBank, ctx 
 
 func (p *problemBankService) UpdateProblemBank(problemBank *po.ProblemBank) *e.Error {
 	problemBank.CreatorID = 0
+	problemBank.UpdatedAt = time.Now()
 	err := p.problemBankDao.UpdateProblemBank(global.Mysql, problemBank)
 	if err != nil {
 		return e.ErrMysql
