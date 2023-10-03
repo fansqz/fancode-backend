@@ -5,19 +5,22 @@
 package routers
 
 import (
-	"FanCode/controllers"
+	c "FanCode/controller"
 	"FanCode/global"
 	"FanCode/interceptor"
 	"FanCode/routers/admin"
 	"FanCode/routers/user"
-	"FanCode/service"
 	"github.com/gin-gonic/gin"
 )
 
-// Run
+// SetupRouter
 //
 //	@Description: 启动路由
-func Run() {
+func SetupRouter(
+	controller *c.Controller,
+	corsInterceptor *interceptor.CorsInterceptor,
+	requestInterceptor *interceptor.RequestInterceptor,
+) *gin.Engine {
 	if global.Conf.Release {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -25,31 +28,28 @@ func Run() {
 	r := gin.Default()
 
 	// 允许跨域
-	r.Use(interceptor.Cors())
+	r.Use(corsInterceptor.Cors())
 
 	// 拦截非法用户
-	r.Use(interceptor.TokenAuthorize(service.NewSysRoleService(), service.NewSysUserService()))
+	r.Use(requestInterceptor.TokenAuthorize())
 
 	//设置静态文件位置
 	r.Static("/static", "/")
 
 	//ping
-	r.GET("/ping", controllers.Ping)
+	r.GET("/ping", c.Ping)
 
-	SetupAuthRoutes(r)
-	SetupAccountRoutes(r)
-	admin.SetupProblemRoutes(r)
-	admin.SetupSysApiRoutes(r)
-	admin.SetupSysMenuRoutes(r)
-	admin.SetupSysRoleRoutes(r)
-	admin.SetupSysUserRoutes(r)
-	admin.SetupProblemBankRoutes(r)
-	user.SetupJudgeRoutes(r)
-	user.SetupProblemRoutes(r)
-	user.SetupSubmissionRoutes(r)
+	SetupAuthRoutes(r, controller.AuthController)
+	SetupAccountRoutes(r, controller.AccountController)
+	admin.SetupSysApiRoutes(r, controller.ApiController)
+	admin.SetupSysMenuRoutes(r, controller.MenuController)
+	admin.SetupSysRoleRoutes(r, controller.RoleController)
+	admin.SetupSysUserRoutes(r, controller.UserController)
+	admin.SetupProblemBankRoutes(r, controller.ProblemBankManagementController)
+	admin.SetupProblemRoutes(r, controller.ProblemManagementController)
+	user.SetupJudgeRoutes(r, controller.JudgeController)
+	user.SetupProblemRoutes(r, controller.ProblemController)
+	user.SetupSubmissionRoutes(r, controller.SubmissionController)
 
-	err := r.Run(":" + global.Conf.Port)
-	if err != nil {
-		return
-	}
+	return r
 }

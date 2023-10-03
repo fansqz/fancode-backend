@@ -1,15 +1,14 @@
 package admin
 
 import (
-	"FanCode/controllers/admin"
+	"FanCode/controller/admin"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupProblemBankRoutes(r *gin.Engine) {
+func SetupProblemBankRoutes(r *gin.Engine, problemBankController admin.ProblemBankManagementController) {
 	//题目相关路由
 	bank := r.Group("/manage/problemBank")
 	{
-		problemBankController := admin.NewProblemBankManagementController()
 		bank.POST("", problemBankController.InsertProblemBank)
 		bank.PUT("", problemBankController.UpdateProblemBank)
 		bank.DELETE("/:id/:forceDelete", problemBankController.DeleteProblemBank)

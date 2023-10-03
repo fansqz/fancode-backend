@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"FanCode/controllers"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
@@ -33,9 +32,9 @@ type sysUserController struct {
 	sysUserService service.SysUserService
 }
 
-func NewSysUserController() SysUserController {
+func NewSysUserController(userService service.SysUserService) SysUserController {
 	return &sysUserController{
-		sysUserService: service.NewSysUserService(),
+		sysUserService: userService,
 	}
 }
 
@@ -122,7 +121,7 @@ func (s *sysUserController) DeleteSysUser(ctx *gin.Context) {
 
 func (s *sysUserController) GetSysUserList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	pageQuery, err := GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return

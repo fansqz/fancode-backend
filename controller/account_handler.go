@@ -1,4 +1,4 @@
-package controllers
+package controller
 
 import (
 	e "FanCode/error"
@@ -30,9 +30,9 @@ type accountController struct {
 	accountService service.AccountService
 }
 
-func NewAccountController() AccountController {
+func NewAccountController(accountService service.AccountService) AccountController {
 	return &accountController{
-		accountService: service.NewAccountService(),
+		accountService: accountService,
 	}
 }
 

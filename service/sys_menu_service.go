@@ -28,15 +28,17 @@ type SysMenuService interface {
 }
 
 type sysMenuService struct {
-	db *gorm.DB
+	sysMenuDao dao.SysMenuDao
 }
 
-func NewSysMenuService() SysMenuService {
-	return &sysMenuService{}
+func NewSysMenuService(menuDao dao.SysMenuDao) SysMenuService {
+	return &sysMenuService{
+		sysMenuDao: menuDao,
+	}
 }
 
 func (s *sysMenuService) GetMenuCount() (int64, *e.Error) {
-	count, err := dao.GetMenuCount(global.Mysql)
+	count, err := s.sysMenuDao.GetMenuCount(global.Mysql)
 	if err != nil {
 		log.Println(err)
 		return 0, e.ErrMenuUnknownError
@@ -60,7 +62,7 @@ func (s *sysMenuService) DeleteMenuByID(id uint) *e.Error {
 
 // deleteMenusRecursive 递归删除API
 func (s *sysMenuService) deleteMenusRecursive(db *gorm.DB, parentID uint) error {
-	childMenus, err := dao.GetChildMenusByParentID(db, parentID)
+	childMenus, err := s.sysMenuDao.GetChildMenusByParentID(db, parentID)
 	if err != nil {
 		return err
 	}
@@ -71,7 +73,7 @@ func (s *sysMenuService) deleteMenusRecursive(db *gorm.DB, parentID uint) error 
 		}
 	}
 	// 当前menu
-	if err = dao.DeleteMenuByID(db, parentID); err != nil {
+	if err = s.sysMenuDao.DeleteMenuByID(db, parentID); err != nil {
 		return err
 	}
 	return nil
@@ -79,7 +81,7 @@ func (s *sysMenuService) deleteMenusRecursive(db *gorm.DB, parentID uint) error 
 
 func (s *sysMenuService) UpdateMenu(menu *po.SysMenu) *e.Error {
 	menu.UpdatedAt = time.Now()
-	err := dao.UpdateMenu(global.Mysql, menu)
+	err := s.sysMenuDao.UpdateMenu(global.Mysql, menu)
 	if gorm.ErrRecordNotFound == err {
 		return e.ErrMenuNotExist
 	}
@@ -87,7 +89,7 @@ func (s *sysMenuService) UpdateMenu(menu *po.SysMenu) *e.Error {
 }
 
 func (s *sysMenuService) GetMenuByID(id uint) (*po.SysMenu, *e.Error) {
-	menu, err := dao.GetMenuByID(global.Mysql, id)
+	menu, err := s.sysMenuDao.GetMenuByID(global.Mysql, id)
 	if err != nil {
 		return nil, e.ErrMenuUnknownError
 	}
@@ -97,7 +99,7 @@ func (s *sysMenuService) GetMenuByID(id uint) (*po.SysMenu, *e.Error) {
 func (s *sysMenuService) GetMenuTree() ([]*dto.SysMenuTreeDto, *e.Error) {
 	var menuList []*po.SysMenu
 	var err error
-	if menuList, err = dao.GetAllMenu(global.Mysql); err != nil {
+	if menuList, err = s.sysMenuDao.GetAllMenu(global.Mysql); err != nil {
 		log.Println(err)
 		return nil, e.ErrMenuUnknownError
 	}
@@ -127,7 +129,7 @@ func (s *sysMenuService) GetMenuTree() ([]*dto.SysMenuTreeDto, *e.Error) {
 }
 
 func (s *sysMenuService) InsertMenu(menu *po.SysMenu) (uint, *e.Error) {
-	err := dao.InsertMenu(global.Mysql, menu)
+	err := s.sysMenuDao.InsertMenu(global.Mysql, menu)
 	if err != nil {
 		return 0, e.ErrMenuUnknownError
 	}

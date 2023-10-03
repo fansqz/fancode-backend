@@ -1,4 +1,4 @@
-package controllers
+package controller
 
 import (
 	e "FanCode/error"
@@ -25,9 +25,9 @@ type fileController struct {
 	fileService service.FileService
 }
 
-func NewFileController() FileController {
+func NewFileController(fileService service.FileService) FileController {
 	return &fileController{
-		fileService: service.NewFileService(),
+		fileService: fileService,
 	}
 }
 

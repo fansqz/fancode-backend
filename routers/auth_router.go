@@ -1,15 +1,14 @@
 package routers
 
 import (
-	"FanCode/controllers"
+	"FanCode/controller"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupAuthRoutes(r *gin.Engine) {
+func SetupAuthRoutes(r *gin.Engine, authController controller.AuthController) {
 	//用户相关
 	auth := r.Group("/auth")
 	{
-		authController := controllers.NewAuthController()
 		auth.POST("/login", authController.Login)
 		auth.POST("/register", authController.UserRegister)
 		auth.POST("/code/send", authController.SendAuthCode)

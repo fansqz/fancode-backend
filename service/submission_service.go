@@ -21,11 +21,16 @@ type SubmissionService interface {
 	GetUserSubmissionList(ctx *gin.Context, pageQuery *dto.PageQuery) (*dto.PageInfo, *e.Error)
 }
 
-func NewSubmissionService() SubmissionService {
-	return &submissionService{}
+func NewSubmissionService(submissionDao dao.SubmissionDao, problemDao dao.ProblemDao) SubmissionService {
+	return &submissionService{
+		submissionDao: submissionDao,
+		problemDao:    problemDao,
+	}
 }
 
 type submissionService struct {
+	submissionDao dao.SubmissionDao
+	problemDao    dao.ProblemDao
 }
 
 func (u *submissionService) GetActivityMap(ctx *gin.Context, year int) ([]*dto.ActivityItem, *e.Error) {
@@ -40,7 +45,7 @@ func (u *submissionService) GetActivityMap(ctx *gin.Context, year int) ([]*dto.A
 	} else {
 		startDate, endDate = getYearRange(year)
 	}
-	submissions, err := dao.GetUserSimpleSubmissionsByTime(global.Mysql, user.ID, startDate, endDate)
+	submissions, err := u.submissionDao.GetUserSimpleSubmissionsByTime(global.Mysql, user.ID, startDate, endDate)
 	if err != nil {
 		return nil, e.ErrMysql
 	}
@@ -69,7 +74,7 @@ func (u *submissionService) GetActivityYear(ctx *gin.Context) ([]string, *e.Erro
 	currentYear := time.Now().Year()
 	for i := beginYear; i <= currentYear; i++ {
 		beginDate, endDate := getYearRange(i)
-		b, err := dao.CheckUserIsSubmittedByTime(global.Mysql, user.ID, beginDate, endDate)
+		b, err := u.submissionDao.CheckUserIsSubmittedByTime(global.Mysql, user.ID, beginDate, endDate)
 		if err != nil {
 			return nil, e.ErrMysql
 		}
@@ -86,11 +91,11 @@ func (u *submissionService) GetUserSubmissionList(ctx *gin.Context, pageQuery *d
 		UserID: user.ID,
 	}
 	pageQuery.Query = submission
-	submissions, err := dao.GetSubmissionList(global.Mysql, pageQuery)
+	submissions, err := u.submissionDao.GetSubmissionList(global.Mysql, pageQuery)
 	submissions2 := make([]*dto.SubmissionDtoForList, len(submissions))
 	for i := 0; i < len(submissions); i++ {
 		submissions2[i] = dto.NewSubmissionDtoForList(submissions[i])
-		name, err := dao.GetProblemNameByID(global.Mysql, submissions[i].ProblemID)
+		name, err := u.problemDao.GetProblemNameByID(global.Mysql, submissions[i].ProblemID)
 		if err != nil {
 			return nil, e.ErrMysql
 		}
@@ -100,7 +105,7 @@ func (u *submissionService) GetUserSubmissionList(ctx *gin.Context, pageQuery *d
 		log.Println(err)
 		return nil, e.ErrMysql
 	}
-	count, err2 := dao.GetSubmissionCount(global.Mysql, submission)
+	count, err2 := u.submissionDao.GetSubmissionCount(global.Mysql, submission)
 	if err2 != nil {
 		log.Println(err)
 		return nil, e.ErrMysql

@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"FanCode/controllers"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
@@ -35,9 +34,9 @@ type problemBankManagementController struct {
 	problemBankService service.ProblemBankService
 }
 
-func NewProblemBankManagementController() ProblemBankManagementController {
+func NewProblemBankManagementController(bankService service.ProblemBankService) ProblemBankManagementController {
 	return &problemBankManagementController{
-		problemBankService: service.NewProblemBankService(),
+		problemBankService: bankService,
 	}
 }
 
@@ -122,7 +121,7 @@ func (p *problemBankManagementController) DeleteProblemBank(ctx *gin.Context) {
 
 func (p *problemBankManagementController) GetProblemBankList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	pageQuery, err := GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return

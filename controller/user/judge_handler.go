@@ -20,9 +20,9 @@ type judgeController struct {
 	judgeService service.JudgeService
 }
 
-func NewJudgeController() JudgeController {
+func NewJudgeController(judgeService service.JudgeService) JudgeController {
 	return &judgeController{
-		judgeService: service.NewJudgeService(),
+		judgeService: judgeService,
 	}
 }
 

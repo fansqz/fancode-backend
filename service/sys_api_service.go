@@ -28,15 +28,17 @@ type SysApiService interface {
 }
 
 type sysApiService struct {
-	db *gorm.DB
+	sysApiDao dao.SysApiDao
 }
 
-func NewSysApiService() SysApiService {
-	return &sysApiService{}
+func NewSysApiService(apiDao dao.SysApiDao) SysApiService {
+	return &sysApiService{
+		sysApiDao: apiDao,
+	}
 }
 
 func (s *sysApiService) GetApiCount() (int64, *e.Error) {
-	count, err := dao.GetApiCount(global.Mysql)
+	count, err := s.sysApiDao.GetApiCount(global.Mysql)
 	if err != nil {
 		log.Println(err)
 		return 0, e.ErrApiUnknownError
@@ -60,7 +62,7 @@ func (s *sysApiService) DeleteApiByID(id uint) *e.Error {
 
 // deleteApisRecursive 递归删除API
 func (s *sysApiService) deleteApisRecursive(db *gorm.DB, parentID uint) error {
-	childApis, err := dao.GetChildApisByParentID(db, parentID)
+	childApis, err := s.sysApiDao.GetChildApisByParentID(db, parentID)
 	if err != nil {
 		return err
 	}
@@ -71,7 +73,7 @@ func (s *sysApiService) deleteApisRecursive(db *gorm.DB, parentID uint) error {
 		}
 	}
 	// 当前api
-	if err = dao.DeleteApiByID(db, parentID); err != nil {
+	if err = s.sysApiDao.DeleteApiByID(db, parentID); err != nil {
 		return err
 	}
 	return nil
@@ -79,7 +81,7 @@ func (s *sysApiService) deleteApisRecursive(db *gorm.DB, parentID uint) error {
 
 func (s *sysApiService) UpdateApi(api *po.SysApi) *e.Error {
 	api.UpdatedAt = time.Now()
-	err := dao.UpdateApi(global.Mysql, api)
+	err := s.sysApiDao.UpdateApi(global.Mysql, api)
 	if gorm.ErrRecordNotFound == err {
 		return e.ErrApiNotExist
 	} else if err != nil {
@@ -89,7 +91,7 @@ func (s *sysApiService) UpdateApi(api *po.SysApi) *e.Error {
 }
 
 func (s *sysApiService) GetApiByID(id uint) (*po.SysApi, *e.Error) {
-	api, err := dao.GetApiByID(global.Mysql, id)
+	api, err := s.sysApiDao.GetApiByID(global.Mysql, id)
 	if err != nil {
 		return nil, e.ErrApiUnknownError
 	}
@@ -99,7 +101,7 @@ func (s *sysApiService) GetApiByID(id uint) (*po.SysApi, *e.Error) {
 func (s *sysApiService) GetApiTree() ([]*dto.SysApiTreeDto, *e.Error) {
 	var apiList []*po.SysApi
 	var err error
-	if apiList, err = dao.GetAllApi(global.Mysql); err != nil {
+	if apiList, err = s.sysApiDao.GetAllApi(global.Mysql); err != nil {
 		log.Println(err)
 		return nil, e.ErrApiUnknownError
 	}
@@ -129,7 +131,7 @@ func (s *sysApiService) GetApiTree() ([]*dto.SysApiTreeDto, *e.Error) {
 }
 
 func (s *sysApiService) InsertApi(api *po.SysApi) (uint, *e.Error) {
-	err := dao.InsertApi(global.Mysql, api)
+	err := s.sysApiDao.InsertApi(global.Mysql, api)
 	if err != nil {
 		return 0, e.ErrApiUnknownError
 	}

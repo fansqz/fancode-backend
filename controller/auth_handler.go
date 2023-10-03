@@ -1,4 +1,4 @@
-package controllers
+package controller
 
 import (
 	e "FanCode/error"
@@ -25,9 +25,9 @@ type authController struct {
 	authService service.AuthService
 }
 
-func NewAuthController() AuthController {
+func NewAuthController(authService service.AuthService) AuthController {
 	return &authController{
-		authService: service.NewAuthService(),
+		authService: authService,
 	}
 }
 

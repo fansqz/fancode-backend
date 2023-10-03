@@ -36,11 +36,14 @@ type AccountService interface {
 	ResetPassword(ctx *gin.Context) *e.Error
 }
 
-func NewAccountService() AccountService {
-	return &accountService{}
+func NewAccountService(userDao dao.SysUserDao) AccountService {
+	return &accountService{
+		sysUserDao: userDao,
+	}
 }
 
 type accountService struct {
+	sysUserDao dao.SysUserDao
 }
 
 func (a *accountService) UploadAvatar(file *multipart.FileHeader) (string, *e.Error) {
@@ -72,7 +75,7 @@ func (a *accountService) ReadAvatar(ctx *gin.Context, avatarName string) {
 
 func (a *accountService) GetAccountInfo(ctx *gin.Context) (*dto.AccountInfo, *e.Error) {
 	user := ctx.Keys["user"].(*dto.UserInfo)
-	u, err := dao.GetUserByID(global.Mysql, user.ID)
+	u, err := a.sysUserDao.GetUserByID(global.Mysql, user.ID)
 	if err != nil {
 		return nil, e.ErrMysql
 	}
@@ -83,7 +86,7 @@ func (a *accountService) UpdateAccountInfo(ctx *gin.Context, user *po.SysUser) *
 	userInfo := ctx.Keys["user"].(*dto.UserInfo)
 	user.ID = userInfo.ID
 	user.UpdatedAt = time.Now()
-	err := dao.UpdateUser(global.Mysql, user)
+	err := a.sysUserDao.UpdateUser(global.Mysql, user)
 	if err != nil {
 		log.Panicln(err)
 		return e.ErrMysql
@@ -91,10 +94,10 @@ func (a *accountService) UpdateAccountInfo(ctx *gin.Context, user *po.SysUser) *
 	return nil
 }
 
-func (u *accountService) ChangePassword(ctx *gin.Context, oldPassword, newPassword string) *e.Error {
+func (a *accountService) ChangePassword(ctx *gin.Context, oldPassword, newPassword string) *e.Error {
 	userInfo := ctx.Keys["user"].(*dto.UserInfo)
 	//检验用户名
-	user, err := dao.GetUserByID(global.Mysql, userInfo.ID)
+	user, err := a.sysUserDao.GetUserByID(global.Mysql, userInfo.ID)
 	if err != nil {
 		log.Println(err)
 		return e.ErrMysql
@@ -113,14 +116,14 @@ func (u *accountService) ChangePassword(ctx *gin.Context, oldPassword, newPasswo
 	}
 	user.Password = string(password)
 	user.UpdatedAt = time.Now()
-	err = dao.UpdateUser(global.Mysql, user)
+	err = a.sysUserDao.UpdateUser(global.Mysql, user)
 	if err != nil {
 		return e.ErrMysql
 	}
 	return nil
 }
 
-func (u *accountService) ResetPassword(ctx *gin.Context) *e.Error {
+func (a *accountService) ResetPassword(ctx *gin.Context) *e.Error {
 	userInfo := ctx.Keys["user"].(*dto.UserInfo)
 	password := utils.GetRandomPassword(11)
 	password2, err := utils.GetPwd(password)
@@ -132,7 +135,7 @@ func (u *accountService) ResetPassword(ctx *gin.Context) *e.Error {
 	user := &po.SysUser{}
 	user.ID = userInfo.ID
 	user.Password = string(password2)
-	err = dao.UpdateUser(tx, user)
+	err = a.sysUserDao.UpdateUser(tx, user)
 	if err != nil {
 		tx.Rollback()
 		return e.ErrMysql

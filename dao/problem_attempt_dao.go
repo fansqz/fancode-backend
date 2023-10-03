@@ -6,11 +6,25 @@ import (
 	"gorm.io/gorm"
 )
 
-func InsertProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error {
+type ProblemAttemptDao interface {
+	InsertProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error
+	UpdateProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error
+	GetProblemAttemptByID(db *gorm.DB, userId uint, problemId uint) (*po.ProblemAttempt, error)
+	GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, error)
+}
+
+type problemAttemptDao struct {
+}
+
+func NewProblemAttemptDao() ProblemAttemptDao {
+	return &problemAttemptDao{}
+}
+
+func (p *problemAttemptDao) InsertProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error {
 	return db.Create(problemAttempt).Error
 }
 
-func UpdateProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error {
+func (p *problemAttemptDao) UpdateProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error {
 	return db.Model(problemAttempt).UpdateColumns(map[string]interface{}{
 		"submission_count": problemAttempt.SubmissionCount,
 		"success_count":    problemAttempt.SuccessCount,
@@ -21,14 +35,14 @@ func UpdateProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error 
 	}).Error
 }
 
-func GetProblemAttempt(db *gorm.DB, userId uint, problemId uint) (*po.ProblemAttempt, error) {
+func (p *problemAttemptDao) GetProblemAttemptByID(db *gorm.DB, userId uint, problemId uint) (*po.ProblemAttempt, error) {
 	var problemAttempt po.ProblemAttempt
 	err := db.Model(&po.ProblemAttempt{}).Where("user_id = ? and problem_id = ?", userId, problemId).
 		Find(&problemAttempt).Error
 	return &problemAttempt, err
 }
 
-func GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, error) {
+func (p *problemAttemptDao) GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, error) {
 	var problemAttempt po.ProblemAttempt
 	err := db.Model(&po.ProblemAttempt{}).Select("status", "id").
 		Where("user_id = ? and problem_id = ?", userId, problemID).Find(&problemAttempt).Error

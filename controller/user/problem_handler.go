@@ -1,7 +1,6 @@
 package user
 
 import (
-	"FanCode/controllers"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
@@ -20,15 +19,15 @@ type problemController struct {
 	problemService service.ProblemService
 }
 
-func NewProblemController() ProblemController {
+func NewProblemController(problemService service.ProblemService) ProblemController {
 	return &problemController{
-		problemService: service.NewProblemService(),
+		problemService: problemService,
 	}
 }
 
 func (p *problemController) GetProblemList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	pageQuery, err := GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return

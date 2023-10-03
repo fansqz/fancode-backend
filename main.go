@@ -3,12 +3,21 @@ package main
 import (
 	"FanCode/global"
 	"FanCode/models/po"
-	"FanCode/routers"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 )
+
+func newApp(engine *gin.Engine) *http.Server {
+	srv := &http.Server{
+		Addr:    global.Conf.Port,
+		Handler: engine,
+	}
+	return srv
+}
 
 func main() {
 	//获取参数
@@ -44,6 +53,15 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
+
 	//注册路由
-	routers.Run()
+	srv, err := initApp()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	if err = srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		fmt.Println(err)
+	}
 }

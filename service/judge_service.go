@@ -36,12 +36,18 @@ type JudgeService interface {
 }
 
 type judgeService struct {
-	judgeCore *judger.JudgeCore
+	judgeCore         *judger.JudgeCore
+	submissionDao     dao.SubmissionDao
+	problemAttemptDao dao.ProblemAttemptDao
+	problemDao        dao.ProblemDao
 }
 
-func NewJudgeService() JudgeService {
+func NewJudgeService(submissionDao dao.SubmissionDao, attemptDao dao.ProblemAttemptDao, problemDao dao.ProblemDao) JudgeService {
 	return &judgeService{
-		judgeCore: judger.NewJudgeCore(),
+		judgeCore:         judger.NewJudgeCore(),
+		submissionDao:     submissionDao,
+		problemAttemptDao: attemptDao,
+		problemDao:        problemDao,
 	}
 }
 
@@ -54,11 +60,11 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 	// 插入提交数据
 	tx := global.Mysql.Begin()
-	_ = dao.InsertSubmission(tx, submission)
+	_ = j.submissionDao.InsertSubmission(tx, submission)
 
 	// 检测用户是否保存了attempt
 	userId := ctx.Keys["user"].(*dto.UserInfo).ID
-	problemAttempt, err2 := dao.GetProblemAttempt(tx, userId, judgeRequest.ProblemID)
+	problemAttempt, err2 := j.problemAttemptDao.GetProblemAttemptByID(tx, userId, judgeRequest.ProblemID)
 	if err2 != nil {
 		log.Println(err2)
 		return nil, e.ErrSubmitFailed
@@ -80,7 +86,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		if problemAttempt.Status == 0 && submission.Status == constants.Accepted {
 			problemAttempt.Status = 1
 		}
-		err2 = dao.InsertProblemAttempt(tx, problemAttempt)
+		err2 = j.problemAttemptDao.InsertProblemAttempt(tx, problemAttempt)
 		if err2 != nil {
 			log.Println(err2)
 			tx.Rollback()
@@ -101,7 +107,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	if problemAttempt.Status == 0 && submission.Status == constants.Accepted {
 		problemAttempt.Status = 1
 	}
-	err2 = dao.UpdateProblemAttempt(tx, problemAttempt)
+	err2 = j.problemAttemptDao.UpdateProblemAttempt(tx, problemAttempt)
 	if err2 != nil {
 		log.Println(err2)
 		tx.Rollback()
@@ -123,7 +129,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 
 	//读取题目到本地
-	problem, err := dao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
+	problem, err := j.problemDao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
@@ -297,7 +303,7 @@ func (j *judgeService) saveUserCode(language string, codeType string, codeStr st
 func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error) {
 
 	//读取题目到本地，并编译
-	problem, err := dao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
+	problem, err := j.problemDao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}

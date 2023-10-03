@@ -6,35 +6,67 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetProblemByNumber 根据题目编码获取题目
-func GetProblemByNumber(db *gorm.DB, problemCode string) (*po.Problem, error) {
+type ProblemDao interface {
+	// GetProblemByNumber 根据题目编码获取题目
+	GetProblemByNumber(db *gorm.DB, problemCode string) (*po.Problem, error)
+	// GetProblemIDByNumber 根据题目number获取题目id
+	GetProblemIDByNumber(db *gorm.DB, problemNumber string) (uint, error)
+	// GetProblemNameByID 根据题目id获取题目名称
+	GetProblemNameByID(db *gorm.DB, problemID uint) (string, error)
+	// GetProblemByID 根据题目id获取题目
+	GetProblemByID(db *gorm.DB, problemID uint) (*po.Problem, error)
+	// GetProblemFilePathByID 根据题目id获取题目文件的path
+	GetProblemFilePathByID(db *gorm.DB, id uint) (string, error)
+	// InsertProblem 添加题库
+	InsertProblem(db *gorm.DB, problem *po.Problem) error
+	// UpdateProblem 更新题目
+	// 不修改path
+	UpdateProblem(db *gorm.DB, problem *po.Problem) error
+	// UpdateProblemField 根据字段进行更新
+	UpdateProblemField(db *gorm.DB, id uint, field string, value string) error
+	UpdatePathByID(db *gorm.DB, path string, id uint) error
+	// CheckProblemNumberExists 检测用户ID是否存在
+	CheckProblemNumberExists(db *gorm.DB, problemCode string) (bool, error)
+	// SetProblemEnable 让一个题目可用
+	SetProblemEnable(db *gorm.DB, id uint, enable int) error
+	// DeleteProblemByID 删除题目
+	DeleteProblemByID(db *gorm.DB, id uint) error
+	GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Problem, error)
+	GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error)
+}
+
+type problemDao struct {
+}
+
+func NewProblemDao() ProblemDao {
+	return &problemDao{}
+}
+
+func (p *problemDao) GetProblemByNumber(db *gorm.DB, problemCode string) (*po.Problem, error) {
 	question := &po.Problem{}
 	err := db.Where("number = ?", problemCode).First(&question).Error
 	return question, err
 }
 
-// GetProblemIDByNumber 根据题目number获取题目id
-func GetProblemIDByNumber(db *gorm.DB, problemNumber string) (uint, error) {
+func (p *problemDao) GetProblemIDByNumber(db *gorm.DB, problemNumber string) (uint, error) {
 	question := &po.Problem{}
 	err := db.Where("number = ?", problemNumber).Select("id").Find(question).Error
 	return question.ID, err
 }
 
-// GetProblemNameByID 根据题目id获取题目名称
-func GetProblemNameByID(db *gorm.DB, problemID uint) (string, error) {
+func (p *problemDao) GetProblemNameByID(db *gorm.DB, problemID uint) (string, error) {
 	question := &po.Problem{}
 	err := db.Where("id = ?", problemID).Select("name").Find(question).Error
 	return question.Name, err
 }
 
-// GetProblemByID 根据题目id获取题目
-func GetProblemByID(db *gorm.DB, problemID uint) (*po.Problem, error) {
+func (p *problemDao) GetProblemByID(db *gorm.DB, problemID uint) (*po.Problem, error) {
 	question := &po.Problem{}
 	err := db.First(&question, problemID).Error
 	return question, err
 }
 
-func GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Problem, error) {
+func (p *problemDao) GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Problem, error) {
 	var problem *po.Problem
 	if pageQuery.Query != nil {
 		problem = pageQuery.Query.(*po.Problem)
@@ -66,7 +98,7 @@ func GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Problem, error
 	return problems, err
 }
 
-func GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
+func (p *problemDao) GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	var count int64
 	db2 := db
 	if problem != nil && problem.Name != "" {
@@ -88,8 +120,7 @@ func GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	return count, err
 }
 
-// GetProblemFilePathByID 根据题目id获取题目文件的path
-func GetProblemFilePathByID(db *gorm.DB, id uint) (string, error) {
+func (p *problemDao) GetProblemFilePathByID(db *gorm.DB, id uint) (string, error) {
 	row := db.Model(&po.Problem{}).Select("path").Where("id = ?", id)
 	if row.Error != nil {
 		return "", row.Error
@@ -99,14 +130,11 @@ func GetProblemFilePathByID(db *gorm.DB, id uint) (string, error) {
 	return problem.Path, nil
 }
 
-// InsertProblem 添加题库
-func InsertProblem(db *gorm.DB, problem *po.Problem) error {
+func (p *problemDao) InsertProblem(db *gorm.DB, problem *po.Problem) error {
 	return db.Create(problem).Error
 }
 
-// UpdateProblem 更新题目
-// 不修改path
-func UpdateProblem(db *gorm.DB, problem *po.Problem) error {
+func (p *problemDao) UpdateProblem(db *gorm.DB, problem *po.Problem) error {
 	return db.Model(&po.Problem{}).Where("id = ?", problem.ID).Updates(map[string]interface{}{
 		"updated_at":  problem.UpdatedAt,
 		"bank_id":     problem.BankID,
@@ -120,8 +148,7 @@ func UpdateProblem(db *gorm.DB, problem *po.Problem) error {
 	}).Error
 }
 
-// UpdateProblemField 根据字段进行更新
-func UpdateProblemField(db *gorm.DB, id uint, field string, value string) error {
+func (p *problemDao) UpdateProblemField(db *gorm.DB, id uint, field string, value string) error {
 	updateData := map[string]interface{}{
 		field: value,
 	}
@@ -131,13 +158,12 @@ func UpdateProblemField(db *gorm.DB, id uint, field string, value string) error 
 	return nil
 }
 
-func UpdatePathByID(db *gorm.DB, path string, id uint) error {
+func (p *problemDao) UpdatePathByID(db *gorm.DB, path string, id uint) error {
 	return db.Model(&po.Problem{}).
 		Where("id = ?", id).Update("path", path).Error
 }
 
-// CheckProblemNumberExists 检测用户ID是否存在
-func CheckProblemNumberExists(db *gorm.DB, problemCode string) (bool, error) {
+func (p *problemDao) CheckProblemNumberExists(db *gorm.DB, problemCode string) (bool, error) {
 	//执行
 	row := db.Model(&po.Problem{}).Select("number").Where("number = ?", problemCode)
 	if row.Error != nil {
@@ -148,16 +174,10 @@ func CheckProblemNumberExists(db *gorm.DB, problemCode string) (bool, error) {
 	return problem.Number != "", nil
 }
 
-// SetProblemEnable 让一个题目可用
-func SetProblemEnable(db *gorm.DB, id uint, enable int) error {
+func (p *problemDao) SetProblemEnable(db *gorm.DB, id uint, enable int) error {
 	return db.Model(&po.Problem{}).Where("id = ?", id).Update("enable", enable).Error
 }
 
-func UpdatePathByCode(db *gorm.DB, path string, problemCode string) error {
-	return db.Model(&po.Problem{}).
-		Where("code = ?", problemCode).Update("path", path).Error
-}
-
-func DeleteProblemByID(db *gorm.DB, id uint) error {
+func (p *problemDao) DeleteProblemByID(db *gorm.DB, id uint) error {
 	return db.Delete(&po.Problem{}, id).Error
 }

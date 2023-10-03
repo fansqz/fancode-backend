@@ -28,9 +28,9 @@ type sysMenuController struct {
 	sysMenuService service.SysMenuService
 }
 
-func NewSysMenuController() SysMenuController {
+func NewSysMenuController(menuService service.SysMenuService) SysMenuController {
 	return &sysMenuController{
-		sysMenuService: service.NewSysMenuService(),
+		sysMenuService: menuService,
 	}
 }
 

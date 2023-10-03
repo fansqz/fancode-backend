@@ -32,19 +32,26 @@ type AuthService interface {
 }
 
 type authService struct {
+	sysUserDao dao.SysUserDao
+	sysMenuDao dao.SysMenuDao
+	sysRoleDao dao.SysRoleDao
 }
 
-func NewAuthService() AuthService {
-	return &authService{}
+func NewAuthService(userDao dao.SysUserDao, menuDao dao.SysMenuDao, roleDao dao.SysRoleDao) AuthService {
+	return &authService{
+		sysUserDao: userDao,
+		sysMenuDao: menuDao,
+		sysRoleDao: roleDao,
+	}
 }
 
 func (u *authService) PasswordLogin(account string, password string) (string, *e.Error) {
 	var user *po.SysUser
 	var userErr error
 	if utils.VerifyEmailFormat(account) {
-		user, userErr = dao.GetUserByEmail(global.Mysql, account)
+		user, userErr = u.sysUserDao.GetUserByEmail(global.Mysql, account)
 	} else {
-		user, userErr = dao.GetUserByLoginName(global.Mysql, account)
+		user, userErr = u.sysUserDao.GetUserByLoginName(global.Mysql, account)
 	}
 	if user == nil || userErr == gorm.ErrRecordNotFound {
 		return "", e.ErrUserNotExist
@@ -60,7 +67,7 @@ func (u *authService) PasswordLogin(account string, password string) (string, *e
 	// 读取菜单
 	for i := 0; i < len(user.Roles); i++ {
 		var err error
-		user.Roles[i].Menus, err = dao.GetMenusByRoleID(global.Mysql, user.Roles[i].ID)
+		user.Roles[i].Menus, err = u.sysRoleDao.GetMenusByRoleID(global.Mysql, user.Roles[i].ID)
 		if err != nil {
 			return "", e.ErrUserUnknownError
 		}
@@ -88,7 +95,7 @@ func (u *authService) EmailLogin(email string, code string) (string, *e.Error) {
 		return "", e.ErrUserUnknownError
 	}
 	// 获取用户
-	user, err := dao.GetUserByEmail(global.Mysql, email)
+	user, err := u.sysUserDao.GetUserByEmail(global.Mysql, email)
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrUserUnknownError
@@ -109,7 +116,7 @@ func (u *authService) EmailLogin(email string, code string) (string, *e.Error) {
 	// 获取菜单
 	for i := 0; i < len(user.Roles); i++ {
 		var err error
-		user.Roles[i].Menus, err = dao.GetMenusByRoleID(global.Mysql, user.Roles[i].ID)
+		user.Roles[i].Menus, err = u.sysRoleDao.GetMenusByRoleID(global.Mysql, user.Roles[i].ID)
 		if err != nil {
 			return "", e.ErrUserUnknownError
 		}
@@ -133,7 +140,7 @@ func (u *authService) EmailLogin(email string, code string) (string, *e.Error) {
 
 func (u *authService) SendAuthCode(email string, kind string) (string, *e.Error) {
 	if kind == "register" {
-		f, err := dao.CheckEmail(global.Mysql, email)
+		f, err := u.sysUserDao.CheckEmail(global.Mysql, email)
 		if err != nil {
 			return "", e.ErrUserUnknownError
 		}
@@ -177,7 +184,7 @@ func (u *authService) SendAuthCode(email string, kind string) (string, *e.Error)
 
 func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	// 检测是否已注册过
-	f, err := dao.CheckEmail(global.Mysql, user.Email)
+	f, err := u.sysUserDao.CheckEmail(global.Mysql, user.Email)
 	if f {
 		return e.ErrUserEmailIsExist
 	}
@@ -201,7 +208,7 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	}
 	loginName = loginName + utils.GetRandomNumber(3)
 	for i := 0; i < 5; i++ {
-		b, err := dao.CheckLoginName(global.Mysql, user.LoginName)
+		b, err := u.sysUserDao.CheckLoginName(global.Mysql, user.LoginName)
 		if err != nil {
 			log.Println(err)
 			return e.ErrUserUnknownError
@@ -224,11 +231,11 @@ func (u *authService) UserRegister(user *po.SysUser, code string) *e.Error {
 	user.Password = string(newPassword)
 
 	err = global.Mysql.Transaction(func(tx *gorm.DB) error {
-		err2 := dao.InsertUser(tx, user)
+		err2 := u.sysUserDao.InsertUser(tx, user)
 		if err2 != nil {
 			return err
 		}
-		err2 = dao.InsertRolesToUser(tx, user.ID, []uint{constants.UserID})
+		err2 = u.sysUserDao.InsertRolesToUser(tx, user.ID, []uint{constants.UserID})
 		return err2
 	})
 	if err != nil {

@@ -1,15 +1,14 @@
 package user
 
 import (
-	"FanCode/controllers/user"
+	"FanCode/controller/user"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupJudgeRoutes(r *gin.Engine) {
+func SetupJudgeRoutes(r *gin.Engine, judgeController user.JudgeController) {
 	//用户相关
 	judge := r.Group("/judge")
 	{
-		judgeController := user.NewJudgeController()
 		judge.POST("/submit", judgeController.Submit)
 		judge.POST("/execute", judgeController.Execute)
 	}

@@ -62,14 +62,19 @@ type ProblemService interface {
 }
 
 type problemService struct {
+	problemDao        dao.ProblemDao
+	problemAttemptDao dao.ProblemAttemptDao
 }
 
-func NewProblemService() ProblemService {
-	return &problemService{}
+func NewProblemService(problemDao dao.ProblemDao, attemptDao dao.ProblemAttemptDao) ProblemService {
+	return &problemService{
+		problemDao:        problemDao,
+		problemAttemptDao: attemptDao,
+	}
 }
 
 func (q *problemService) CheckProblemNumber(problemCode string) (bool, *e.Error) {
-	b, err := dao.CheckProblemNumberExists(global.Mysql, problemCode)
+	b, err := q.problemDao.CheckProblemNumberExists(global.Mysql, problemCode)
 	if err != nil {
 		return !b, e.ErrProblemCodeCheckFailed
 	}
@@ -98,7 +103,7 @@ func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (u
 	}
 	// 检测编号是否重复
 	if problem.Number != "" {
-		b, checkError := dao.CheckProblemNumberExists(global.Mysql, problem.Number)
+		b, checkError := q.problemDao.CheckProblemNumberExists(global.Mysql, problem.Number)
 		if checkError != nil {
 			return 0, e.ErrProblemInsertFailed
 		}
@@ -112,7 +117,7 @@ func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (u
 	}
 	problem.Enable = -1
 	// 添加
-	err := dao.InsertProblem(global.Mysql, problem)
+	err := q.problemDao.InsertProblem(global.Mysql, problem)
 	if err != nil {
 		return 0, e.ErrProblemInsertFailed
 	}
@@ -120,7 +125,7 @@ func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (u
 }
 
 func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, file *multipart.FileHeader) *e.Error {
-	path, err := dao.GetProblemFilePathByID(global.Mysql, problem.ID)
+	path, err := q.problemDao.GetProblemFilePathByID(global.Mysql, problem.ID)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemUpdateFailed
@@ -135,7 +140,7 @@ func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, fi
 	}
 	problem.UpdatedAt = time.Now()
 	// 更新题目
-	err2 := dao.UpdateProblem(global.Mysql, problem)
+	err2 := q.problemDao.UpdateProblem(global.Mysql, problem)
 	if err2 != nil {
 		log.Println(err2)
 		return e.ErrProblemUpdateFailed
@@ -146,7 +151,7 @@ func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, fi
 // todo: 这里有事务相关的问题
 func (q *problemService) DeleteProblem(id uint) *e.Error {
 	// 读取Problem
-	problem, err := dao.GetProblemByID(global.Mysql, id)
+	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemDeleteFailed
@@ -170,7 +175,7 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 		}
 	}
 	// 删除题目
-	err = dao.DeleteProblemByID(global.Mysql, id)
+	err = q.problemDao.DeleteProblemByID(global.Mysql, id)
 	if err != nil {
 		return e.ErrProblemDeleteFailed
 	}
@@ -183,7 +188,7 @@ func (q *problemService) GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e
 		bankQuery = query.Query.(*po.Problem)
 	}
 	// 获取题目列表
-	problems, err := dao.GetProblemList(global.Mysql, query)
+	problems, err := q.problemDao.GetProblemList(global.Mysql, query)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
@@ -193,7 +198,7 @@ func (q *problemService) GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e
 	}
 	// 获取所有题目总数目
 	var count int64
-	count, err = dao.GetProblemCount(global.Mysql, bankQuery)
+	count, err = q.problemDao.GetProblemCount(global.Mysql, bankQuery)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
@@ -215,7 +220,7 @@ func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQue
 		}
 	}
 	// 获取题目列表
-	problems, err := dao.GetProblemList(global.Mysql, query)
+	problems, err := q.problemDao.GetProblemList(global.Mysql, query)
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
@@ -224,7 +229,7 @@ func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQue
 		newProblems[i] = dto.NewProblemDtoForUserList(problems[i])
 		// 读取题目完成情况
 		var state int
-		state, err = dao.GetProblemAttemptState(global.Mysql, userId, problems[i].ID)
+		state, err = q.problemAttemptDao.GetProblemAttemptState(global.Mysql, userId, problems[i].ID)
 		if err != nil {
 			return nil, e.ErrProblemListFailed
 		}
@@ -232,7 +237,7 @@ func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQue
 	}
 	// 获取所有题目总数目
 	var count int64
-	count, err = dao.GetProblemCount(global.Mysql, query.Query.(*po.Problem))
+	count, err = q.problemDao.GetProblemCount(global.Mysql, query.Query.(*po.Problem))
 	if err != nil {
 		return nil, e.ErrProblemListFailed
 	}
@@ -268,7 +273,7 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 	err = s.DeleteFolder(strconv.Itoa(int(problemID)))
 	s.UploadFolder(path, ProblemPathInLocal)
 	// 存储到数据库
-	updateError := dao.UpdatePathByID(global.Mysql, path, problemID)
+	updateError := q.problemDao.UpdatePathByID(global.Mysql, path, problemID)
 	if updateError != nil {
 		return e.ErrProblemFileUploadFailed
 	}
@@ -287,7 +292,7 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 }
 
 func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error) {
-	problem, err := dao.GetProblemByID(global.Mysql, id)
+	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrProblemGetFailed
@@ -296,7 +301,7 @@ func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Erro
 }
 
 func (q *problemService) GetProblemByNumber(number string) (*dto.ProblemDtoForGet, *e.Error) {
-	problem, err := dao.GetProblemByNumber(global.Mysql, number)
+	problem, err := q.problemDao.GetProblemByNumber(global.Mysql, number)
 	if err != nil {
 		log.Println(err)
 		return nil, e.ErrProblemGetFailed
@@ -306,7 +311,7 @@ func (q *problemService) GetProblemByNumber(number string) (*dto.ProblemDtoForGe
 
 func (q *problemService) GetProblemTemplateCode(ctx *gin.Context, number string, language string, codeType string) (string, *e.Error) {
 	// 读取获取题目id
-	id, err := dao.GetProblemIDByNumber(global.Mysql, number)
+	id, err := q.problemDao.GetProblemIDByNumber(global.Mysql, number)
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrProblemGetFailed
@@ -322,7 +327,7 @@ func (q *problemService) GetProblemTemplateCode(ctx *gin.Context, number string,
 	}
 
 	// 读取核心代码模板
-	p, err := dao.GetProblemFilePathByID(global.Mysql, id)
+	p, err := q.problemDao.GetProblemFilePathByID(global.Mysql, id)
 	store := file_store.NewProblemCOS()
 	var content []byte
 	codePath, err2 := getCodePathByProblemPath(p, language)
@@ -349,7 +354,7 @@ func (q *problemService) GetProblemTemplateCode(ctx *gin.Context, number string,
 
 func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error) {
 	// 获取题目文件
-	problem, err := dao.GetProblemByID(global.Mysql, id)
+	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err != nil {
 		return nil, e.ErrProblemGetFailed
 	}
@@ -388,7 +393,7 @@ func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Err
 
 func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int) (*dto.PageInfo, *e.Error) {
 	// 获取题目文件
-	problem, err := dao.GetProblemByID(global.Mysql, id)
+	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err != nil {
 		return nil, e.ErrProblemGetFailed
 	}
@@ -425,7 +430,7 @@ func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int) (*dto.
 
 func (q *problemService) UpdateProblemField(id uint, field string, value string) *e.Error {
 	if field == "name" || field == "code" || field == "description" || field == "title" {
-		err := dao.UpdateProblemField(global.Mysql, id, field, value)
+		err := q.problemDao.UpdateProblemField(global.Mysql, id, field, value)
 		if err != nil {
 			log.Println(err)
 			return e.ErrProblemUpdateFailed
@@ -457,7 +462,7 @@ func getSingleDirectoryPath(path string) (string, error) {
 
 func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint) {
 	result := r.NewResult(ctx)
-	path, err := dao.GetProblemFilePathByID(global.Mysql, problemID)
+	path, err := q.problemDao.GetProblemFilePathByID(global.Mysql, problemID)
 	if err != nil {
 		result.Error(e.ErrProblemZipFileDownloadFailed)
 		return
@@ -508,7 +513,7 @@ func (q *problemService) DownloadProblemTemplateFile(ctx *gin.Context) {
 // todo: 是否要加事务
 func (q *problemService) UpdateProblemEnable(id uint, enable int) *e.Error {
 	//检测题目文件是否存在
-	problem, err := dao.GetProblemByID(global.Mysql, id)
+	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemUpdateFailed
@@ -516,7 +521,7 @@ func (q *problemService) UpdateProblemEnable(id uint, enable int) *e.Error {
 	if problem.Path == "" {
 		return e.ErrProblemFilePathNotExist
 	}
-	err = dao.SetProblemEnable(global.Mysql, id, enable)
+	err = q.problemDao.SetProblemEnable(global.Mysql, id, enable)
 	if err != nil {
 		log.Println(err)
 		return e.ErrProblemUpdateFailed

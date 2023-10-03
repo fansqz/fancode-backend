@@ -6,20 +6,41 @@ import (
 	"gorm.io/gorm"
 )
 
-// InsertProblemBank 添加题库
-func InsertProblemBank(db *gorm.DB, bank *po.ProblemBank) error {
+type ProblemBankDao interface {
+	// InsertProblemBank 添加题库
+	InsertProblemBank(db *gorm.DB, bank *po.ProblemBank) error
+	// GetProblemBankByID 根据题库id获取题库
+	GetProblemBankByID(db *gorm.DB, bankID uint) (*po.ProblemBank, error)
+	// UpdateProblemBank 更新题库
+	UpdateProblemBank(db *gorm.DB, bank *po.ProblemBank) error
+	// DeleteProblemBankByID 删除题库
+	DeleteProblemBankByID(db *gorm.DB, id uint) error
+	// GetProblemBankCount 读取题库数量
+	GetProblemBankCount(db *gorm.DB, problemBank *po.ProblemBank) (int64, error)
+	// GetProblemBankList 获取题库列表
+	GetProblemBankList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.ProblemBank, error)
+	// GetSimpleProblemBankList 获取题库列表，只包含id和名称
+	GetSimpleProblemBankList(db *gorm.DB) ([]*po.ProblemBank, error)
+}
+
+type problemBankDao struct {
+}
+
+func NewProblemBankDao() ProblemBankDao {
+	return &problemBankDao{}
+}
+
+func (p *problemBankDao) InsertProblemBank(db *gorm.DB, bank *po.ProblemBank) error {
 	return db.Create(bank).Error
 }
 
-// GetProblemBankByID 根据题库id获取题库
-func GetProblemBankByID(db *gorm.DB, bankID uint) (*po.ProblemBank, error) {
+func (p *problemBankDao) GetProblemBankByID(db *gorm.DB, bankID uint) (*po.ProblemBank, error) {
 	bank := &po.ProblemBank{}
 	err := db.First(&bank, bankID).Error
 	return bank, err
 }
 
-// UpdateProblemBank 更新题库
-func UpdateProblemBank(db *gorm.DB, bank *po.ProblemBank) error {
+func (p *problemBankDao) UpdateProblemBank(db *gorm.DB, bank *po.ProblemBank) error {
 	return db.Model(&po.ProblemBank{}).Where("id = ?", bank.ID).Updates(map[string]interface{}{
 		"name":        bank.Name,
 		"icon":        bank.Icon,
@@ -28,13 +49,11 @@ func UpdateProblemBank(db *gorm.DB, bank *po.ProblemBank) error {
 	}).Error
 }
 
-// DeleteProblemBankByID 删除题库
-func DeleteProblemBankByID(db *gorm.DB, id uint) error {
+func (p *problemBankDao) DeleteProblemBankByID(db *gorm.DB, id uint) error {
 	return db.Delete(&po.ProblemBank{}, id).Error
 }
 
-// GetProblemBankCount 读取题库数量
-func GetProblemBankCount(db *gorm.DB, problemBank *po.ProblemBank) (int64, error) {
+func (p *problemBankDao) GetProblemBankCount(db *gorm.DB, problemBank *po.ProblemBank) (int64, error) {
 	var count int64
 	db2 := db
 	if problemBank != nil && problemBank.Name != "" {
@@ -47,8 +66,7 @@ func GetProblemBankCount(db *gorm.DB, problemBank *po.ProblemBank) (int64, error
 	return count, err
 }
 
-// GetProblemBankList 获取题库列表
-func GetProblemBankList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.ProblemBank, error) {
+func (p *problemBankDao) GetProblemBankList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.ProblemBank, error) {
 	var problemBank *po.ProblemBank
 	if pageQuery.Query != nil {
 		problemBank = pageQuery.Query.(*po.ProblemBank)
@@ -70,8 +88,7 @@ func GetProblemBankList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.ProblemBan
 	return banks, err
 }
 
-// GetSimpleProblemBankList 获取题库列表，只包含id和名称
-func GetSimpleProblemBankList(db *gorm.DB) ([]*po.ProblemBank, error) {
+func (p *problemBankDao) GetSimpleProblemBankList(db *gorm.DB) ([]*po.ProblemBank, error) {
 	var banks []*po.ProblemBank
 	err := db.Select("id", "name").Find(&banks).Error
 	return banks, err

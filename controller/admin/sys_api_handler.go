@@ -28,9 +28,9 @@ type sysApiController struct {
 	sysApiService service.SysApiService
 }
 
-func NewSysApiController() SysApiController {
+func NewSysApiController(apiService service.SysApiService) SysApiController {
 	return &sysApiController{
-		sysApiService: service.NewSysApiService(),
+		sysApiService: apiService,
 	}
 }
 

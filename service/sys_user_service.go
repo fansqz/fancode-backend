@@ -32,14 +32,19 @@ type SysUserService interface {
 }
 
 type sysUserService struct {
+	sysUserDao dao.SysUserDao
+	sysRoleDao dao.SysRoleDao
 }
 
-func NewSysUserService() SysUserService {
-	return &sysUserService{}
+func NewSysUserService(userDao dao.SysUserDao, roleDao dao.SysRoleDao) SysUserService {
+	return &sysUserService{
+		sysUserDao: userDao,
+		sysRoleDao: roleDao,
+	}
 }
 
 func (s *sysUserService) GetUserByID(userID uint) (*po.SysUser, *e.Error) {
-	user, err := dao.GetUserByID(global.Mysql, userID)
+	user, err := s.sysUserDao.GetUserByID(global.Mysql, userID)
 	if err != nil {
 		return nil, e.ErrMysql
 	}
@@ -62,7 +67,7 @@ func (s *sysUserService) InsertSysUser(sysUser *po.SysUser) (uint, *e.Error) {
 		return 0, e.ErrSysUserUnknownError
 	}
 	sysUser.Password = string(p)
-	err = dao.InsertUser(global.Mysql, sysUser)
+	err = s.sysUserDao.InsertUser(global.Mysql, sysUser)
 	if err != nil {
 		return 0, e.ErrSysUserUnknownError
 	}
@@ -71,7 +76,7 @@ func (s *sysUserService) InsertSysUser(sysUser *po.SysUser) (uint, *e.Error) {
 
 func (s *sysUserService) UpdateSysUser(sysUser *po.SysUser) *e.Error {
 	sysUser.UpdatedAt = time.Now()
-	err := dao.UpdateUser(global.Mysql, sysUser)
+	err := s.sysUserDao.UpdateUser(global.Mysql, sysUser)
 	if err != nil {
 		log.Println(err)
 		return e.ErrSysUserUnknownError
@@ -80,7 +85,7 @@ func (s *sysUserService) UpdateSysUser(sysUser *po.SysUser) *e.Error {
 }
 
 func (s *sysUserService) DeleteSysUser(id uint) *e.Error {
-	err := dao.DeleteUserByID(global.Mysql, id)
+	err := s.sysUserDao.DeleteUserByID(global.Mysql, id)
 	if err != nil {
 		log.Println(err)
 		return e.ErrSysUserUnknownError
@@ -91,20 +96,20 @@ func (s *sysUserService) DeleteSysUser(id uint) *e.Error {
 func (s *sysUserService) GetSysUserList(pageQuery *dto.PageQuery) (*dto.PageInfo, *e.Error) {
 	var pageInfo *dto.PageInfo
 	err := global.Mysql.Transaction(func(tx *gorm.DB) error {
-		userList, err := dao.GetUserList(global.Mysql, pageQuery)
+		userList, err := s.sysUserDao.GetUserList(global.Mysql, pageQuery)
 		if err != nil {
 			return err
 		}
 		userDtoList := make([]*dto.SysUserDtoForList, len(userList))
 		for i, user := range userList {
-			user.Roles, err = dao.GetRolesByUserID(tx, user.ID)
+			user.Roles, err = s.sysUserDao.GetRolesByUserID(tx, user.ID)
 			if err != nil {
 				return err
 			}
 			userDtoList[i] = dto.NewSysUserDtoForList(user)
 		}
 		var count int64
-		count, err = dao.GetUserCount(global.Mysql)
+		count, err = s.sysUserDao.GetUserCount(global.Mysql)
 		if err != nil {
 			return err
 		}
@@ -122,13 +127,13 @@ func (s *sysUserService) GetSysUserList(pageQuery *dto.PageQuery) (*dto.PageInfo
 
 func (s *sysUserService) UpdateUserRoles(userID uint, roleIDs []uint) *e.Error {
 	tx := global.Mysql.Begin()
-	err := dao.DeleteUserRoleByUserID(tx, userID)
+	err := s.sysUserDao.DeleteUserRoleByUserID(tx, userID)
 	if err != nil {
 		log.Println(err)
 		tx.Rollback()
 		return e.ErrSysUserUnknownError
 	}
-	err = dao.InsertRolesToUser(tx, userID, roleIDs)
+	err = s.sysUserDao.InsertRolesToUser(tx, userID, roleIDs)
 	if err != nil {
 		log.Println(err)
 		tx.Rollback()
@@ -139,7 +144,7 @@ func (s *sysUserService) UpdateUserRoles(userID uint, roleIDs []uint) *e.Error {
 }
 
 func (s *sysUserService) GetRoleIDsByUserID(userID uint) ([]uint, *e.Error) {
-	roleIDs, err := dao.GetRoleIDsByUserID(global.Mysql, userID)
+	roleIDs, err := s.sysUserDao.GetRoleIDsByUserID(global.Mysql, userID)
 	if err != nil {
 		return nil, e.ErrSysUserUnknownError
 	}
@@ -147,7 +152,7 @@ func (s *sysUserService) GetRoleIDsByUserID(userID uint) ([]uint, *e.Error) {
 }
 
 func (s *sysUserService) GetAllSimpleRole() ([]*dto.SimpleRoleDto, *e.Error) {
-	roles, err := dao.GetAllSimpleRoleList(global.Mysql)
+	roles, err := s.sysRoleDao.GetAllSimpleRoleList(global.Mysql)
 	if err != nil {
 		log.Println(err.Error())
 		return nil, e.ErrSysUserUnknownError

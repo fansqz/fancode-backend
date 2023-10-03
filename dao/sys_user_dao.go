@@ -7,23 +7,61 @@ import (
 	"gorm.io/gorm"
 )
 
-// InsertUser 创建用户
-func InsertUser(db *gorm.DB, user *po.SysUser) error {
+type SysUserDao interface {
+	// InsertUser 创建用户
+	InsertUser(db *gorm.DB, user *po.SysUser) error
+	// UpdateUser
+	UpdateUser(db *gorm.DB, user *po.SysUser) error
+	// DeleteUserByID 删除用户
+	DeleteUserByID(db *gorm.DB, id uint) error
+	// GetUserByID 通过用户id获取用户
+	GetUserByID(db *gorm.DB, id uint) (*po.SysUser, error)
+	// GetUserNameByID 通过用户id获取用户名称
+	GetUserNameByID(db *gorm.DB, id uint) (string, error)
+	// GetUserList 获取用户列表
+	GetUserList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysUser, error)
+	// GetUserCount 获取所有用户数量
+	GetUserCount(db *gorm.DB) (int64, error)
+	// GetUserByLoginName 根据用户登录名称获取用户
+	GetUserByLoginName(db *gorm.DB, loginName string) (*po.SysUser, error)
+	// CheckEmail 检测邮箱是否已经存在
+	CheckEmail(db *gorm.DB, email string) (bool, error)
+	// DeleteUserRoleByUserID 清除所有与userID关联的userID-roleID数据
+	DeleteUserRoleByUserID(db *gorm.DB, userID uint) error
+	// GetRolesByUserID 获取用户关联的所有role的名称
+	GetRolesByUserID(db *gorm.DB, userID uint) ([]*po.SysRole, error)
+	// GetUserByEmail 根据用户邮箱获取用户信息
+	GetUserByEmail(db *gorm.DB, email string) (*po.SysUser, error)
+	// CheckLoginName 检测loginname是否存在
+	CheckLoginName(db *gorm.DB, loginname string) (bool, error)
+	// GetRoleIDsByUserID 获取用户关联的所有role的id
+	GetRoleIDsByUserID(db *gorm.DB, userID uint) ([]uint, error)
+	// InsertRolesToUser 给用户设置角色
+	InsertRolesToUser(db *gorm.DB, userID uint, roleIDs []uint) error
+	// UpdateUserPassword 更新用户密码
+	UpdateUserPassword(db *gorm.DB, userID uint, password string) error
+}
+
+type sysUserDao struct {
+}
+
+func NewSysUserDao() SysUserDao {
+	return &sysUserDao{}
+}
+
+func (s *sysUserDao) InsertUser(db *gorm.DB, user *po.SysUser) error {
 	return db.Create(user).Error
 }
 
-// UpdateUser
-func UpdateUser(db *gorm.DB, user *po.SysUser) error {
+func (s *sysUserDao) UpdateUser(db *gorm.DB, user *po.SysUser) error {
 	return db.Model(user).Updates(user).Error
 }
 
-// DeleteUserByID 删除用户
-func DeleteUserByID(db *gorm.DB, id uint) error {
+func (s *sysUserDao) DeleteUserByID(db *gorm.DB, id uint) error {
 	return db.Delete(&po.SysUser{}, id).Error
 }
 
-// GetUserByID 通过用户id获取用户
-func GetUserByID(db *gorm.DB, id uint) (*po.SysUser, error) {
+func (s *sysUserDao) GetUserByID(db *gorm.DB, id uint) (*po.SysUser, error) {
 	var user po.SysUser
 	err := db.First(&user, id).Error
 	if err != nil {
@@ -32,8 +70,7 @@ func GetUserByID(db *gorm.DB, id uint) (*po.SysUser, error) {
 	return &user, nil
 }
 
-// GetUserNameByID 通过用户id获取用户名称
-func GetUserNameByID(db *gorm.DB, id uint) (string, error) {
+func (s *sysUserDao) GetUserNameByID(db *gorm.DB, id uint) (string, error) {
 	var user po.SysUser
 	err := db.Select("username").First(&user, id).Error
 	if err != nil {
@@ -42,8 +79,7 @@ func GetUserNameByID(db *gorm.DB, id uint) (string, error) {
 	return user.Username, nil
 }
 
-// GetUserList 获取用户列表
-func GetUserList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysUser, error) {
+func (s *sysUserDao) GetUserList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysUser, error) {
 	user := pageQuery.Query.(*po.SysUser)
 	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var users []*po.SysUser
@@ -52,15 +88,13 @@ func GetUserList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysUser, error) {
 	return users, err
 }
 
-// GetUserCount 获取所有用户数量
-func GetUserCount(db *gorm.DB) (int64, error) {
+func (s *sysUserDao) GetUserCount(db *gorm.DB) (int64, error) {
 	var count int64
 	err := db.Model(&po.SysUser{}).Count(&count).Error
 	return count, err
 }
 
-// GetUserByLoginName 根据用户登录名称获取用户
-func GetUserByLoginName(db *gorm.DB, loginName string) (*po.SysUser, error) {
+func (s *sysUserDao) GetUserByLoginName(db *gorm.DB, loginName string) (*po.SysUser, error) {
 	var user po.SysUser
 	err := db.Where("login_name = ?", loginName).Preload("Roles").First(&user).Error
 	if err != nil {
@@ -69,8 +103,7 @@ func GetUserByLoginName(db *gorm.DB, loginName string) (*po.SysUser, error) {
 	return &user, nil
 }
 
-// GetUserByEmail 根据用户邮箱获取用户信息
-func GetUserByEmail(db *gorm.DB, email string) (*po.SysUser, error) {
+func (s *sysUserDao) GetUserByEmail(db *gorm.DB, email string) (*po.SysUser, error) {
 	var user po.SysUser
 	err := db.Where("email = ?", email).Preload("Roles").First(&user).Error
 	if err != nil {
@@ -79,8 +112,7 @@ func GetUserByEmail(db *gorm.DB, email string) (*po.SysUser, error) {
 	return &user, nil
 }
 
-// CheckLoginName 检测loginname是否存在
-func CheckLoginName(db *gorm.DB, loginname string) (bool, error) {
+func (s *sysUserDao) CheckLoginName(db *gorm.DB, loginname string) (bool, error) {
 	var user *po.SysUser
 	err := db.Where("login_name = ?", loginname).First(&user).Error
 	if err != nil {
@@ -92,7 +124,7 @@ func CheckLoginName(db *gorm.DB, loginname string) (bool, error) {
 	return true, nil
 }
 
-func ListLoginName(db *gorm.DB, loginName string) ([]string, error) {
+func (s *sysUserDao) ListLoginName(db *gorm.DB, loginName string) ([]string, error) {
 	var users []*po.SysUser
 	err := db.Model(&po.SysUser{}).Where("login_name like ?", loginName+"%").
 		Select("login_name").Find(&users).Error
@@ -106,8 +138,7 @@ func ListLoginName(db *gorm.DB, loginName string) ([]string, error) {
 	return answer, nil
 }
 
-// CheckEmail 检测邮箱是否已经存在
-func CheckEmail(db *gorm.DB, email string) (bool, error) {
+func (s *sysUserDao) CheckEmail(db *gorm.DB, email string) (bool, error) {
 	var user *po.SysUser
 	err := db.Where("email = ?", email).First(&user).Error
 	if err != nil {
@@ -119,8 +150,7 @@ func CheckEmail(db *gorm.DB, email string) (bool, error) {
 	return user.ID != 0, nil
 }
 
-// DeleteUserRoleByUserID 清除所有与userID关联的userID-roleID数据
-func DeleteUserRoleByUserID(db *gorm.DB, userID uint) error {
+func (s *sysUserDao) DeleteUserRoleByUserID(db *gorm.DB, userID uint) error {
 	user := po.SysUser{}
 	user.ID = userID
 	if err := db.Model(&user).Association("Roles").Clear(); err != nil {
@@ -129,8 +159,7 @@ func DeleteUserRoleByUserID(db *gorm.DB, userID uint) error {
 	return nil
 }
 
-// GetRolesByUserID 获取用户关联的所有role的名称
-func GetRolesByUserID(db *gorm.DB, userID uint) ([]*po.SysRole, error) {
+func (s *sysUserDao) GetRolesByUserID(db *gorm.DB, userID uint) ([]*po.SysRole, error) {
 	user := po.SysUser{}
 	user.ID = userID
 	if err := db.Model(&user).Association("Roles").Find(&user.Roles); err != nil {
@@ -139,8 +168,7 @@ func GetRolesByUserID(db *gorm.DB, userID uint) ([]*po.SysRole, error) {
 	return user.Roles, nil
 }
 
-// GetRoleIDsByUserID 获取用户关联的所有role的id
-func GetRoleIDsByUserID(db *gorm.DB, userID uint) ([]uint, error) {
+func (s *sysUserDao) GetRoleIDsByUserID(db *gorm.DB, userID uint) ([]uint, error) {
 	user := po.SysUser{}
 	user.ID = userID
 	if err := db.Model(&user).Association("Roles").Find(&user.Roles); err != nil {
@@ -153,8 +181,7 @@ func GetRoleIDsByUserID(db *gorm.DB, userID uint) ([]uint, error) {
 	return roleIDs, nil
 }
 
-// InsertRolesToUser 给用户设置角色
-func InsertRolesToUser(db *gorm.DB, userID uint, roleIDs []uint) error {
+func (s *sysUserDao) InsertRolesToUser(db *gorm.DB, userID uint, roleIDs []uint) error {
 	user := &po.SysUser{}
 	user.ID = userID
 	for _, roleID := range roleIDs {
@@ -168,8 +195,7 @@ func InsertRolesToUser(db *gorm.DB, userID uint, roleIDs []uint) error {
 	return nil
 }
 
-// UpdateUserPassword 更新用户密码
-func UpdateUserPassword(db *gorm.DB, userID uint, password string) error {
+func (s *sysUserDao) UpdateUserPassword(db *gorm.DB, userID uint, password string) error {
 	user := po.SysUser{}
 	user.ID = userID
 	return db.Model(&user).Update("password", password).Error

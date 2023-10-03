@@ -6,23 +6,59 @@ import (
 	"gorm.io/gorm"
 )
 
-// InsertRole 创建角色
-func InsertRole(db *gorm.DB, role *po.SysRole) error {
+type SysRoleDao interface {
+	// InsertRole 创建角色
+	InsertRole(db *gorm.DB, role *po.SysRole) error
+	// UpdateRole 更新角色
+	UpdateRole(db *gorm.DB, role *po.SysRole) error
+	// DeleteRoleByID 删除角色
+	DeleteRoleByID(db *gorm.DB, id uint) error
+	// GetRoleByID 通过角色id获取角色
+	GetRoleByID(db *gorm.DB, roleID uint) (*po.SysRole, error)
+	// GetRoleList 获取角色列表
+	GetRoleList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysRole, error)
+	// GetRoleCount 获取所有角色数量
+	GetRoleCount(db *gorm.DB, role *po.SysRole) (int64, error)
+	// InsertMenusToRole 给角色添加menu
+	InsertMenusToRole(db *gorm.DB, roleID uint, menuIDs []uint) error
+	// DeleteRoleMenusByRoleID 清除所有与roleID关联的roleID-menuID数据
+	DeleteRoleMenusByRoleID(db *gorm.DB, roleID uint) error
+	// GetMenuIDsByRoleID 获取用户关联的所有menu的id
+	GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error)
+	// GetMenusByRoleID 通过用户角色获取菜单列表
+	GetMenusByRoleID(db *gorm.DB, roleID uint) ([]*po.SysMenu, error)
+	// InsertApisToRole 给角色添加api
+	InsertApisToRole(db *gorm.DB, roleID uint, apiIDs []uint) error
+	// DeleteRoleAPIsByRoleID 清除所有与roleID关联的roleID-apiID数据
+	DeleteRoleAPIsByRoleID(db *gorm.DB, roleID uint) error
+	// GetApiIDsByRoleID 获取用户关联的所有api的id
+	GetApiIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error)
+	// GetApisByRoleID 获取用户关联的所有api
+	GetApisByRoleID(db *gorm.DB, roleID uint) ([]*po.SysApi, error)
+	// GetAllSimpleRoleList 获取所有角色列表，只含有id和name
+	GetAllSimpleRoleList(db *gorm.DB) ([]*po.SysRole, error)
+}
+
+type sysRoleDao struct {
+}
+
+func NewSysRoleDao() SysRoleDao {
+	return &sysRoleDao{}
+}
+
+func (r *sysRoleDao) InsertRole(db *gorm.DB, role *po.SysRole) error {
 	return db.Create(role).Error
 }
 
-// UpdateRole 更新角色
-func UpdateRole(db *gorm.DB, role *po.SysRole) error {
+func (r *sysRoleDao) UpdateRole(db *gorm.DB, role *po.SysRole) error {
 	return db.Model(role).Updates(role).Error
 }
 
-// DeleteRoleByID 删除角色
-func DeleteRoleByID(db *gorm.DB, id uint) error {
+func (r *sysRoleDao) DeleteRoleByID(db *gorm.DB, id uint) error {
 	return db.Delete(&po.SysRole{}, id).Error
 }
 
-// GetRoleByID 通过角色id获取角色
-func GetRoleByID(db *gorm.DB, roleID uint) (*po.SysRole, error) {
+func (r *sysRoleDao) GetRoleByID(db *gorm.DB, roleID uint) (*po.SysRole, error) {
 	var role po.SysRole
 	err := db.First(&role, roleID).Error
 	if err != nil {
@@ -31,8 +67,7 @@ func GetRoleByID(db *gorm.DB, roleID uint) (*po.SysRole, error) {
 	return &role, nil
 }
 
-// GetRoleList 获取角色列表
-func GetRoleList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysRole, error) {
+func (r *sysRoleDao) GetRoleList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysRole, error) {
 	role := pageQuery.Query.(*po.SysRole)
 	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var roles []*po.SysRole
@@ -41,16 +76,14 @@ func GetRoleList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysRole, error) {
 	return roles, err
 }
 
-// GetRoleCount 获取所有角色数量
-func GetRoleCount(db *gorm.DB, role *po.SysRole) (int64, error) {
+func (r *sysRoleDao) GetRoleCount(db *gorm.DB, role *po.SysRole) (int64, error) {
 	var count int64
 	err := db.Model(&po.SysRole{}).
 		Where("name LIKE ?", "%"+role.Name+"%").Count(&count).Error
 	return count, err
 }
 
-// InsertMenusToRole 给角色添加menu
-func InsertMenusToRole(db *gorm.DB, roleID uint, menuIDs []uint) error {
+func (r *sysRoleDao) InsertMenusToRole(db *gorm.DB, roleID uint, menuIDs []uint) error {
 	role := &po.SysRole{}
 	role.ID = roleID
 	var menus []po.SysMenu
@@ -63,8 +96,7 @@ func InsertMenusToRole(db *gorm.DB, roleID uint, menuIDs []uint) error {
 	return err
 }
 
-// DeleteRoleMenusByRoleID 清除所有与roleID关联的roleID-menuID数据
-func DeleteRoleMenusByRoleID(db *gorm.DB, roleID uint) error {
+func (r *sysRoleDao) DeleteRoleMenusByRoleID(db *gorm.DB, roleID uint) error {
 	role := po.SysRole{}
 	role.ID = roleID
 	if err := db.Model(&role).Association("Menus").Clear(); err != nil {
@@ -74,8 +106,7 @@ func DeleteRoleMenusByRoleID(db *gorm.DB, roleID uint) error {
 	return nil
 }
 
-// GetMenuIDsByRoleID 获取用户关联的所有menu的id
-func GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
+func (r *sysRoleDao) GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	var role po.SysRole
 	role.ID = roleID
 	if err := db.Model(&role).Association("Menus").Find(&role.Menus); err != nil {
@@ -88,8 +119,7 @@ func GetMenuIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	return menuIDs, nil
 }
 
-// GetMenusByRoleID 通过用户角色获取菜单列表
-func GetMenusByRoleID(db *gorm.DB, roleID uint) ([]*po.SysMenu, error) {
+func (r *sysRoleDao) GetMenusByRoleID(db *gorm.DB, roleID uint) ([]*po.SysMenu, error) {
 	var role po.SysRole
 	role.ID = roleID
 	if err := db.Model(&role).Association("Menus").Find(&role.Menus); err != nil {
@@ -98,8 +128,7 @@ func GetMenusByRoleID(db *gorm.DB, roleID uint) ([]*po.SysMenu, error) {
 	return role.Menus, nil
 }
 
-// InsertApisToRole 给角色添加api
-func InsertApisToRole(db *gorm.DB, roleID uint, apiIDs []uint) error {
+func (r *sysRoleDao) InsertApisToRole(db *gorm.DB, roleID uint, apiIDs []uint) error {
 	role := &po.SysRole{}
 	role.ID = roleID
 	var apis []po.SysApi
@@ -112,8 +141,7 @@ func InsertApisToRole(db *gorm.DB, roleID uint, apiIDs []uint) error {
 	return err
 }
 
-// DeleteRoleAPIsByRoleID 清除所有与roleID关联的roleID-apiID数据
-func DeleteRoleAPIsByRoleID(db *gorm.DB, roleID uint) error {
+func (r *sysRoleDao) DeleteRoleAPIsByRoleID(db *gorm.DB, roleID uint) error {
 	role := po.SysRole{}
 	role.ID = roleID
 	if err := db.Model(&role).Association("Apis").Clear(); err != nil {
@@ -123,8 +151,7 @@ func DeleteRoleAPIsByRoleID(db *gorm.DB, roleID uint) error {
 	return nil
 }
 
-// GetApiIDsByRoleID 获取用户关联的所有api的id
-func GetApiIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
+func (r *sysRoleDao) GetApiIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	var role po.SysRole
 	role.ID = roleID
 	if err := db.Model(&role).Association("Apis").Find(&role.Apis); err != nil {
@@ -137,8 +164,7 @@ func GetApiIDsByRoleID(db *gorm.DB, roleID uint) ([]uint, error) {
 	return apiIDs, nil
 }
 
-// GetApisByRoleID 获取用户关联的所有api
-func GetApisByRoleID(db *gorm.DB, roleID uint) ([]*po.SysApi, error) {
+func (r *sysRoleDao) GetApisByRoleID(db *gorm.DB, roleID uint) ([]*po.SysApi, error) {
 	var role po.SysRole
 	role.ID = roleID
 	if err := db.Model(&role).Association("Apis").Find(&role.Apis); err != nil {
@@ -147,8 +173,7 @@ func GetApisByRoleID(db *gorm.DB, roleID uint) ([]*po.SysApi, error) {
 	return role.Apis, nil
 }
 
-// GetAllSimpleRoleList 获取所有角色列表，只含有id和name
-func GetAllSimpleRoleList(db *gorm.DB) ([]*po.SysRole, error) {
+func (r *sysRoleDao) GetAllSimpleRoleList(db *gorm.DB) ([]*po.SysRole, error) {
 	var roles []*po.SysRole
 	err := db.Select([]string{"id", "name"}).Find(&roles).Error
 	if err != nil {

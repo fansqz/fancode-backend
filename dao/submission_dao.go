@@ -7,13 +7,29 @@ import (
 	"time"
 )
 
-func GetLastSubmission(db *gorm.DB, userID uint, problemID uint) (*po.Submission, error) {
+type SubmissionDao interface {
+	GetLastSubmission(db *gorm.DB, userID uint, problemID uint) (*po.Submission, error)
+	GetSubmissionList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Submission, error)
+	GetSubmissionCount(db *gorm.DB, submission *po.Submission) (int64, error)
+	GetUserSimpleSubmissionsByTime(db *gorm.DB, userID uint, begin time.Time, end time.Time) ([]*po.Submission, error)
+	CheckUserIsSubmittedByTime(db *gorm.DB, userID uint, begin time.Time, end time.Time) (bool, error)
+	InsertSubmission(db *gorm.DB, submission *po.Submission) error
+}
+
+type submissionDao struct {
+}
+
+func NewSubmissionDao() SubmissionDao {
+	return &submissionDao{}
+}
+
+func (s *submissionDao) GetLastSubmission(db *gorm.DB, userID uint, problemID uint) (*po.Submission, error) {
 	var submission *po.Submission
 	err := db.Where("user_id = ? and problem_id = ?", userID, problemID).Last(submission).Error
 	return submission, err
 }
 
-func GetSubmissionList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Submission, error) {
+func (s *submissionDao) GetSubmissionList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Submission, error) {
 	submission := pageQuery.Query.(*po.Submission)
 	var submissions []*po.Submission
 	db2 := db
@@ -28,7 +44,7 @@ func GetSubmissionList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Submission,
 	return submissions, err
 }
 
-func GetSubmissionCount(db *gorm.DB, submission *po.Submission) (int64, error) {
+func (s *submissionDao) GetSubmissionCount(db *gorm.DB, submission *po.Submission) (int64, error) {
 	var count int64
 	db2 := db
 	if submission != nil && submission.UserID != 0 {
@@ -41,7 +57,7 @@ func GetSubmissionCount(db *gorm.DB, submission *po.Submission) (int64, error) {
 	return count, err
 }
 
-func GetUserSimpleSubmissionsByTime(db *gorm.DB, userID uint, begin time.Time, end time.Time) ([]*po.Submission, error) {
+func (s *submissionDao) GetUserSimpleSubmissionsByTime(db *gorm.DB, userID uint, begin time.Time, end time.Time) ([]*po.Submission, error) {
 	var submissions []*po.Submission
 	err := db.Where("user_id = ? and created_at >= ? and created_at <= ?", userID, begin, end).
 		Select("created_at").Find(&submissions).Error
@@ -51,7 +67,7 @@ func GetUserSimpleSubmissionsByTime(db *gorm.DB, userID uint, begin time.Time, e
 	return submissions, err
 }
 
-func CheckUserIsSubmittedByTime(db *gorm.DB, userID uint, begin time.Time, end time.Time) (bool, error) {
+func (s *submissionDao) CheckUserIsSubmittedByTime(db *gorm.DB, userID uint, begin time.Time, end time.Time) (bool, error) {
 	submission := po.Submission{}
 	submission.UserID = userID
 	data := &po.Submission{}
@@ -66,6 +82,6 @@ func CheckUserIsSubmittedByTime(db *gorm.DB, userID uint, begin time.Time, end t
 	return true, nil
 }
 
-func InsertSubmission(db *gorm.DB, submission *po.Submission) error {
+func (s *submissionDao) InsertSubmission(db *gorm.DB, submission *po.Submission) error {
 	return db.Create(submission).Error
 }

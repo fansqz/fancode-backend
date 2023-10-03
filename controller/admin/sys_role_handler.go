@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"FanCode/controllers"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
@@ -36,9 +35,9 @@ type sysRoleController struct {
 	sysRoleService service.SysRoleService
 }
 
-func NewSysRoleController() SysRoleController {
+func NewSysRoleController(roleService service.SysRoleService) SysRoleController {
 	return &sysRoleController{
-		sysRoleService: service.NewSysRoleService(),
+		sysRoleService: roleService,
 	}
 }
 
@@ -111,7 +110,7 @@ func (s *sysRoleController) DeleteSysRole(ctx *gin.Context) {
 // GetSysRoleList 读取一个列表的角色
 func (s *sysRoleController) GetSysRoleList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	pageQuery, err := GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return

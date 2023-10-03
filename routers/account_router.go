@@ -1,12 +1,11 @@
 package routers
 
 import (
-	"FanCode/controllers"
+	"FanCode/controller"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupAccountRoutes(r *gin.Engine) {
-	accountController := controllers.NewAccountController()
+func SetupAccountRoutes(r *gin.Engine, accountController controller.AccountController) {
 	account := r.Group("/account")
 	{
 		account.GET("/info", accountController.GetAccountInfo)

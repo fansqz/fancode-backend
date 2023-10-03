@@ -7,12 +7,19 @@ import (
 	"strings"
 )
 
+type CorsInterceptor struct {
+}
+
+func NewCorsInterceptor() *CorsInterceptor {
+	return &CorsInterceptor{}
+}
+
 // Cors
 // 拦截器拦截option 请求方法，添加允许跨域的信息
 //
 //	@Description: 解决跨域问题
 //	@return gin.HandlerFunc
-func Cors() gin.HandlerFunc {
+func (*CorsInterceptor) Cors() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		method := context.Request.Method
 		origin := context.Request.Header.Get("Origin")

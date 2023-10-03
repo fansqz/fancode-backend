@@ -41,10 +41,17 @@ type ProblemBankService interface {
 }
 
 type problemBankService struct {
+	problemBankDao dao.ProblemBankDao
+	problemDao     dao.ProblemDao
+	sysUserDao     dao.SysUserDao
 }
 
-func NewProblemBankService() ProblemBankService {
-	return &problemBankService{}
+func NewProblemBankService(bankDao dao.ProblemBankDao, problemDao dao.ProblemDao, userDao dao.SysUserDao) ProblemBankService {
+	return &problemBankService{
+		problemBankDao: bankDao,
+		problemDao:     problemDao,
+		sysUserDao:     userDao,
+	}
 }
 
 func (p *problemBankService) UploadProblemBankIcon(file *multipart.FileHeader) (string, *e.Error) {
@@ -83,7 +90,7 @@ func (p *problemBankService) InsertProblemBank(problemBank *po.ProblemBank, ctx 
 		problemBank.Description = "无描述信息"
 	}
 	problemBank.CreatorID = ctx.Keys["user"].(*dto.UserInfo).ID
-	err := dao.InsertProblemBank(global.Mysql, problemBank)
+	err := p.problemBankDao.InsertProblemBank(global.Mysql, problemBank)
 	if err != nil {
 		return 0, e.ErrMysql
 	}
@@ -91,7 +98,7 @@ func (p *problemBankService) InsertProblemBank(problemBank *po.ProblemBank, ctx 
 }
 
 func (p *problemBankService) UpdateProblemBank(problemBank *po.ProblemBank) *e.Error {
-	err := dao.UpdateProblemBank(global.Mysql, problemBank)
+	err := p.problemBankDao.UpdateProblemBank(global.Mysql, problemBank)
 	if err != nil {
 		return e.ErrMysql
 	}
@@ -103,13 +110,13 @@ func (p *problemBankService) DeleteProblemBank(id uint, forceDelete bool) *e.Err
 	// 非强制删除
 	if !forceDelete {
 		var count int64
-		count, err = dao.GetProblemCount(global.Mysql, &po.Problem{
+		count, err = p.problemDao.GetProblemCount(global.Mysql, &po.Problem{
 			BankID: &id,
 		})
 		if count != 0 {
 			return e.NewCustomMsg("题库不为空，请问是否需要强制删除")
 		}
-		err = dao.DeleteProblemBankByID(global.Mysql, id)
+		err = p.problemBankDao.DeleteProblemBankByID(global.Mysql, id)
 		if err != nil {
 			return e.ErrMysql
 		}
@@ -117,7 +124,7 @@ func (p *problemBankService) DeleteProblemBank(id uint, forceDelete bool) *e.Err
 	}
 
 	// 强制删除
-	err = dao.DeleteProblemBankByID(global.Mysql, id)
+	err = p.problemBankDao.DeleteProblemBankByID(global.Mysql, id)
 	if err != nil {
 		return e.ErrMysql
 	}
@@ -130,7 +137,7 @@ func (p *problemBankService) GetProblemBankList(query *dto.PageQuery) (*dto.Page
 		bankQuery = query.Query.(*po.ProblemBank)
 	}
 	// 获取题库列表
-	banks, err := dao.GetProblemBankList(global.Mysql, query)
+	banks, err := p.problemBankDao.GetProblemBankList(global.Mysql, query)
 	if err != nil {
 		return nil, e.ErrMysql
 	}
@@ -138,17 +145,17 @@ func (p *problemBankService) GetProblemBankList(query *dto.PageQuery) (*dto.Page
 	for i := 0; i < len(banks); i++ {
 		newProblemBanks[i] = dto.NewProblemBankDtoForList(banks[i])
 		// 读取题库中的题目总数还有作者
-		newProblemBanks[i].ProblemCount, err = dao.GetProblemCount(global.Mysql, &po.Problem{
+		newProblemBanks[i].ProblemCount, err = p.problemDao.GetProblemCount(global.Mysql, &po.Problem{
 			BankID: &newProblemBanks[i].ID,
 		})
 		if err != nil {
 			return nil, e.ErrMysql
 		}
-		newProblemBanks[i].CreatorName, err = dao.GetUserNameByID(global.Mysql, banks[i].CreatorID)
+		newProblemBanks[i].CreatorName, err = p.sysUserDao.GetUserNameByID(global.Mysql, banks[i].CreatorID)
 	}
 	// 获取所有题库总数目
 	var count int64
-	count, err = dao.GetProblemBankCount(global.Mysql, bankQuery)
+	count, err = p.problemBankDao.GetProblemBankCount(global.Mysql, bankQuery)
 	if err != nil {
 		return nil, e.ErrMysql
 	}
@@ -161,7 +168,7 @@ func (p *problemBankService) GetProblemBankList(query *dto.PageQuery) (*dto.Page
 }
 
 func (p *problemBankService) GetSimpleProblemBankList() ([]*dto.ProblemBankDtoForSimpleList, *e.Error) {
-	banks, err := dao.GetSimpleProblemBankList(global.Mysql)
+	banks, err := p.problemBankDao.GetSimpleProblemBankList(global.Mysql)
 	if err != nil {
 		return nil, e.ErrMysql
 	}
@@ -173,7 +180,7 @@ func (p *problemBankService) GetSimpleProblemBankList() ([]*dto.ProblemBankDtoFo
 }
 
 func (p *problemBankService) GetProblemBankByID(id uint) (*po.ProblemBank, *e.Error) {
-	bank, err := dao.GetProblemBankByID(global.Mysql, id)
+	bank, err := p.problemBankDao.GetProblemBankByID(global.Mysql, id)
 	if err != nil {
 		return nil, e.ErrMysql
 	}

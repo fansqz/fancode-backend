@@ -1,8 +1,8 @@
 package admin
 
 import (
-	"FanCode/controllers"
 	e "FanCode/error"
+	"FanCode/models/dto"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
@@ -33,9 +33,9 @@ type problemManagementController struct {
 	problemService service.ProblemService
 }
 
-func NewProblemManagementController() ProblemManagementController {
+func NewProblemManagementController(problemService service.ProblemService) ProblemManagementController {
 	return &problemManagementController{
-		problemService: service.NewProblemService(),
+		problemService: problemService,
 	}
 }
 
@@ -112,7 +112,7 @@ func (q *problemManagementController) DeleteProblem(ctx *gin.Context) {
 // GetProblemList 读取一个列表的题目
 func (q *problemManagementController) GetProblemList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := controllers.GetPageQueryByQuery(ctx)
+	pageQuery, err := GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return
@@ -269,4 +269,32 @@ func (q *problemManagementController) getProblemByQuery(ctx *gin.Context) (*po.P
 		problem.Enable = -1
 	}
 	return problem, nil
+}
+
+func GetPageQueryByQuery(ctx *gin.Context) (*dto.PageQuery, *e.Error) {
+	pageStr := ctx.Query("page")
+	pageSizeStr := ctx.Query("pageSize")
+	var page int
+	var pageSize int
+	var convertErr error
+	page, convertErr = strconv.Atoi(pageStr)
+	if convertErr != nil {
+		return nil, e.ErrBadRequest
+	}
+	pageSize, convertErr = strconv.Atoi(pageSizeStr)
+	if convertErr != nil {
+		return nil, e.ErrBadRequest
+	}
+	if pageSize > 50 {
+		pageSize = 50
+	}
+	sortProperty := ctx.Query("sortProperty")
+	sortRule := ctx.Query("sortRule")
+	answer := &dto.PageQuery{
+		Page:         page,
+		PageSize:     pageSize,
+		SortProperty: sortProperty,
+		SortRule:     sortRule,
+	}
+	return answer, nil
 }
