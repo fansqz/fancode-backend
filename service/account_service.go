@@ -86,6 +86,9 @@ func (a *accountService) UpdateAccountInfo(ctx *gin.Context, user *po.SysUser) *
 	userInfo := ctx.Keys["user"].(*dto.UserInfo)
 	user.ID = userInfo.ID
 	user.UpdatedAt = time.Now()
+	// 不能更新账号名称和密码
+	user.LoginName = ""
+	user.Password = ""
 	err := a.sysUserDao.UpdateUser(global.Mysql, user)
 	if err != nil {
 		log.Panicln(err)
