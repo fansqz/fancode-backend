@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 	"testing"
+	"time"
 )
 
 func TestProblemBankService_InsertProblemBank(t *testing.T) {
@@ -56,26 +57,19 @@ func TestProblemBankService_UpdateProblemBank(t *testing.T) {
 		Icon:        "icon",
 		Description: "description",
 	}
-	resultID := uint(10)
 	problemBankDao.EXPECT().UpdateProblemBank(global.Mysql, gomock.Any()).Return(nil).Do(
 		func(db *gorm.DB, bank *po.ProblemBank) {
+			assert.NotNil(t, bank.UpdatedAt)
+			bank.UpdatedAt = time.Time{}
 			bank2 := &po.ProblemBank{
-				Name:        "未命名题库",
+				Name:        "name",
 				Icon:        "icon",
-				Description: "无描述信息",
-				CreatorID:   uint(1),
+				Description: "description",
 			}
 			assert.Equal(t, bank, bank2)
-			bank.ID = resultID
 		})
 
-	ctx := &gin.Context{}
-	ctx.Keys = make(map[string]interface{})
-	ctx.Keys["user"] = &dto.UserInfo{
-		ID: 1,
-	}
 	bankService := NewProblemBankService(problemBankDao, nil, nil)
-	id, err := bankService.InsertProblemBank(bank, ctx)
-	assert.Equal(t, id, resultID)
+	err := bankService.UpdateProblemBank(bank)
 	assert.Nil(t, err)
 }
