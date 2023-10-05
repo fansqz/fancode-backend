@@ -3,6 +3,7 @@ package judger
 import (
 	"FanCode/constants"
 	"FanCode/utils"
+	"bufio"
 	"bytes"
 	"context"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -32,6 +34,7 @@ func NewJudgeCore() *JudgeCore {
 }
 
 // Compile 编译，编译时在容器外进行编译的
+// compileFiles第个文件是main文件
 func (j *JudgeCore) Compile(language string, compileFiles []string, outFilePath string, timeout time.Duration) error {
 	var cmd *exec.Cmd
 	var ctx context.Context
@@ -44,11 +47,7 @@ func (j *JudgeCore) Compile(language string, compileFiles []string, outFilePath 
 		defer cancel()
 		cmd = exec.CommandContext(ctx, "gcc", compileFiles...)
 	case constants.ProgramJava:
-		compileFiles = append([]string{"-d", outFilePath}, compileFiles...)
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(context.Background(), timeout)
-		defer cancel()
-		cmd = exec.CommandContext(ctx, "javac", compileFiles...)
+		return j.compileJava(compileFiles, outFilePath, timeout)
 	case constants.ProgramGo:
 		compileFiles = append([]string{"build", "-o", outFilePath}, compileFiles...)
 		var cancel context.CancelFunc
@@ -69,8 +68,81 @@ func (j *JudgeCore) Compile(language string, compileFiles []string, outFilePath 
 		}
 		return err
 	}
+	err = cmd.Wait()
+	if err != nil {
+		return err
+	}
+
+	// 如果是java还需要将编译文件打包成jar包
+	if language == constants.ProgramJava {
+
+	}
+
+	return err
+}
+
+// 编译java语言会比较麻烦
+func (j *JudgeCore) compileJava(compileFiles []string, outFilePath string, timeout time.Duration) error {
+	lastIndex := strings.LastIndex(outFilePath, "/")
+	// 读取main文件，规定第一个文件时main文件
+	mainClass := compileFiles[0][strings.LastIndex(compileFiles[0], "/")+1:]
+	mainClass = strings.Split(mainClass, ".")[0]
+
+	// 创建存放class文件的目录
+	classPath := path.Join(outFilePath[0:lastIndex], "classPath")
+	os.MkdirAll(classPath, os.ModePerm)
+	defer os.RemoveAll(classPath)
+
+	// 编译为class文件
+	compileFiles = append([]string{"-d", classPath}, compileFiles...)
+	var cancel context.CancelFunc
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "javac", compileFiles...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Start()
+	if err != nil {
+		return err
+	}
+	err = cmd.Wait()
+	if err != nil {
+		// 如果是由于超时导致的错误，则返回自定义错误
+		if ctx.Err() == context.DeadlineExceeded {
+			return errors.New("编译超时")
+		}
+		return err
+	}
+
+	// 添加一些jar包必要的文件
+	file, err := os.Create(path.Join(classPath, "MANIFEST.MF"))
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	writer := bufio.NewWriter(file)
+	//将第一个文件当作main文件
+	_, err = writer.WriteString("Manifest-Version: 1.0\nMain-Class: " + mainClass + "\nBuilt-By: fancode\n")
+	if err != nil {
+		return err
+	}
+	err = writer.Flush()
+
+	// 打包成jar包
+	cmd = exec.Command("jar", "cvfm", outFilePath, path.Join(classPath, "MANIFEST.MF"),
+		"-C", classPath, ".")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
+	if err != nil {
+		return err
+	}
 
 	err = cmd.Wait()
+	// 如果是由于超时导致的错误，则返回自定义错误
+	if ctx.Err() == context.DeadlineExceeded {
+		return errors.New("编译超时")
+	}
 	return err
 }
 
