@@ -42,9 +42,9 @@ func execute(language string, t *testing.T) {
 		OutputCh:    output,
 		InputCh:     input,
 		ExitCh:      exitCh,
-		ExecFile:    "./test_file/test_execute.jar",
+		ExecFile:    "./test_file/test_execute",
 		LimitTime:   10 * time.Second,
-		LimitMemory: 100 * 1024,
+		LimitMemory: 20 * 1024 * 1024,
 	}
 
 	err = judgeCore.Execute(executeOption)

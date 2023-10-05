@@ -150,14 +150,16 @@ func (j *JudgeCore) compileJava(compileFiles []string, outFilePath string, timeo
 // todo: 计算空间的使用
 func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 	// 根据扩展名设置执行命令
-	cmd := ""
+	cmdName := ""
+	cmdArg := []string{}
 	switch executeOption.Language {
 	case constants.ProgramC:
-		cmd = fmt.Sprintf("%s", executeOption.ExecFile)
+		cmdName = executeOption.ExecFile
 	case constants.ProgramJava:
-		cmd = fmt.Sprintf("java -jar %s", executeOption.ExecFile)
+		cmdName = "java"
+		cmdArg = []string{"-jar", executeOption.ExecFile}
 	case constants.ProgramGo:
-		cmd = fmt.Sprintf("%s", executeOption.ExecFile)
+		cmdName = executeOption.ExecFile
 	default:
 		return fmt.Errorf("不支持该语言")
 	}
@@ -199,7 +201,7 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 				}
 
 				// 创建子进程，并将其加入cgroup
-				cmd2 := exec.CommandContext(ctx, cmd)
+				cmd2 := exec.CommandContext(ctx, cmdName, cmdArg...)
 				result := ExecuteResult{}
 
 				cmd2.Stdin = bytes.NewReader(inputItem)
@@ -214,7 +216,8 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 
 				if err != nil {
 					result.Executed = false
-					result.Error = err
+					result.Error = errors.New(err.Error() + "\n" +
+						string(cmd2.Stderr.(*bytes.Buffer).Bytes()))
 					executeOption.OutputCh <- result
 					break
 				}
