@@ -73,11 +73,6 @@ func (j *JudgeCore) Compile(language string, compileFiles []string, outFilePath 
 		return err
 	}
 
-	// 如果是java还需要将编译文件打包成jar包
-	if language == constants.ProgramJava {
-
-	}
-
 	return err
 }
 
