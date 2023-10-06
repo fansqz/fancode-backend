@@ -239,6 +239,8 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 				// 结果不正确则结束
 				if !bytes.Equal(executeResult.Output, outFileContent) {
 					submission.Status = constants.WrongAnswer
+					submission.CaseName = strings.Split(fileInfo.Name(), ".")[0]
+					submission.CaseData = string(input)
 					submission.ExpectedOutput = string(outFileContent)
 					submission.UserOutput = string(executeResult.Output)
 					return submission, nil

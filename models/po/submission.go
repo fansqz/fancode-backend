@@ -21,6 +21,10 @@ type Submission struct {
 	Status int `gorm:"column:status"`
 	// 异常信息
 	ErrorMessage string `gorm:"column:error_message"`
+	// 用例名称
+	CaseName string `gorm:"column:case_name"`
+	// 用例数据
+	CaseData string `gorm:"column:case_data"`
 	// 期望输出
 	ExpectedOutput string `gorm:"column:expected_output"`
 	// 用户输出
