@@ -9,6 +9,6 @@ func SetupProblemBankRoutes(r *gin.Engine, problemBankController user.ProblemBan
 	//题目相关路由
 	problem := r.Group("/problemBank")
 	{
-		problem.GET("/list", problemBankController.GetProblemBankList)
+		problem.GET("/all", problemBankController.GetAllProblemBank)
 	}
 }

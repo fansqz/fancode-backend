@@ -19,6 +19,8 @@ type ProblemBankDao interface {
 	GetProblemBankCount(db *gorm.DB, problemBank *po.ProblemBank) (int64, error)
 	// GetProblemBankList 获取题库列表
 	GetProblemBankList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.ProblemBank, error)
+	// GetAllProblemBank 获取所有的题目数据
+	GetAllProblemBank(db *gorm.DB) ([]*po.ProblemBank, error)
 	// GetSimpleProblemBankList 获取题库列表，只包含id和名称
 	GetSimpleProblemBankList(db *gorm.DB) ([]*po.ProblemBank, error)
 }
@@ -79,6 +81,12 @@ func (p *problemBankDao) GetProblemBankList(db *gorm.DB, pageQuery *dto.PageQuer
 		order := pageQuery.SortProperty + " " + pageQuery.SortRule
 		db = db.Order(order)
 	}
+	err := db.Find(&banks).Error
+	return banks, err
+}
+
+func (p *problemBankDao) GetAllProblemBank(db *gorm.DB) ([]*po.ProblemBank, error) {
+	var banks []*po.ProblemBank
 	err := db.Find(&banks).Error
 	return banks, err
 }

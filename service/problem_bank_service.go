@@ -33,11 +33,13 @@ type ProblemBankService interface {
 	UpdateProblemBank(problemBank *po.ProblemBank) *e.Error
 	// DeleteProblemBank 删除题库
 	DeleteProblemBank(id uint, forceDelete bool) *e.Error
-	// GetProblemBankList 获取题目列表
+	// GetProblemBankList 获取题库列表
 	GetProblemBankList(query *dto.PageQuery) (*dto.PageInfo, *e.Error)
+	// GetAllProblemBank 获取所有的题库列表
+	GetAllProblemBank() ([]*po.ProblemBank, *e.Error)
 	// GetSimpleProblemBankList 获取简单的题库列表
 	GetSimpleProblemBankList() ([]*dto.ProblemBankDtoForSimpleList, *e.Error)
-	// GetProblemBankByID 获取题目信息
+	// GetProblemBankByID 获取题库信息
 	GetProblemBankByID(id uint) (*po.ProblemBank, *e.Error)
 }
 
@@ -168,6 +170,14 @@ func (p *problemBankService) GetProblemBankList(query *dto.PageQuery) (*dto.Page
 		List:  newProblemBanks,
 	}
 	return pageInfo, nil
+}
+
+func (p *problemBankService) GetAllProblemBank() ([]*po.ProblemBank, *e.Error) {
+	banks, err := p.problemBankDao.GetAllProblemBank(global.Mysql)
+	if err != nil {
+		return nil, e.ErrMysql
+	}
+	return banks, nil
 }
 
 func (p *problemBankService) GetSimpleProblemBankList() ([]*dto.ProblemBankDtoForSimpleList, *e.Error) {

@@ -7,8 +7,8 @@ import (
 )
 
 type ProblemBankController interface {
-	// GetProblemBankList 读取题库列表
-	GetProblemBankList(ctx *gin.Context)
+	// GetAllProblemBank( 读取题库列表
+	GetAllProblemBank(ctx *gin.Context)
 }
 type problemBankController struct {
 	problemBankService service.ProblemBankService
@@ -20,17 +20,12 @@ func NewProblemBankController(bankService service.ProblemBankService) ProblemBan
 	}
 }
 
-func (p *problemBankController) GetProblemBankList(ctx *gin.Context) {
+func (p *problemBankController) GetAllProblemBank(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := GetPageQueryByQuery(ctx)
+	banks, err := p.problemBankService.GetAllProblemBank()
 	if err != nil {
 		result.Error(err)
 		return
 	}
-	pageInfo, err := p.problemBankService.GetProblemBankList(pageQuery)
-	if err != nil {
-		result.Error(err)
-		return
-	}
-	result.SuccessData(pageInfo)
+	result.SuccessData(banks)
 }
