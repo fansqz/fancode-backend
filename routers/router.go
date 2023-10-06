@@ -49,6 +49,7 @@ func SetupRouter(
 	admin.SetupProblemRoutes(r, controller.ProblemManagementController)
 	user.SetupJudgeRoutes(r, controller.JudgeController)
 	user.SetupProblemRoutes(r, controller.ProblemController)
+	user.SetupProblemBankRoutes(r, controller.ProblemBankController)
 	user.SetupSubmissionRoutes(r, controller.SubmissionController)
 
 	return r

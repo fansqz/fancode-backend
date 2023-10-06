@@ -1,9 +1,12 @@
 package user
 
 import (
+	e "FanCode/error"
+	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
+	"strconv"
 )
 
 type ProblemController interface {
@@ -31,6 +34,18 @@ func (p *problemController) GetProblemList(ctx *gin.Context) {
 	if err != nil {
 		result.Error(err)
 		return
+	}
+	bankIDStr := ctx.Query("bankID")
+	if bankIDStr != "" {
+		bankID, err := strconv.Atoi(bankIDStr)
+		if err != nil {
+			result.Error(e.ErrBadRequest)
+			return
+		}
+		uintBankID := uint(bankID)
+		pageQuery.Query = &po.Problem{
+			BankID: &uintBankID,
+		}
 	}
 	pageInfo, err := p.problemService.GetUserProblemList(ctx, pageQuery)
 	if err != nil {
