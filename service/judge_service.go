@@ -10,7 +10,6 @@ import (
 	"FanCode/models/po"
 	"FanCode/service/judger"
 	"FanCode/utils"
-	"bytes"
 	"github.com/gin-gonic/gin"
 	"log"
 	"os"
@@ -237,7 +236,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 				}
 
 				// 结果不正确则结束
-				if !bytes.Equal(executeResult.Output, outFileContent) {
+				if !j.compareAnswer(string(executeResult.Output), string(outFileContent)) {
 					submission.Status = constants.WrongAnswer
 					submission.CaseName = strings.Split(fileInfo.Name(), ".")[0]
 					submission.CaseData = string(input)
@@ -361,7 +360,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	}()
 	executeOption := &judger.ExecuteOption{
 		ExecFile:    executeFilePath,
-		Language:    constants.ProgramC,
+		Language:    judgeRequest.Language,
 		InputCh:     inputCh,
 		OutputCh:    outputCh,
 		ExitCh:      exitCh,
@@ -395,6 +394,14 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 		ErrorMessage: "",
 		UserOutput:   string(output.Output),
 	}, nil
+}
+
+func (j *judgeService) compareAnswer(data1 string, data2 string) bool {
+	data1 = strings.Trim(data1, " ")
+	data1 = strings.Trim(data1, "\n")
+	data2 = strings.Trim(data2, " ")
+	data2 = strings.Trim(data2, "\n")
+	return data1 == data2
 }
 
 func checkAndDownloadQuestionFile(questionPath string) error {

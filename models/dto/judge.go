@@ -17,6 +17,8 @@ type SubmitResultDto struct {
 	ProblemID    uint   `json:"problemID"`
 	Status       int    `json:"status"`
 	ErrorMessage string `json:"errorMessage"`
+	CaseName     string `json:"caseName"`
+	CaseData     string `json:"caseData"`
 	// 预期输出
 	ExpectedOutput string `json:"expectedOutput"`
 	// 用户输出
@@ -32,6 +34,8 @@ func NewSubmitResultDto(submission *po.Submission) *SubmitResultDto {
 		ProblemID:      submission.ProblemID,
 		Status:         submission.Status,
 		ErrorMessage:   submission.ErrorMessage,
+		CaseName:       submission.CaseName,
+		CaseData:       submission.CaseData,
 		ExpectedOutput: submission.ExpectedOutput,
 		UserOutput:     submission.UserOutput,
 		TimeUsed:       submission.TimeUsed,
