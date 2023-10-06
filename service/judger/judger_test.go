@@ -3,7 +3,9 @@ package judger
 import (
 	"FanCode/constants"
 	"gotest.tools/v3/assert"
+	"math/rand"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -54,16 +56,18 @@ func execute(language string, t *testing.T) {
 	}
 
 	// 输入数据
-	input <- []byte("1 2")
 	defer func() {
 		exitCh <- "exit"
 	}()
-
-	// 校验
-	select {
-	case result := <-output:
-		assert.Equal(t, true, result.Executed)
-		assert.Equal(t, "3\n", string(result.Output))
+	for i := 0; i < 10; i++ {
+		a := rand.Int() % 100
+		b := rand.Int() % 100
+		input <- []byte(strconv.Itoa(a) + " " + strconv.Itoa(b))
+		select {
+		case result := <-output:
+			assert.Equal(t, true, result.Executed)
+			assert.Equal(t, strconv.Itoa(a+b)+"\n", string(result.Output))
+		}
 	}
 }
 

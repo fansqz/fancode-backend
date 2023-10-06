@@ -189,7 +189,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}()
 	executeOption := &judger.ExecuteOption{
 		ExecFile:    executeFilePath,
-		Language:    constants.ProgramC,
+		Language:    judgeRequest.Language,
 		InputCh:     inputCh,
 		OutputCh:    outputCh,
 		ExitCh:      exitCh,
@@ -218,30 +218,31 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 			inputCh <- input
 
 			// 读取输出数据
-			executeResult := <-outputCh
+			select {
+			case executeResult := <-outputCh:
+				// 运行出错
+				if !executeResult.Executed {
+					submission.Status = constants.RuntimeError
+					submission.ErrorMessage = executeResult.Error.Error()
+					return submission, nil
+				}
 
-			// 运行出错
-			if !executeResult.Executed {
-				submission.Status = constants.RuntimeError
-				submission.ErrorMessage = executeResult.Error.Error()
-				return submission, nil
-			}
+				// 读取.out文件
+				outFilePath := path.Join(caseFilePath, strings.ReplaceAll(fileInfo.Name(), ".in", ".out"))
+				var outFileContent []byte
+				outFileContent, err = os.ReadFile(outFilePath)
+				if err != nil {
+					log.Println(err)
+					return nil, e.ErrExecuteFailed
+				}
 
-			// 读取.out文件
-			outFilePath := path.Join(caseFilePath, strings.ReplaceAll(fileInfo.Name(), ".in", ".out"))
-			var outFileContent []byte
-			outFileContent, err = os.ReadFile(outFilePath)
-			if err != nil {
-				log.Println(err)
-				return nil, e.ErrExecuteFailed
-			}
-
-			// 结果不正确则结束
-			if !bytes.Equal(executeResult.Output, outFileContent) {
-				submission.Status = constants.WrongAnswer
-				submission.ExpectedOutput = string(outFileContent)
-				submission.UserOutput = string(executeResult.Output)
-				return submission, nil
+				// 结果不正确则结束
+				if !bytes.Equal(executeResult.Output, outFileContent) {
+					submission.Status = constants.WrongAnswer
+					submission.ExpectedOutput = string(outFileContent)
+					submission.UserOutput = string(executeResult.Output)
+					return submission, nil
+				}
 			}
 		}
 	}
