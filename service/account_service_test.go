@@ -1,7 +1,7 @@
 package service
 
 import (
-	"FanCode/dao"
+	"FanCode/dao/mock"
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
@@ -16,7 +16,7 @@ import (
 func TestAccountService_GetAccountInfo(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
-	userDao := dao.NewMockSysUserDao(mockCtl)
+	userDao := mock.NewMockSysUserDao(mockCtl)
 	// mock数据
 	sex := 1
 	birthDay := time.Now()
@@ -58,7 +58,7 @@ func TestAccountService_GetAccountInfo(t *testing.T) {
 func TestAccountService_UpdateAccountInfo(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
-	userDao := dao.NewMockSysUserDao(mockCtl)
+	userDao := mock.NewMockSysUserDao(mockCtl)
 	// mock数据
 	sex := 1
 	birthDay := time.Now()

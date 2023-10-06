@@ -1,7 +1,7 @@
 package service
 
 import (
-	"FanCode/dao"
+	"FanCode/dao/mock"
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
@@ -16,7 +16,7 @@ import (
 func TestProblemBankService_InsertProblemBank(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
-	problemBankDao := dao.NewMockProblemBankDao(mockCtl)
+	problemBankDao := mock.NewMockProblemBankDao(mockCtl)
 	// mock数据
 	bank := &po.ProblemBank{
 		Name:        "",
@@ -50,7 +50,7 @@ func TestProblemBankService_InsertProblemBank(t *testing.T) {
 func TestProblemBankService_UpdateProblemBank(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
-	problemBankDao := dao.NewMockProblemBankDao(mockCtl)
+	problemBankDao := mock.NewMockProblemBankDao(mockCtl)
 	// mock数据
 	bank := &po.ProblemBank{
 		Name:        "name",
@@ -77,8 +77,8 @@ func TestProblemBankService_UpdateProblemBank(t *testing.T) {
 func TestProblemBankService_DeleteProblemBank(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
-	problemDao := dao.NewMockProblemDao(mockCtl)
-	problemBankDao := dao.NewMockProblemBankDao(mockCtl)
+	problemDao := mock.NewMockProblemDao(mockCtl)
+	problemBankDao := mock.NewMockProblemBankDao(mockCtl)
 
 	problemDao.EXPECT().GetProblemCount(global.Mysql, gomock.Any()).DoAndReturn(
 		func(db *gorm.DB, problem *po.Problem) (int64, error) {

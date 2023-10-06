@@ -2,7 +2,7 @@
 // Source: dao/sys_menu_dao.go
 
 // Package dao is a generated GoMock package.
-package dao
+package mock
 
 import (
 	po "FanCode/models/po"

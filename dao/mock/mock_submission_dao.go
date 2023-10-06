@@ -2,7 +2,7 @@
 // Source: dao/submission_dao.go
 
 // Package dao is a generated GoMock package.
-package dao
+package mock
 
 import (
 	dto "FanCode/models/dto"
