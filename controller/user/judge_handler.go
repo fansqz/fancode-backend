@@ -12,8 +12,12 @@ import (
 // JudgeController
 // @Description: 判题模块
 type JudgeController interface {
+	// Execute 执行
 	Execute(ctx *gin.Context)
+	// Submit 提交
 	Submit(ctx *gin.Context)
+	// 保存代码
+	SaveCode(ctx *gin.Context)
 }
 
 type judgeController struct {
@@ -71,4 +75,22 @@ func (j *judgeController) Submit(ctx *gin.Context) {
 	} else {
 		result.SuccessData(response)
 	}
+}
+
+func (j *judgeController) SaveCode(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	// 题库id
+	problemIDStr := ctx.PostForm("problemID")
+	code := ctx.PostForm("code")
+	problemID, err := strconv.Atoi(problemIDStr)
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
+	err2 := j.judgeService.SaveCode(ctx, uint(problemID), code)
+	if err2 != nil {
+		result.Error(err2)
+		return
+	}
+	result.SuccessMessage("保存成功")
 }

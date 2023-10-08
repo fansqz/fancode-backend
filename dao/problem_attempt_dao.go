@@ -36,16 +36,16 @@ func (p *problemAttemptDao) UpdateProblemAttempt(db *gorm.DB, problemAttempt *po
 }
 
 func (p *problemAttemptDao) GetProblemAttemptByID(db *gorm.DB, userId uint, problemId uint) (*po.ProblemAttempt, error) {
-	var problemAttempt po.ProblemAttempt
+	problemAttempt := po.ProblemAttempt{}
 	err := db.Model(&po.ProblemAttempt{}).Where("user_id = ? and problem_id = ?", userId, problemId).
-		Find(&problemAttempt).Error
+		First(&problemAttempt).Error
 	return &problemAttempt, err
 }
 
 func (p *problemAttemptDao) GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, error) {
 	var problemAttempt po.ProblemAttempt
 	err := db.Model(&po.ProblemAttempt{}).Select("status", "id").
-		Where("user_id = ? and problem_id = ?", userId, problemID).Find(&problemAttempt).Error
+		Where("user_id = ? and problem_id = ?", userId, problemID).First(&problemAttempt).Error
 	if err != nil {
 		return 0, err
 	}

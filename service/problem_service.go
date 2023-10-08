@@ -11,6 +11,7 @@ import (
 	r "FanCode/models/vo"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -230,7 +231,7 @@ func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQue
 		// 读取题目完成情况
 		var state int
 		state, err = q.problemAttemptDao.GetProblemAttemptState(global.Mysql, userId, problems[i].ID)
-		if err != nil {
+		if err != nil && err != gorm.ErrRecordNotFound {
 			return nil, e.ErrProblemListFailed
 		}
 		newProblems[i].State = state

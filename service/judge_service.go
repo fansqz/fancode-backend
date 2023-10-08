@@ -11,6 +11,7 @@ import (
 	"FanCode/service/judger"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"log"
 	"os"
 	"path"
@@ -32,6 +33,8 @@ type JudgeService interface {
 	Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*dto.SubmitResultDto, *e.Error)
 	// Execute 执行
 	Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error)
+	// SaveCode 保存用户代码
+	SaveCode(ctx *gin.Context, problemID uint, code string) *e.Error
 }
 
 type judgeService struct {
@@ -64,16 +67,16 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	// 检测用户是否保存了attempt
 	userId := ctx.Keys["user"].(*dto.UserInfo).ID
 	problemAttempt, err2 := j.problemAttemptDao.GetProblemAttemptByID(tx, userId, judgeRequest.ProblemID)
-	if err2 != nil {
-		log.Println(err2)
+	if err2 != nil && err2 != gorm.ErrRecordNotFound {
 		return nil, e.ErrSubmitFailed
 	}
 
 	// 如果本身就没有记录，就插入
-	if problemAttempt.ID == 0 {
+	if err2 == gorm.ErrRecordNotFound {
 		problemAttempt = &po.ProblemAttempt{
 			UserID:    userId,
 			ProblemID: judgeRequest.ProblemID,
+			Code:      judgeRequest.Code,
 		}
 		problemAttempt.SubmissionCount++
 		if submission.Status == constants.Accepted {
@@ -87,7 +90,6 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		}
 		err2 = j.problemAttemptDao.InsertProblemAttempt(tx, problemAttempt)
 		if err2 != nil {
-			log.Println(err2)
 			tx.Rollback()
 			return nil, e.ErrSubmitFailed
 		}
@@ -108,7 +110,6 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 	err2 = j.problemAttemptDao.UpdateProblemAttempt(tx, problemAttempt)
 	if err2 != nil {
-		log.Println(err2)
 		tx.Rollback()
 		return nil, e.ErrSubmitFailed
 	}
@@ -396,6 +397,48 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	}, nil
 }
 
+func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, code string) *e.Error {
+	userInfo := ctx.Keys["user"].(*dto.UserInfo)
+	tx := global.Mysql.Begin()
+	problemAttempt, err := j.problemAttemptDao.GetProblemAttemptByID(tx, userInfo.ID, problemID)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return e.ErrMysql
+	}
+
+	// attempt不存在则添加
+	if err == gorm.ErrRecordNotFound {
+		problemAttempt = &po.ProblemAttempt{
+			UserID:          userInfo.ID,
+			ProblemID:       problemID,
+			Code:            code,
+			SubmissionCount: 0,
+			Status:          0,
+		}
+		err2 := j.problemAttemptDao.InsertProblemAttempt(tx, problemAttempt)
+		if err2 != nil {
+			tx.Rollback()
+			return e.ErrMysql
+		}
+		tx.Commit()
+		return nil
+	}
+
+	// 存在则更新
+	problemAttempt2 := &po.ProblemAttempt{
+		UserID:    userInfo.ID,
+		ProblemID: problemID,
+		Code:      code,
+	}
+	err = j.problemAttemptDao.UpdateProblemAttempt(tx, problemAttempt2)
+	if err != nil {
+		tx.Rollback()
+		return e.ErrMysql
+	}
+	tx.Commit()
+	return nil
+}
+
+// 比较用户的答案，忽略\n和空格
 func (j *judgeService) compareAnswer(data1 string, data2 string) bool {
 	data1 = strings.Trim(data1, " ")
 	data1 = strings.Trim(data1, "\n")
