@@ -36,7 +36,7 @@ type ProblemBankService interface {
 	// GetProblemBankList 获取题库列表
 	GetProblemBankList(query *dto.PageQuery) (*dto.PageInfo, *e.Error)
 	// GetAllProblemBank 获取所有的题库列表
-	GetAllProblemBank() ([]*po.ProblemBank, *e.Error)
+	GetAllProblemBank() ([]*dto.ProblemBankDtoForList, *e.Error)
 	// GetSimpleProblemBankList 获取简单的题库列表
 	GetSimpleProblemBankList() ([]*dto.ProblemBankDtoForSimpleList, *e.Error)
 	// GetProblemBankByID 获取题库信息
@@ -172,12 +172,16 @@ func (p *problemBankService) GetProblemBankList(query *dto.PageQuery) (*dto.Page
 	return pageInfo, nil
 }
 
-func (p *problemBankService) GetAllProblemBank() ([]*po.ProblemBank, *e.Error) {
+func (p *problemBankService) GetAllProblemBank() ([]*dto.ProblemBankDtoForList, *e.Error) {
 	banks, err := p.problemBankDao.GetAllProblemBank(global.Mysql)
 	if err != nil {
 		return nil, e.ErrMysql
 	}
-	return banks, nil
+	answer := make([]*dto.ProblemBankDtoForList, len(banks))
+	for index, bank := range banks {
+		answer[index] = dto.NewProblemBankDtoForList(bank)
+	}
+	return answer, nil
 }
 
 func (p *problemBankService) GetSimpleProblemBankList() ([]*dto.ProblemBankDtoForSimpleList, *e.Error) {

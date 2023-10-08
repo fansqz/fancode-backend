@@ -8,6 +8,7 @@ import (
 // ProblemBankDtoForList 获取题目列表
 type ProblemBankDtoForList struct {
 	ID           uint       `json:"id"`
+	Icon         string     `json:"icon"`
 	Name         string     `json:"name"`
 	Description  string     `json:"description"`
 	CreatedAt    utils.Time `json:"createdAt"`
@@ -19,10 +20,11 @@ type ProblemBankDtoForList struct {
 func NewProblemBankDtoForList(bank *po.ProblemBank) *ProblemBankDtoForList {
 	response := &ProblemBankDtoForList{
 		ID:          bank.ID,
-		CreatedAt:   utils.Time(bank.CreatedAt),
-		UpdatedAt:   utils.Time(bank.UpdatedAt),
+		Icon:        bank.Icon,
 		Name:        bank.Name,
 		Description: bank.Description,
+		CreatedAt:   utils.Time(bank.CreatedAt),
+		UpdatedAt:   utils.Time(bank.UpdatedAt),
 	}
 	return response
 }
