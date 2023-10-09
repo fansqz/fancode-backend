@@ -40,7 +40,7 @@ func initApp() (*http.Server, error) {
 	sysUserService := service.NewSysUserService(sysUserDao, sysRoleDao)
 	sysUserController := admin.NewSysUserController(sysUserService)
 	submissionDao := dao.NewSubmissionDao()
-	judgeService := service.NewJudgeService(submissionDao, problemAttemptDao, problemDao)
+	judgeService := service.NewJudgeService(problemService, submissionDao, problemAttemptDao, problemDao)
 	judgeController := user.NewJudgeController(judgeService)
 	problemController := user.NewProblemController(problemService)
 	problemBankController := user.NewProblemBankController(problemBankService)
