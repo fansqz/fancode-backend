@@ -14,6 +14,6 @@ type ProblemAttempt struct {
 	Code     string `gorm:"column:code"`
 	Language string `gorm:"column:language"`
 	CodeType string `gorm:"column:code_type"`
-	// 0 进行中， 1 提交成功
-	Status int `gorm:"column:Status"`
+	// 0 未开始，1进行中 2 提交成功
+	Status int `gorm:"column:status"`
 }
