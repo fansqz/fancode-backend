@@ -107,9 +107,7 @@ func (j *judgeController) GetCode(ctx *gin.Context) {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	language := ctx.Param("language")
-	codeType := ctx.Param("codeType")
-	code, err2 := j.judgeService.GetCode(ctx, uint(problemID), language, codeType)
+	code, err2 := j.judgeService.GetCode(ctx, uint(problemID))
 	if err2 != nil {
 		result.Error(err2)
 		return

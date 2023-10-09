@@ -12,6 +12,6 @@ func SetupJudgeRoutes(r *gin.Engine, judgeController user.JudgeController) {
 		judge.POST("/submit", judgeController.Submit)
 		judge.POST("/execute", judgeController.Execute)
 		judge.POST("/code", judgeController.SaveCode)
-		judge.GET("/code/:problemID/:language/:codeType", judgeController.GetCode)
+		judge.GET("/code/:problemID", judgeController.GetCode)
 	}
 }
