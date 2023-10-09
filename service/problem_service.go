@@ -229,12 +229,12 @@ func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQue
 	for i := 0; i < len(problems); i++ {
 		newProblems[i] = dto.NewProblemDtoForUserList(problems[i])
 		// 读取题目完成情况
-		var state int
-		state, err = q.problemAttemptDao.GetProblemAttemptState(global.Mysql, userId, problems[i].ID)
+		var status int
+		status, err = q.problemAttemptDao.GetProblemAttemptStatus(global.Mysql, userId, problems[i].ID)
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return nil, e.ErrProblemListFailed
 		}
-		newProblems[i].State = state
+		newProblems[i].Status = status
 	}
 	// 获取所有题目总数目
 	var count int64

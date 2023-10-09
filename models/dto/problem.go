@@ -83,7 +83,7 @@ type ProblemDtoForUserList struct {
 	Title       string `json:"title"`
 	Difficulty  int    `json:"difficulty"`
 	// 学生做题状态
-	State int `json:"state"`
+	Status int `json:"status"`
 }
 
 func NewProblemDtoForUserList(problem *po.Problem) *ProblemDtoForUserList {

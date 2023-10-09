@@ -9,7 +9,7 @@ type ProblemAttemptDao interface {
 	InsertProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error
 	UpdateProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error
 	GetProblemAttemptByID(db *gorm.DB, userId uint, problemId uint) (*po.ProblemAttempt, error)
-	GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, error)
+	GetProblemAttemptStatus(db *gorm.DB, userId uint, problemID uint) (int, error)
 }
 
 type problemAttemptDao struct {
@@ -41,7 +41,7 @@ func (p *problemAttemptDao) GetProblemAttemptByID(db *gorm.DB, userId uint, prob
 	return &problemAttempt, err
 }
 
-func (p *problemAttemptDao) GetProblemAttemptState(db *gorm.DB, userId uint, problemID uint) (int, error) {
+func (p *problemAttemptDao) GetProblemAttemptStatus(db *gorm.DB, userId uint, problemID uint) (int, error) {
 	var problemAttempt po.ProblemAttempt
 	err := db.Model(&po.ProblemAttempt{}).Select("status", "id").
 		Where("user_id = ? and problem_id = ?", userId, problemID).First(&problemAttempt).Error
