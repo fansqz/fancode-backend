@@ -352,7 +352,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	executeFilePath := path.Join(executePath, "main")
 
 	// 执行编译
-	err = j.judgeCore.Compile(constants.ProgramC, compileFiles, executeFilePath, LimitCompileTime)
+	err = j.judgeCore.Compile(judgeRequest.Language, compileFiles, executeFilePath, LimitCompileTime)
 	if err != nil {
 		return &dto.ExecuteResultDto{
 			ProblemID:    problem.ID,
