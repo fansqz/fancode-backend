@@ -338,12 +338,12 @@ func (q *problemService) GetProblemTemplateCode(problemID uint, language string,
 		return "", e.ErrProblemGetFailed
 	}
 	// 读取begin和end中的数据
-	re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
+	re := regexp.MustCompile(`/\*begin\*/((?s).*)/\*end\*/`)
 	matchArr := re.FindStringSubmatch(string(content))
 	if len(matchArr) == 0 {
 		return "//暂无模板", nil
 	}
-	return matchArr[0], nil
+	return matchArr[len(matchArr)-1], nil
 }
 
 func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error) {
