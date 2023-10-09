@@ -114,6 +114,9 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		problemAttempt.Status = constants.Success
 		problemAttempt.SuccessCount++
 	} else {
+		if problemAttempt.Status != constants.Success {
+			problemAttempt.Status = constants.InProgress
+		}
 		problemAttempt.ErrCount++
 	}
 	err2 = j.problemAttemptDao.UpdateProblemAttempt(tx, problemAttempt)
