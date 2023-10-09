@@ -84,12 +84,14 @@ func (j *judgeController) SaveCode(ctx *gin.Context) {
 	// 题库id
 	problemIDStr := ctx.PostForm("problemID")
 	code := ctx.PostForm("code")
+	language := ctx.PostForm("language")
+	codeType := ctx.PostForm("codeType")
 	problemID, err := strconv.Atoi(problemIDStr)
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err2 := j.judgeService.SaveCode(ctx, uint(problemID), code)
+	err2 := j.judgeService.SaveCode(ctx, uint(problemID), language, codeType, code)
 	if err2 != nil {
 		result.Error(err2)
 		return

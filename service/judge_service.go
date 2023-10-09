@@ -34,7 +34,7 @@ type JudgeService interface {
 	// Execute 执行
 	Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error)
 	// SaveCode 保存用户代码
-	SaveCode(ctx *gin.Context, problemID uint, code string) *e.Error
+	SaveCode(ctx *gin.Context, problemID uint, language string, codeType string, code string) *e.Error
 	// GetCode 读取用户代码
 	GetCode(ctx *gin.Context, problemID uint, language string, codeType string) (string, *e.Error)
 }
@@ -402,7 +402,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	}, nil
 }
 
-func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, code string) *e.Error {
+func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, language string, codeType string, code string) *e.Error {
 	userInfo := ctx.Keys["user"].(*dto.UserInfo)
 	tx := global.Mysql.Begin()
 	problemAttempt, err := j.problemAttemptDao.GetProblemAttemptByID(tx, userInfo.ID, problemID)
@@ -416,6 +416,8 @@ func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, code string) *
 			UserID:          userInfo.ID,
 			ProblemID:       problemID,
 			Code:            code,
+			Language:        language,
+			CodeType:        codeType,
 			SubmissionCount: 0,
 			Status:          0,
 		}
@@ -433,6 +435,8 @@ func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, code string) *
 		UserID:    userInfo.ID,
 		ProblemID: problemID,
 		Code:      code,
+		Language:  language,
+		CodeType:  codeType,
 	}
 	err = j.problemAttemptDao.UpdateProblemAttempt(tx, problemAttempt2)
 	if err != nil {
