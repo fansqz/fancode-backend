@@ -82,6 +82,8 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 			UserID:    userId,
 			ProblemID: judgeRequest.ProblemID,
 			Code:      judgeRequest.Code,
+			Language:  judgeRequest.Language,
+			CodeType:  judgeRequest.CodeType,
 		}
 		problemAttempt.SubmissionCount++
 		if submission.Status == constants.Accepted {
@@ -102,6 +104,9 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		return dto.NewSubmitResultDto(submission), nil
 	}
 
+	problemAttempt.Code = judgeRequest.Code
+	problemAttempt.Language = judgeRequest.Language
+	problemAttempt.CodeType = judgeRequest.CodeType
 	// 有记录则更新
 	problemAttempt.SubmissionCount++
 	if submission.Status == constants.Accepted {
@@ -109,7 +114,6 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	} else {
 		problemAttempt.ErrCount++
 	}
-	problemAttempt.Code = judgeRequest.Code
 	if problemAttempt.Status == 0 && submission.Status == constants.Accepted {
 		problemAttempt.Status = 1
 	}
