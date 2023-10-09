@@ -11,6 +11,6 @@ func SetupProblemRoutes(r *gin.Engine, problemController user.ProblemController)
 	{
 		problem.GET("/list", problemController.GetProblemList)
 		problem.GET("/:number", problemController.GetProblem)
-		problem.GET("/code/:number/:language/:codeType", problemController.GetProblemTemplateCode)
+		problem.GET("/code/:problemID/:language/:codeType", problemController.GetProblemTemplateCode)
 	}
 }

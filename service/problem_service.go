@@ -52,7 +52,7 @@ type ProblemService interface {
 	// GetProblemByNumber 根据题目编号获取题目信息
 	GetProblemByNumber(number string) (*dto.ProblemDtoForGet, *e.Error)
 	// GetProblemTemplateCode 获取题目的模板代码
-	GetProblemTemplateCode(ctx *gin.Context, number string, language string, codeType string) (string, *e.Error)
+	GetProblemTemplateCode(problemID uint, language string, codeType string) (string, *e.Error)
 	// UpdateProblemEnable 设置题目可用
 	UpdateProblemEnable(id uint, enable int) *e.Error
 
@@ -310,14 +310,7 @@ func (q *problemService) GetProblemByNumber(number string) (*dto.ProblemDtoForGe
 	return dto.NewProblemDtoForGet(problem), nil
 }
 
-func (q *problemService) GetProblemTemplateCode(ctx *gin.Context, number string, language string, codeType string) (string, *e.Error) {
-	// 读取获取题目id
-	id, err := q.problemDao.GetProblemIDByNumber(global.Mysql, number)
-	if err != nil {
-		log.Println(err)
-		return "", e.ErrProblemGetFailed
-	}
-
+func (q *problemService) GetProblemTemplateCode(problemID uint, language string, codeType string) (string, *e.Error) {
 	// 读取acm模板
 	if codeType == constants.CodeTypeAcm {
 		code, err := getAcmCodeTemplate(language)
@@ -328,7 +321,7 @@ func (q *problemService) GetProblemTemplateCode(ctx *gin.Context, number string,
 	}
 
 	// 读取核心代码模板
-	p, err := q.problemDao.GetProblemFilePathByID(global.Mysql, id)
+	p, err := q.problemDao.GetProblemFilePathByID(global.Mysql, problemID)
 	store := file_store.NewProblemCOS()
 	var content []byte
 	codePath, err2 := getCodePathByProblemPath(p, language)

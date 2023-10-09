@@ -11,7 +11,9 @@ type ProblemAttempt struct {
 	SuccessCount    int  `gorm:"column:success_count"`
 	ErrCount        int  `gorm:"column:err_count"`
 	// 最近一次的代码
-	Code string `gorm:"column:code"`
+	Code     string `gorm:"column:code"`
+	Language string `gorm:"column:language"`
+	CodeType string `gorm:"column:code_type"`
 	// 0 进行中， 1 提交成功
 	Status int `gorm:"column:Status"`
 }

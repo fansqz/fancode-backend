@@ -68,12 +68,17 @@ func (p *problemController) GetProblem(ctx *gin.Context) {
 
 func (p *problemController) GetProblemTemplateCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	number := ctx.Param("number")
+	problemIDStr := ctx.Param("problemID")
+	problemID, err := strconv.Atoi(problemIDStr)
+	if err != nil {
+		result.Error(e.ErrBadRequest)
+		return
+	}
 	language := ctx.Param("language")
 	codeType := ctx.Param("codeType")
-	code, err := p.problemService.GetProblemTemplateCode(ctx, number, language, codeType)
-	if err != nil {
-		result.Error(err)
+	code, err2 := p.problemService.GetProblemTemplateCode(uint(problemID), language, codeType)
+	if err2 != nil {
+		result.Error(err2)
 		return
 	}
 	result.SuccessData(code)

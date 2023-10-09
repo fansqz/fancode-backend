@@ -35,18 +35,23 @@ type JudgeService interface {
 	Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error)
 	// SaveCode 保存用户代码
 	SaveCode(ctx *gin.Context, problemID uint, code string) *e.Error
+	// GetCode 读取用户代码
+	GetCode(ctx *gin.Context, problemID uint, language string, codeType string) (string, *e.Error)
 }
 
 type judgeService struct {
 	judgeCore         *judger.JudgeCore
+	problemService    ProblemService
 	submissionDao     dao.SubmissionDao
 	problemAttemptDao dao.ProblemAttemptDao
 	problemDao        dao.ProblemDao
 }
 
-func NewJudgeService(submissionDao dao.SubmissionDao, attemptDao dao.ProblemAttemptDao, problemDao dao.ProblemDao) JudgeService {
+func NewJudgeService(problemService ProblemService, submissionDao dao.SubmissionDao,
+	attemptDao dao.ProblemAttemptDao, problemDao dao.ProblemDao) JudgeService {
 	return &judgeService{
 		judgeCore:         judger.NewJudgeCore(),
+		problemService:    problemService,
 		submissionDao:     submissionDao,
 		problemAttemptDao: attemptDao,
 		problemDao:        problemDao,
@@ -438,6 +443,18 @@ func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, code string) *
 	return nil
 }
 
+func (j *judgeService) GetCode(ctx *gin.Context, problemID uint, language string, codeType string) (string, *e.Error) {
+	userInfo := ctx.Keys["user"].(*dto.UserInfo)
+	problemAttempt, err := j.problemAttemptDao.GetProblemAttemptByID(global.Mysql, userInfo.ID, problemID)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return "", e.ErrMysql
+	}
+	if err == gorm.ErrRecordNotFound || problemAttempt.CodeType != codeType || problemAttempt.Language != language {
+		return j.problemService.GetProblemTemplateCode(problemID, language, codeType)
+	}
+	return problemAttempt.Code, nil
+}
+
 // 比较用户的答案，忽略\n和空格
 func (j *judgeService) compareAnswer(data1 string, data2 string) bool {
 	data1 = strings.Trim(data1, " ")
@@ -458,86 +475,4 @@ func checkAndDownloadQuestionFile(questionPath string) error {
 		}
 	}
 	return nil
-}
-
-// 根据题目的相对路径，获取题目的本地路径
-func getLocalProblemPath(p string) string {
-	return path.Join(global.Conf.FilePathConfig.ProblemFileDir, p)
-}
-
-// 给用户的此次运行生成一个临时目录
-func getExecutePath() string {
-	uuid := utils.GetUUID()
-	executePath := path.Join(global.Conf.FilePathConfig.TempDir, uuid)
-	return executePath
-}
-
-const (
-	/* 一道题目的结构如下：
-	// problemFile:
-	//	c     //保存c代码
-	//	java // 保存java代码
-	//	go    // 保存go代码
-	//	io    //保存用例
-	*/
-	CCodePath    = "c"
-	JavaCodePath = "java"
-	GoCodePath   = "go"
-	CaseFilePath = "io"
-)
-
-const (
-	CMainFile        = "main.c"
-	CSolutionFile    = "solution.c"
-	JavaMainFile     = "Main.java"
-	JavaSolutionFile = "Solution.java"
-	GoMainFile       = "main.go"
-	GoSolutionFile   = "solution.go"
-)
-
-// 根据题目的路径获取题目中编程语言的路径
-func getCodePathByProblemPath(problemPath string, language string) (string, *e.Error) {
-	switch language {
-	case constants.ProgramC:
-		return path.Join(problemPath, CCodePath), nil
-	case constants.ProgramJava:
-		return path.Join(problemPath, JavaCodePath), nil
-	case constants.ProgramGo:
-		return path.Join(problemPath, GoCodePath), nil
-	default:
-		return "", e.ErrLanguageNotSupported
-	}
-}
-
-// 根据编程语言获取该编程语言的Main文件名称
-func getMainFileNameByLanguage(language string) (string, *e.Error) {
-	switch language {
-	case constants.ProgramC:
-		return CMainFile, nil
-	case constants.ProgramJava:
-		return JavaMainFile, nil
-	case constants.ProgramGo:
-		return GoMainFile, nil
-	default:
-		return "", e.ErrLanguageNotSupported
-	}
-}
-
-// 根据编程语言获取该编程语言的Solution文件名称
-func getSolutionFileNameByLanguage(language string) (string, *e.Error) {
-	switch language {
-	case constants.ProgramC:
-		return CSolutionFile, nil
-	case constants.ProgramJava:
-		return JavaSolutionFile, nil
-	case constants.ProgramGo:
-		return GoSolutionFile, nil
-	default:
-		return "", e.ErrLanguageNotSupported
-	}
-}
-
-// 根据题目的路径获取题目中用例的路径
-func getCasePathByLocalProblemPath(localProblemPath string) string {
-	return path.Join(localProblemPath, CaseFilePath)
 }
