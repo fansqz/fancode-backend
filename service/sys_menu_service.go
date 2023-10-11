@@ -40,8 +40,7 @@ func NewSysMenuService(menuDao dao.SysMenuDao) SysMenuService {
 func (s *sysMenuService) GetMenuCount() (int64, *e.Error) {
 	count, err := s.sysMenuDao.GetMenuCount(global.Mysql)
 	if err != nil {
-		log.Println(err)
-		return 0, e.ErrMenuUnknownError
+		return 0, e.ErrMysql
 	}
 	return count, nil
 }
