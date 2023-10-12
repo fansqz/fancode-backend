@@ -24,12 +24,6 @@ import (
 	"time"
 )
 
-const (
-	AcmCCodeFilePath    = "./resources/acmTemplate/main.c"
-	AcmGoCodeFilePath   = "./resources/acmTemplate/main.go"
-	AcmJavaCodeFilePath = "./resources/acmTemplate/Main.java"
-)
-
 type ProblemService interface {
 	// CheckProblemNumber 检测题目编码
 	CheckProblemNumber(problemCode string) (bool, *e.Error)
@@ -521,18 +515,4 @@ func (q *problemService) UpdateProblemEnable(id uint, enable int) *e.Error {
 		return e.ErrProblemUpdateFailed
 	}
 	return nil
-}
-
-func getAcmCodeTemplate(language string) (string, error) {
-	var filePath string
-	switch language {
-	case constants.ProgramC:
-		filePath = AcmCCodeFilePath
-	case constants.ProgramGo:
-		filePath = AcmGoCodeFilePath
-	case constants.ProgramJava:
-		filePath = AcmJavaCodeFilePath
-	}
-	code, err := os.ReadFile(filePath)
-	return string(code), err
 }

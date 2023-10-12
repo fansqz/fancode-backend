@@ -5,6 +5,7 @@ import (
 	e "FanCode/error"
 	"FanCode/global"
 	"FanCode/utils"
+	"os"
 	"path"
 )
 
@@ -27,12 +28,18 @@ const (
 )
 
 const (
-	CMainFile        = "main.c"
+	CMainFile        = "c"
 	CSolutionFile    = "solution.c"
-	JavaMainFile     = "Main.java"
+	JavaMainFile     = "java"
 	JavaSolutionFile = "Solution.java"
-	GoMainFile       = "main.go"
+	GoMainFile       = "go"
 	GoSolutionFile   = "solution.go"
+)
+
+const (
+	AcmCCodeFilePath    = "./resources/acmTemplate/c"
+	AcmGoCodeFilePath   = "./resources/acmTemplate/go"
+	AcmJavaCodeFilePath = "./resources/acmTemplate/java"
 )
 
 // 根据题目的路径获取题目中编程语言的路径
@@ -99,4 +106,18 @@ func getTempDir() string {
 	uuid := utils.GetUUID()
 	executePath := global.Conf.FilePathConfig.TempDir + "/" + uuid
 	return executePath
+}
+
+func getAcmCodeTemplate(language string) (string, error) {
+	var filePath string
+	switch language {
+	case constants.ProgramC:
+		filePath = AcmCCodeFilePath
+	case constants.ProgramGo:
+		filePath = AcmGoCodeFilePath
+	case constants.ProgramJava:
+		filePath = AcmJavaCodeFilePath
+	}
+	code, err := os.ReadFile(filePath)
+	return string(code), err
 }
