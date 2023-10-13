@@ -7,7 +7,6 @@ import (
 	"FanCode/models/dto"
 	"FanCode/models/po"
 	"gorm.io/gorm"
-	"log"
 	"time"
 )
 
@@ -53,7 +52,7 @@ func (s *sysMenuService) DeleteMenuByID(id uint) *e.Error {
 	})
 
 	if err != nil {
-		return e.ErrMenuUnknownError
+		return e.ErrMysql
 	}
 
 	return nil
@@ -81,16 +80,19 @@ func (s *sysMenuService) deleteMenusRecursive(db *gorm.DB, parentID uint) error 
 func (s *sysMenuService) UpdateMenu(menu *po.SysMenu) *e.Error {
 	menu.UpdatedAt = time.Now()
 	err := s.sysMenuDao.UpdateMenu(global.Mysql, menu)
-	if gorm.ErrRecordNotFound == err {
-		return e.ErrMenuNotExist
+	if err != nil {
+		return e.ErrMysql
 	}
 	return nil
 }
 
 func (s *sysMenuService) GetMenuByID(id uint) (*po.SysMenu, *e.Error) {
 	menu, err := s.sysMenuDao.GetMenuByID(global.Mysql, id)
-	if err != nil {
-		return nil, e.ErrMenuUnknownError
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, e.ErrMysql
+	}
+	if err == gorm.ErrRecordNotFound {
+		return nil, e.ErrMenuNotExist
 	}
 	return menu, nil
 }
@@ -99,8 +101,7 @@ func (s *sysMenuService) GetMenuTree() ([]*dto.SysMenuTreeDto, *e.Error) {
 	var menuList []*po.SysMenu
 	var err error
 	if menuList, err = s.sysMenuDao.GetAllMenu(global.Mysql); err != nil {
-		log.Println(err)
-		return nil, e.ErrMenuUnknownError
+		return nil, e.ErrMysql
 	}
 
 	menuMap := make(map[uint]*dto.SysMenuTreeDto)
@@ -130,7 +131,7 @@ func (s *sysMenuService) GetMenuTree() ([]*dto.SysMenuTreeDto, *e.Error) {
 func (s *sysMenuService) InsertMenu(menu *po.SysMenu) (uint, *e.Error) {
 	err := s.sysMenuDao.InsertMenu(global.Mysql, menu)
 	if err != nil {
-		return 0, e.ErrMenuUnknownError
+		return 0, e.ErrMysql
 	}
 	return menu.ID, nil
 }
