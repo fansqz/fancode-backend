@@ -6,6 +6,7 @@ import (
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -45,34 +46,29 @@ func NewSysRoleService(roleDao dao.SysRoleDao) SysRoleService {
 
 func (r *sysRoleService) GetRoleByID(roleID uint) (*po.SysRole, *e.Error) {
 	role, err := r.sysRoleDao.GetRoleByID(global.Mysql, roleID)
-	if err != nil {
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, e.ErrMysql
+	}
+	if err == gorm.ErrRecordNotFound {
+		return nil, e.ErrRoleNotExist
 	}
 	return role, nil
 }
 
 func (r *sysRoleService) InsertSysRole(sysRole *po.SysRole) (uint, *e.Error) {
-	// 对设置值的数据设置默认值
-	if sysRole.Name == "" {
-		sysRole.Name = "未命名角色"
-	}
 	// 添加
 	err := r.sysRoleDao.InsertRole(global.Mysql, sysRole)
 	if err != nil {
-		return 0, e.ErrRoleUnknownError
+		return 0, e.ErrMysql
 	}
 	return sysRole.ID, nil
 }
 
 func (r *sysRoleService) UpdateSysRole(sysRole *po.SysRole) *e.Error {
-	// 对设置值的数据设置默认值
-	if sysRole.Name == "" {
-		sysRole.Name = "未命名角色"
-	}
 	sysRole.UpdatedAt = time.Now()
 	err := r.sysRoleDao.UpdateRole(global.Mysql, sysRole)
 	if err != nil {
-		return e.ErrRoleUnknownError
+		return e.ErrMysql
 	}
 	return nil
 }
@@ -81,7 +77,7 @@ func (r *sysRoleService) DeleteSysRole(id uint) *e.Error {
 	// 删除删除角色
 	err := r.sysRoleDao.DeleteRoleByID(global.Mysql, id)
 	if err != nil {
-		return e.ErrRoleUnknownError
+		return e.ErrMysql
 	}
 	return nil
 }
@@ -90,7 +86,7 @@ func (r *sysRoleService) GetSysRoleList(query *dto.PageQuery) (*dto.PageInfo, *e
 	// 获取角色列表
 	sysSysRoles, err := r.sysRoleDao.GetRoleList(global.Mysql, query)
 	if err != nil {
-		return nil, e.ErrRoleUnknownError
+		return nil, e.ErrMysql
 	}
 	newSysRoles := make([]*dto.SysRoleDtoForList, len(sysSysRoles))
 	for i := 0; i < len(sysSysRoles); i++ {
@@ -100,7 +96,7 @@ func (r *sysRoleService) GetSysRoleList(query *dto.PageQuery) (*dto.PageInfo, *e
 	var count int64
 	count, err = r.sysRoleDao.GetRoleCount(global.Mysql, query.Query.(*po.SysRole))
 	if err != nil {
-		return nil, e.ErrRoleUnknownError
+		return nil, e.ErrMysql
 	}
 	pageInfo := &dto.PageInfo{
 		Total: count,
@@ -115,12 +111,12 @@ func (r *sysRoleService) UpdateRoleApis(roleID uint, apiIDs []uint) *e.Error {
 	err := r.sysRoleDao.DeleteRoleAPIsByRoleID(tx, roleID)
 	if err != nil {
 		tx.Rollback()
-		return e.ErrApiUnknownError
+		return e.ErrMysql
 	}
 	err = r.sysRoleDao.InsertApisToRole(tx, roleID, apiIDs)
 	if err != nil {
 		tx.Rollback() // 发生错误时回滚事务
-		return e.ErrApiUnknownError
+		return e.ErrMysql
 	}
 	tx.Commit()
 	return nil
@@ -131,12 +127,12 @@ func (r *sysRoleService) UpdateRoleMenus(roleID uint, menuIDs []uint) *e.Error {
 	err := r.sysRoleDao.DeleteRoleMenusByRoleID(tx, roleID)
 	if err != nil {
 		tx.Rollback()
-		return e.ErrApiUnknownError
+		return e.ErrMysql
 	}
 	err = r.sysRoleDao.InsertMenusToRole(tx, roleID, menuIDs)
 	if err != nil {
 		tx.Rollback()
-		return e.ErrApiUnknownError
+		return e.ErrMysql
 	}
 	tx.Commit()
 	return nil
@@ -145,7 +141,7 @@ func (r *sysRoleService) UpdateRoleMenus(roleID uint, menuIDs []uint) *e.Error {
 func (r *sysRoleService) GetApiIDsByRoleID(roleID uint) ([]uint, *e.Error) {
 	apiIDs, err := r.sysRoleDao.GetApiIDsByRoleID(global.Mysql, roleID)
 	if err != nil {
-		return nil, e.ErrRoleUnknownError
+		return nil, e.ErrMysql
 	}
 	return apiIDs, nil
 }
@@ -153,7 +149,7 @@ func (r *sysRoleService) GetApiIDsByRoleID(roleID uint) ([]uint, *e.Error) {
 func (r *sysRoleService) GetMenuIDsByRoleID(roleID uint) ([]uint, *e.Error) {
 	menuIDs, err := r.sysRoleDao.GetMenuIDsByRoleID(global.Mysql, roleID)
 	if err != nil {
-		return nil, e.ErrRoleUnknownError
+		return nil, e.ErrMysql
 	}
 	return menuIDs, nil
 }

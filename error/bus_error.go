@@ -78,7 +78,7 @@ const (
 
 var (
 	ErrSubmitFailed         = NewError(CodeSubmitFailed, "Submit error", ErrTypeBus)
-	ErrExecuteFailed        = NewError(CodeExecuteFailed, "Execute error", ErrTypeServer)
+	ErrExecuteFailed        = NewError(CodeExecuteFailed, "Execute error", ErrTypeBus)
 	ErrCompileFailed        = NewError(CodeCompileFailed, "Compilation error", ErrTypeBus)
 	ErrLanguageNotSupported = NewError(CodeLanguageNotSupported, "This language is not supported", ErrTypeBus)
 )
@@ -90,7 +90,7 @@ const (
 )
 
 var (
-	ErrApiUnknownError = NewError(CodeApiUnknownError, "Unknown error", ErrTypeServer)
+	ErrApiUnknownError = NewError(CodeApiUnknownError, "Unknown error", ErrTypeBus)
 	ErrApiNotExist     = NewError(CodeApiNotExist, "The api is not exist", ErrTypeBus)
 )
 
@@ -101,17 +101,19 @@ const (
 )
 
 var (
-	ErrMenuUnknownError = NewError(CodeMenuUnknownError, "Unknown error", ErrTypeServer)
+	ErrMenuUnknownError = NewError(CodeMenuUnknownError, "Unknown error", ErrTypeBus)
 	ErrMenuNotExist     = NewError(CodeMenuNotExist, "The Menu is not exist", ErrTypeBus)
 )
 
-/************菜单管理**************/
+/************角色管理**************/
 const (
 	CodeRoleUnknownError = 14000 + iota
+	CodeRoleNotExist
 )
 
 var (
-	ErrRoleUnknownError = NewError(CodeRoleUnknownError, "Unknown error", ErrTypeServer)
+	ErrRoleUnknownError = NewError(CodeRoleUnknownError, "Unknown error", ErrTypeBus)
+	ErrRoleNotExist     = NewError(CodeRoleNotExist, "The role is not exist", ErrTypeBus)
 )
 
 /************用户管理**************/
@@ -120,7 +122,7 @@ const (
 )
 
 var (
-	ErrSysUserUnknownError = NewError(CodeSysUserUnknownError, "Unknown error", ErrTypeServer)
+	ErrSysUserUnknownError = NewError(CodeSysUserUnknownError, "Unknown error", ErrTypeBus)
 )
 
 /*************文件上传*****************/
