@@ -8,22 +8,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
-)
-
-const (
-	// cgorup相关参数，用于限制系统资源
-	procsFile        = "cgroup.procs"
-	memoryLimitFile  = "memory.limit_in_bytes"
-	swapLimitFile    = "memory.swappiness"
-	cgroupMemoryRoot = "/sys/fs/cgroup/memory"
 )
 
 type JudgeCore struct {
@@ -160,24 +150,21 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 	}
 
 	// 创建cgroup限制资源
-	uuid := utils.GetUUID()
-	cgroupPath := path.Join(cgroupMemoryRoot, uuid)
-	err := os.MkdirAll(cgroupPath, 0755)
+	cgroup, err := NewCGroup(utils.GetUUID())
 	if err != nil {
-		return fmt.Errorf("创建cgroup组出错")
+		return err
 	}
-	// 设置内存限制
-	limitMemory := fmt.Sprintf("%d", executeOption.LimitMemory)
-	limitMemoryPath := filepath.Join(cgroupPath, memoryLimitFile)
-	err = os.WriteFile(limitMemoryPath, []byte(limitMemory), 0755)
-	if err != nil {
-		return fmt.Errorf("cgroup限制内存出错")
+	if executeOption.MemoryLimit != 0 {
+		err = cgroup.SetMemoryLimit(executeOption.MemoryLimit)
+		if err != nil {
+			return err
+		}
 	}
-	// 限制交换空
-	limitSwapPath := filepath.Join(cgroupPath, swapLimitFile)
-	err = os.WriteFile(limitSwapPath, []byte("0"), 0755)
-	if err != nil {
-		return fmt.Errorf("cgroup限制交换空间")
+	if executeOption.CPUQuota != 0 {
+		err = cgroup.SetCPUQuota(executeOption.CPUQuota)
+		if err != nil {
+			return err
+		}
 	}
 
 	go func() {
@@ -218,8 +205,7 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 				}
 
 				// 将进程写入cgroup组
-				pPath := path.Join(cgroupPath, procsFile)
-				err = os.WriteFile(pPath, []byte(fmt.Sprintf("%d", cmd2.Process.Pid)), 0755)
+				err = cgroup.AddPID(cmd2.Process.Pid)
 				if err != nil {
 					result.Executed = false
 					result.Error = err
@@ -253,11 +239,7 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 					executeOption.OutputCh <- result
 				}
 			case <-executeOption.ExitCh:
-				// 删除cgroup文件
-				err = os.Remove(cgroupPath)
-				if err != nil {
-					log.Println(err)
-				}
+				cgroup.Release()
 				return
 			}
 		}

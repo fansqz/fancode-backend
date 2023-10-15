@@ -24,6 +24,7 @@ const (
 	// 限制时间和内存
 	LimitExecuteTime   = 15 * time.Second
 	LimitExecuteMemory = 20 * 1024 * 1024
+	QuotaExecuteCpu    = 100000
 	// 限制编译时间
 	LimitCompileTime = 10 * time.Second
 )
@@ -205,7 +206,8 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		OutputCh:    outputCh,
 		ExitCh:      exitCh,
 		LimitTime:   LimitExecuteTime,
-		LimitMemory: LimitExecuteMemory,
+		MemoryLimit: LimitExecuteMemory,
+		CPUQuota:    QuotaExecuteCpu,
 	}
 	// 运行可执行文件
 	err = j.judgeCore.Execute(executeOption)
@@ -377,7 +379,8 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 		OutputCh:    outputCh,
 		ExitCh:      exitCh,
 		LimitTime:   LimitExecuteTime,
-		LimitMemory: LimitExecuteMemory,
+		MemoryLimit: LimitExecuteMemory,
+		CPUQuota:    QuotaExecuteCpu,
 	}
 
 	err = j.judgeCore.Execute(executeOption)

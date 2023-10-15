@@ -46,7 +46,8 @@ func execute(language string, t *testing.T) {
 		ExitCh:      exitCh,
 		ExecFile:    "./test_file/test_execute",
 		LimitTime:   10 * time.Second,
-		LimitMemory: 20 * 1024 * 1024,
+		MemoryLimit: 20 * 1024 * 1024,
+		CPUQuota:    100000,
 	}
 
 	err = judgeCore.Execute(executeOption)
@@ -98,7 +99,8 @@ func TestJudgeCore_Timeout(t *testing.T) {
 		ExitCh:      exitCh,
 		ExecFile:    "./test_file/test_timeout",
 		LimitTime:   1 * time.Second,
-		LimitMemory: 1 * 1024 * 1024, //限制1m
+		MemoryLimit: 1 * 1024 * 1024, //限制1m
+		CPUQuota:    10000,           //限制cpu
 	}
 	err = judgeCore.Execute(executeOption)
 	if err != nil {

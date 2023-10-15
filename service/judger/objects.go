@@ -15,7 +15,8 @@ type ExecuteOption struct {
 	OutputCh chan<- ExecuteResult
 
 	LimitTime   time.Duration
-	LimitMemory int
+	MemoryLimit int
+	CPUQuota    int
 }
 
 // ExecuteResult 程序执行结果
