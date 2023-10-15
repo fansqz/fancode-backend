@@ -132,7 +132,6 @@ func (j *JudgeCore) compileJava(compileFiles []string, outFilePath string, timeo
 }
 
 // Execute 运行
-// todo: 计算空间的使用
 func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 	// 根据扩展名设置执行命令
 	cmdName := ""
@@ -171,13 +170,13 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 		for {
 			select {
 			case inputItem := <-executeOption.InputCh:
-				ctx, cancel := context.WithTimeout(context.Background(), executeOption.LimitTime)
+				ctx, cancel := context.WithTimeout(context.Background(), time.Duration(executeOption.LimitTime)+100)
 				defer cancel()
 
 				if err != nil {
 					executeOption.OutputCh <- ExecuteResult{
-						Executed: false,
-						Error:    err,
+						Executed:     false,
+						ErrorMessage: err.Error(),
 					}
 					break
 				}
@@ -198,8 +197,7 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 
 				if err != nil {
 					result.Executed = false
-					result.Error = errors.New(err.Error() + "\n" +
-						string(cmd2.Stderr.(*bytes.Buffer).Bytes()))
+					result.ErrorMessage = err.Error() + "\n" + string(cmd2.Stderr.(*bytes.Buffer).Bytes())
 					executeOption.OutputCh <- result
 					break
 				}
@@ -208,33 +206,41 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 				err = cgroup.AddPID(cmd2.Process.Pid)
 				if err != nil {
 					result.Executed = false
-					result.Error = err
+					result.ErrorMessage = err.Error() + "\n" + string(cmd2.Stderr.(*bytes.Buffer).Bytes())
 					executeOption.OutputCh <- result
 					break
 				}
 
 				// 等待程序执行
 				err = cmd2.Wait()
-				endTime := time.Now()
+				// 读取使用cpu和内存，以及执行时间
+				rusage := cmd2.ProcessState.SysUsage().(*syscall.Rusage)
+				result.UsedCpuTime = rusage.Utime.Sec*1000 + rusage.Utime.Usec/1000
+				result.UsedMemory = rusage.Maxrss * 1024
+				result.UsedTime = int64(time.Now().Sub(beginTime))
+
 				if err != nil {
 					result.Executed = false
-					if ctx.Err() == context.DeadlineExceeded {
-						result.Error = ExecuteTimoutErr
-					} else {
-						result.Error = err
-					}
+					result.ErrorMessage = err.Error() + "\n" + string(cmd2.Stderr.(*bytes.Buffer).Bytes())
 					executeOption.OutputCh <- result
 					break
 				}
 
-				// 读取结果
-				if cmd2.Stderr.(*bytes.Buffer).Len() != 0 {
+				// 检测内存占用，cpu占用，以及执行时间
+				if executeOption.LimitTime < result.UsedTime {
 					result.Executed = false
-					result.Error = errors.New(string(cmd2.Stderr.(*bytes.Buffer).Bytes()))
+					result.ErrorMessage = "运行超时"
 					executeOption.OutputCh <- result
-				} else if cmd2.Stdout.(*bytes.Buffer).Len() != 0 {
+				} else if executeOption.MemoryLimit < result.UsedMemory {
+					result.Executed = false
+					result.ErrorMessage = "内存超出限制"
+					executeOption.OutputCh <- result
+				} else if executeOption.CPUQuota < result.UsedCpuTime {
+					result.Executed = false
+					result.ErrorMessage = "cpu超出限制"
+					executeOption.OutputCh <- result
+				} else {
 					result.Executed = true
-					result.TimeUsed = endTime.Sub(beginTime)
 					result.Output = cmd2.Stdout.(*bytes.Buffer).Bytes()
 					executeOption.OutputCh <- result
 				}

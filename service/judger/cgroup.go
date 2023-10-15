@@ -44,7 +44,7 @@ func (c *CGroup) AddPID(pid int) error {
 }
 
 // 设置CPU配额
-func (c *CGroup) SetCPUQuota(quota int) error {
+func (c *CGroup) SetCPUQuota(quota int64) error {
 	cgroupDir := filepath.Join(cgCPUPathPrefix, c.containerID)
 	cpuQuotaFile := filepath.Join(cgroupDir, "cpu.cfs_quota_us")
 	if err := os.WriteFile(cpuQuotaFile, []byte(fmt.Sprintf("%d", quota)), 0644); err != nil {
@@ -54,7 +54,7 @@ func (c *CGroup) SetCPUQuota(quota int) error {
 }
 
 // 设置内存限制
-func (c *CGroup) SetMemoryLimit(limit int) error {
+func (c *CGroup) SetMemoryLimit(limit int64) error {
 	cgroupDir := filepath.Join(cgMemoryPathPrefix, c.containerID)
 	memoryLimitFile := filepath.Join(cgroupDir, "memory.limit_in_bytes")
 	if err := os.WriteFile(memoryLimitFile, []byte(fmt.Sprintf("%d", limit)), 0644); err != nil {

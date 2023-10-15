@@ -45,8 +45,8 @@ func execute(language string, t *testing.T) {
 		InputCh:     input,
 		ExitCh:      exitCh,
 		ExecFile:    "./test_file/test_execute",
-		LimitTime:   10 * time.Second,
-		MemoryLimit: 20 * 1024 * 1024,
+		LimitTime:   int64(10 * time.Second),
+		MemoryLimit: 40 * 1024 * 1024,
 		CPUQuota:    100000,
 	}
 
@@ -98,7 +98,7 @@ func TestJudgeCore_Timeout(t *testing.T) {
 		InputCh:     input,
 		ExitCh:      exitCh,
 		ExecFile:    "./test_file/test_timeout",
-		LimitTime:   1 * time.Second,
+		LimitTime:   int64(1 * time.Second),
 		MemoryLimit: 1 * 1024 * 1024, //限制1m
 		CPUQuota:    10000,           //限制cpu
 	}
