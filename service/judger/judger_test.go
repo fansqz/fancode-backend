@@ -111,5 +111,6 @@ func TestJudgeCore_Timeout(t *testing.T) {
 	select {
 	case result := <-output:
 		assert.Equal(t, false, result.Executed)
+		assert.Equal(t, "运行超时\n", result.ErrorMessage)
 	}
 }

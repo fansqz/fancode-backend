@@ -212,32 +212,25 @@ func (j *JudgeCore) Execute(executeOption *ExecuteOption) error {
 				}
 
 				// 等待程序执行
-				err = cmd2.Wait()
+				cmd2.Wait()
 				// 读取使用cpu和内存，以及执行时间
 				rusage := cmd2.ProcessState.SysUsage().(*syscall.Rusage)
 				result.UsedCpuTime = rusage.Utime.Sec*1000 + rusage.Utime.Usec/1000
 				result.UsedMemory = rusage.Maxrss * 1024
 				result.UsedTime = int64(time.Now().Sub(beginTime))
 
-				if err != nil {
-					result.Executed = false
-					result.ErrorMessage = err.Error() + "\n" + string(cmd2.Stderr.(*bytes.Buffer).Bytes())
-					executeOption.OutputCh <- result
-					break
-				}
-
 				// 检测内存占用，cpu占用，以及执行时间
 				if executeOption.LimitTime < result.UsedTime {
 					result.Executed = false
-					result.ErrorMessage = "运行超时"
+					result.ErrorMessage = "运行超时\n"
 					executeOption.OutputCh <- result
 				} else if executeOption.MemoryLimit < result.UsedMemory {
 					result.Executed = false
-					result.ErrorMessage = "内存超出限制"
+					result.ErrorMessage = "内存超出限制\n"
 					executeOption.OutputCh <- result
 				} else if executeOption.CPUQuota < result.UsedCpuTime {
 					result.Executed = false
-					result.ErrorMessage = "cpu超出限制"
+					result.ErrorMessage = "cpu超出限制\n"
 					executeOption.OutputCh <- result
 				} else {
 					result.Executed = true
