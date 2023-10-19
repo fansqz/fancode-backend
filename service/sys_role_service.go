@@ -119,7 +119,7 @@ func (r *sysRoleService) UpdateRoleApis(roleID uint, apiIDs []uint) *e.Error {
 	}
 	err = r.sysRoleDao.InsertApisToRole(tx, roleID, apiIDs)
 	if err != nil {
-		tx.Rollback() // 发生错误时回滚事务
+		tx.Rollback()
 		return e.ErrMysql
 	}
 	tx.Commit()

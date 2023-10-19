@@ -3,11 +3,14 @@ package service
 import (
 	"FanCode/dao/mock"
 	e "FanCode/error"
+	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
 	"FanCode/utils"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"testing"
 	"time"
@@ -159,4 +162,86 @@ func TestSysRoleService_GetSysRoleList(t *testing.T) {
 	roleList, err = roleService.GetSysRoleList(&dto.PageQuery{})
 	assert.Nil(t, roleList)
 	assert.Equal(t, err, e.ErrMysql)
+}
+
+func TestSysRoleService_GetApiIDsByRoleID(t *testing.T) {
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+	roleDao := mock.NewMockSysRoleDao(mockCtl)
+
+	// mock数据库
+	db, mock, err := sqlmock.New()
+	defer db.Close()
+	assert.Nil(t, err)
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{
+		SkipInitializeWithVersion: true,
+		Conn:                      db,
+	}), &gorm.Config{})
+	assert.Nil(t, err)
+	global.Mysql = gormDB
+
+	mock.ExpectBegin()
+	mock.ExpectCommit()
+	roleDao.EXPECT().DeleteRoleAPIsByRoleID(gomock.Any(), uint(1)).Return(nil)
+	roleDao.EXPECT().InsertApisToRole(gomock.Any(), uint(1), []uint{1, 2, 3}).Return(nil)
+
+	mock.ExpectBegin()
+	mock.ExpectRollback()
+	roleDao.EXPECT().DeleteRoleAPIsByRoleID(gomock.Any(), uint(2)).Return(gorm.ErrInvalidDB)
+
+	mock.ExpectBegin()
+	mock.ExpectRollback()
+	roleDao.EXPECT().DeleteRoleAPIsByRoleID(gomock.Any(), uint(3)).Return(nil)
+	roleDao.EXPECT().InsertApisToRole(gomock.Any(), uint(3), []uint{1, 2, 3}).Return(gorm.ErrInvalidDB)
+
+	roleService := NewSysRoleService(roleDao)
+	err2 := roleService.UpdateRoleApis(1, []uint{1, 2, 3})
+	assert.Nil(t, err2)
+
+	err2 = roleService.UpdateRoleApis(2, []uint{1, 2, 3})
+	assert.Equal(t, err2, e.ErrMysql)
+
+	err2 = roleService.UpdateRoleApis(3, []uint{1, 2, 3})
+	assert.Equal(t, err2, e.ErrMysql)
+}
+
+func TestSysRoleService_GetMenuIDsByRoleID(t *testing.T) {
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+	roleDao := mock.NewMockSysRoleDao(mockCtl)
+
+	// mock数据库
+	db, mock, err := sqlmock.New()
+	defer db.Close()
+	assert.Nil(t, err)
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{
+		SkipInitializeWithVersion: true,
+		Conn:                      db,
+	}), &gorm.Config{})
+	assert.Nil(t, err)
+	global.Mysql = gormDB
+
+	mock.ExpectBegin()
+	mock.ExpectCommit()
+	roleDao.EXPECT().DeleteRoleMenusByRoleID(gomock.Any(), uint(1)).Return(nil)
+	roleDao.EXPECT().InsertMenusToRole(gomock.Any(), uint(1), []uint{1, 2, 3}).Return(nil)
+
+	mock.ExpectBegin()
+	mock.ExpectRollback()
+	roleDao.EXPECT().DeleteRoleMenusByRoleID(gomock.Any(), uint(2)).Return(gorm.ErrInvalidDB)
+
+	mock.ExpectBegin()
+	mock.ExpectRollback()
+	roleDao.EXPECT().DeleteRoleMenusByRoleID(gomock.Any(), uint(3)).Return(nil)
+	roleDao.EXPECT().InsertMenusToRole(gomock.Any(), uint(3), []uint{1, 2, 3}).Return(gorm.ErrInvalidDB)
+
+	roleService := NewSysRoleService(roleDao)
+	err2 := roleService.UpdateRoleMenus(1, []uint{1, 2, 3})
+	assert.Nil(t, err2)
+
+	err2 = roleService.UpdateRoleMenus(2, []uint{1, 2, 3})
+	assert.Equal(t, err2, e.ErrMysql)
+
+	err2 = roleService.UpdateRoleMenus(3, []uint{1, 2, 3})
+	assert.Equal(t, err2, e.ErrMysql)
 }
