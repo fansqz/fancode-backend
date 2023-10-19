@@ -83,6 +83,10 @@ func (r *sysRoleService) DeleteSysRole(id uint) *e.Error {
 }
 
 func (r *sysRoleService) GetSysRoleList(query *dto.PageQuery) (*dto.PageInfo, *e.Error) {
+	var roleQuery *po.SysRole
+	if query.Query != nil {
+		roleQuery = query.Query.(*po.SysRole)
+	}
 	// 获取角色列表
 	sysSysRoles, err := r.sysRoleDao.GetRoleList(global.Mysql, query)
 	if err != nil {
@@ -94,7 +98,7 @@ func (r *sysRoleService) GetSysRoleList(query *dto.PageQuery) (*dto.PageInfo, *e
 	}
 	// 获取所有角色总数目
 	var count int64
-	count, err = r.sysRoleDao.GetRoleCount(global.Mysql, query.Query.(*po.SysRole))
+	count, err = r.sysRoleDao.GetRoleCount(global.Mysql, roleQuery)
 	if err != nil {
 		return nil, e.ErrMysql
 	}

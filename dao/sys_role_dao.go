@@ -68,18 +68,36 @@ func (r *sysRoleDao) GetRoleByID(db *gorm.DB, roleID uint) (*po.SysRole, error) 
 }
 
 func (r *sysRoleDao) GetRoleList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysRole, error) {
-	role := pageQuery.Query.(*po.SysRole)
+	var role *po.SysRole
+	if pageQuery.Query != nil {
+		role = pageQuery.Query.(*po.SysRole)
+	}
 	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var roles []*po.SysRole
-	err := db.Where("name LIKE ?", "%"+role.Name+"%").
-		Limit(pageQuery.PageSize).Offset(offset).Find(&roles).Error
+	if role != nil && role.Name != "" {
+		db = db.Where("name LIKE ?", "%"+role.Name+"%")
+	}
+	if role != nil && role.Description != "" {
+		db = db.Where("description LIKE ?", "%"+role.Description+"%")
+	}
+	db = db.Limit(pageQuery.PageSize).Offset(offset)
+	if pageQuery.SortProperty != "" && pageQuery.SortRule != "" {
+		order := pageQuery.SortProperty + " " + pageQuery.SortRule
+		db = db.Order(order)
+	}
+	err := db.Find(&roles).Error
 	return roles, err
 }
 
 func (r *sysRoleDao) GetRoleCount(db *gorm.DB, role *po.SysRole) (int64, error) {
 	var count int64
-	err := db.Model(&po.SysRole{}).
-		Where("name LIKE ?", "%"+role.Name+"%").Count(&count).Error
+	if role != nil && role.Name != "" {
+		db = db.Where("name LIKE ?", "%"+role.Name+"%")
+	}
+	if role != nil && role.Description != "" {
+		db = db.Where("description LIKE ?", "%"+role.Description+"%")
+	}
+	err := db.Model(&po.SysRole{}).Count(&count).Error
 	return count, err
 }
 

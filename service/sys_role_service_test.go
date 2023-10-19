@@ -3,7 +3,9 @@ package service
 import (
 	"FanCode/dao/mock"
 	e "FanCode/error"
+	"FanCode/models/dto"
 	"FanCode/models/po"
+	"FanCode/utils"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
@@ -111,5 +113,50 @@ func TestSysRoleService_DeleteSysRole(t *testing.T) {
 	err := roleService.DeleteSysRole(1)
 	assert.Nil(t, err)
 	err = roleService.DeleteSysRole(2)
+	assert.Equal(t, err, e.ErrMysql)
+}
+
+func TestSysRoleService_GetSysRoleList(t *testing.T) {
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+
+	roleDao := mock.NewMockSysRoleDao(mockCtl)
+
+	// 测试1
+	testRoleList := []*po.SysRole{
+		{Name: "role1", Description: "description1", Model: gorm.Model{ID: 0, UpdatedAt: time.Now()}},
+		{Name: "role2", Description: "description2", Model: gorm.Model{ID: 1, UpdatedAt: time.Now()}},
+		{Name: "role3", Description: "description3", Model: gorm.Model{ID: 2, UpdatedAt: time.Now()}},
+	}
+	roleDao.EXPECT().GetRoleList(gomock.Any(), &dto.PageQuery{
+		Page: 1, PageSize: 3, SortProperty: "name", SortRule: "desc", Query: &po.SysRole{Name: "role", Description: "description"},
+	}).Return(testRoleList, nil)
+	roleDao.EXPECT().GetRoleCount(gomock.Any(), &po.SysRole{Name: "role", Description: "description"}).Return(int64(10), nil)
+
+	// 测试2
+	roleDao.EXPECT().GetRoleList(gomock.Any(), gomock.Any()).Return(nil, gorm.ErrInvalidDB)
+
+	// 测试3
+	roleDao.EXPECT().GetRoleList(gomock.Any(), gomock.Any()).Return([]*po.SysRole{}, nil)
+	roleDao.EXPECT().GetRoleCount(gomock.Any(), gomock.Any()).Return(int64(0), gorm.ErrInvalidDB)
+
+	// 测试
+	roleService := NewSysRoleService(roleDao)
+	roleList, err := roleService.GetSysRoleList(&dto.PageQuery{
+		Page: 1, PageSize: 3, SortProperty: "name", SortRule: "desc", Query: &po.SysRole{Name: "role", Description: "description"},
+	})
+	assert.Nil(t, err)
+	assert.Equal(t, &dto.PageInfo{Total: 10, Size: 3, List: []*dto.SysRoleDtoForList{
+		{Name: "role1", Description: "description1", ID: 0, UpdatedAt: utils.Time(testRoleList[0].UpdatedAt)},
+		{Name: "role2", Description: "description2", ID: 1, UpdatedAt: utils.Time(testRoleList[1].UpdatedAt)},
+		{Name: "role3", Description: "description3", ID: 2, UpdatedAt: utils.Time(testRoleList[2].UpdatedAt)},
+	}}, roleList)
+
+	roleList, err = roleService.GetSysRoleList(&dto.PageQuery{})
+	assert.Nil(t, roleList)
+	assert.Equal(t, err, e.ErrMysql)
+
+	roleList, err = roleService.GetSysRoleList(&dto.PageQuery{})
+	assert.Nil(t, roleList)
 	assert.Equal(t, err, e.ErrMysql)
 }

@@ -22,7 +22,7 @@ import (
 
 const (
 	// 限制时间和内存
-	LimitExecuteTime   = 15 * time.Second
+	LimitExecuteTime   = int64(15 * time.Second)
 	LimitExecuteMemory = 20 * 1024 * 1024
 	QuotaExecuteCpu    = 100000
 	// 限制编译时间
@@ -236,7 +236,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 				// 运行出错
 				if !executeResult.Executed {
 					submission.Status = constants.RuntimeError
-					submission.ErrorMessage = executeResult.Error.Error()
+					submission.ErrorMessage = executeResult.ErrorMessage
 					return submission, nil
 				}
 
@@ -399,7 +399,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 		return &dto.ExecuteResultDto{
 			ProblemID:    problem.ID,
 			Status:       constants.RuntimeError,
-			ErrorMessage: output.Error.Error(),
+			ErrorMessage: output.ErrorMessage,
 		}, nil
 	}
 

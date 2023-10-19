@@ -71,30 +71,29 @@ func (p *problemDao) GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*p
 	if pageQuery.Query != nil {
 		problem = pageQuery.Query.(*po.Problem)
 	}
-	db2 := db
 	if problem != nil && problem.Number != "" {
-		db2 = db2.Where("number like ?", "%"+problem.Number+"%")
+		db = db.Where("number like ?", "%"+problem.Number+"%")
 	}
 	if problem != nil && problem.Name != "" {
-		db2 = db2.Where("name like ?", "%"+problem.Name+"%")
+		db = db.Where("name like ?", "%"+problem.Name+"%")
 	}
 	if problem != nil && problem.Difficulty != 0 {
-		db2 = db2.Where("difficulty = ?", problem.Difficulty)
+		db = db.Where("difficulty = ?", problem.Difficulty)
 	}
 	if problem != nil && problem.Enable != 0 {
-		db2 = db2.Where("enable = ?", problem.Enable)
+		db = db.Where("enable = ?", problem.Enable)
 	}
 	if problem != nil && problem.BankID != nil {
-		db2 = db2.Where("bank_id = ?", problem.BankID)
+		db = db.Where("bank_id = ?", problem.BankID)
 	}
 	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var problems []*po.Problem
-	db2 = db2.Offset(offset).Limit(pageQuery.PageSize)
+	db = db.Offset(offset).Limit(pageQuery.PageSize)
 	if pageQuery.SortProperty != "" && pageQuery.SortRule != "" {
 		order := pageQuery.SortProperty + " " + pageQuery.SortRule
-		db2 = db2.Order(order)
+		db = db.Order(order)
 	}
-	err := db2.Find(&problems).Error
+	err := db.Find(&problems).Error
 	return problems, err
 }
 
