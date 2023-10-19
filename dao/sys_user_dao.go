@@ -62,21 +62,15 @@ func (s *sysUserDao) DeleteUserByID(db *gorm.DB, id uint) error {
 }
 
 func (s *sysUserDao) GetUserByID(db *gorm.DB, id uint) (*po.SysUser, error) {
-	var user po.SysUser
+	user := &po.SysUser{}
 	err := db.First(&user, id).Error
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+	return user, err
 }
 
 func (s *sysUserDao) GetUserNameByID(db *gorm.DB, id uint) (string, error) {
-	var user po.SysUser
-	err := db.Select("username").First(&user, id).Error
-	if err != nil {
-		return "", err
-	}
-	return user.Username, nil
+	user := &po.SysUser{}
+	err := db.Select("username").First(user, id).Error
+	return user.Username, err
 }
 
 func (s *sysUserDao) GetUserList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysUser, error) {

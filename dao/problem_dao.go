@@ -50,7 +50,7 @@ func (p *problemDao) GetProblemByNumber(db *gorm.DB, problemCode string) (*po.Pr
 
 func (p *problemDao) GetProblemIDByNumber(db *gorm.DB, problemNumber string) (uint, error) {
 	question := &po.Problem{}
-	err := db.Where("number = ?", problemNumber).Select("id").Find(question).Error
+	err := db.Where("number = ?", problemNumber).Select("id").First(question).Error
 	return question.ID, err
 }
 

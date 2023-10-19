@@ -44,6 +44,9 @@ func NewSysUserService(userDao dao.SysUserDao, roleDao dao.SysRoleDao) SysUserSe
 
 func (s *sysUserService) GetUserByID(userID uint) (*po.SysUser, *e.Error) {
 	user, err := s.sysUserDao.GetUserByID(global.Mysql, userID)
+	if err == gorm.ErrRecordNotFound {
+		return nil, e.ErrUserNotExist
+	}
 	if err != nil {
 		return nil, e.ErrMysql
 	}

@@ -10,7 +10,7 @@ import (
 	r "FanCode/models/vo"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
-	"log"
+	"gorm.io/gorm"
 	"mime/multipart"
 	"path"
 	"time"
@@ -67,7 +67,6 @@ func (p *problemBankService) UploadProblemBankIcon(file *multipart.FileHeader) (
 	}
 	err = cos.SaveFile(path.Join(ProblemBankIconPath, fileName), file2)
 	if err != nil {
-		log.Println(err)
 		return "", e.ErrServer
 	}
 	return global.Conf.ProUrl + path.Join("/manage/problemBank/icon", fileName), nil
@@ -198,6 +197,9 @@ func (p *problemBankService) GetSimpleProblemBankList() ([]*dto.ProblemBankDtoFo
 
 func (p *problemBankService) GetProblemBankByID(id uint) (*po.ProblemBank, *e.Error) {
 	bank, err := p.problemBankDao.GetProblemBankByID(global.Mysql, id)
+	if err == gorm.ErrRecordNotFound {
+		return nil, e.ErrProblemNotExist
+	}
 	if err != nil {
 		return nil, e.ErrMysql
 	}

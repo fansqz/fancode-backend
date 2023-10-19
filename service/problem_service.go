@@ -88,7 +88,6 @@ func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (u
 	if problem.Description == "" {
 		problemDescription, err := os.ReadFile(global.Conf.FilePathConfig.ProblemDescriptionTemplate)
 		if err != nil {
-			log.Println(err)
 			return 0, e.ErrProblemInsertFailed
 		}
 		problem.Description = string(problemDescription)
@@ -100,7 +99,7 @@ func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (u
 	if problem.Number != "" {
 		b, checkError := q.problemDao.CheckProblemNumberExists(global.Mysql, problem.Number)
 		if checkError != nil {
-			return 0, e.ErrProblemInsertFailed
+			return 0, e.ErrMysql
 		}
 		if b {
 			return 0, e.ErrProblemCodeIsExist
@@ -114,7 +113,7 @@ func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (u
 	// 添加
 	err := q.problemDao.InsertProblem(global.Mysql, problem)
 	if err != nil {
-		return 0, e.ErrProblemInsertFailed
+		return 0, e.ErrMysql
 	}
 	return problem.ID, nil
 }
@@ -148,8 +147,7 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 	// 读取Problem
 	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err != nil {
-		log.Println(err)
-		return e.ErrProblemDeleteFailed
+		return e.ErrMysql
 	}
 	if problem == nil || problem.Number == "" {
 		return e.ErrProblemNotExist
@@ -165,14 +163,13 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 		localPath := getLocalProblemPath(problem.Path)
 		err = utils.CheckAndDeletePath(localPath)
 		if err != nil {
-			log.Println(err)
 			return e.ErrProblemDeleteFailed
 		}
 	}
 	// 删除题目
 	err = q.problemDao.DeleteProblemByID(global.Mysql, id)
 	if err != nil {
-		return e.ErrProblemDeleteFailed
+		return e.ErrMysql
 	}
 	return nil
 }
@@ -185,7 +182,7 @@ func (q *problemService) GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e
 	// 获取题目列表
 	problems, err := q.problemDao.GetProblemList(global.Mysql, query)
 	if err != nil {
-		return nil, e.ErrProblemListFailed
+		return nil, e.ErrMysql
 	}
 	newProblems := make([]*dto.ProblemDtoForList, len(problems))
 	for i := 0; i < len(problems); i++ {
@@ -195,7 +192,7 @@ func (q *problemService) GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e
 	var count int64
 	count, err = q.problemDao.GetProblemCount(global.Mysql, bankQuery)
 	if err != nil {
-		return nil, e.ErrProblemListFailed
+		return nil, e.ErrMysql
 	}
 	pageInfo := &dto.PageInfo{
 		Total: count,
@@ -217,7 +214,7 @@ func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQue
 	// 获取题目列表
 	problems, err := q.problemDao.GetProblemList(global.Mysql, query)
 	if err != nil {
-		return nil, e.ErrProblemListFailed
+		return nil, e.ErrMysql
 	}
 	newProblems := make([]*dto.ProblemDtoForUserList, len(problems))
 	for i := 0; i < len(problems); i++ {
@@ -234,7 +231,7 @@ func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQue
 	var count int64
 	count, err = q.problemDao.GetProblemCount(global.Mysql, query.Query.(*po.Problem))
 	if err != nil {
-		return nil, e.ErrProblemListFailed
+		return nil, e.ErrMysql
 	}
 	pageInfo := &dto.PageInfo{
 		Total: count,
@@ -270,13 +267,10 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 	// 存储到数据库
 	updateError := q.problemDao.UpdatePathByID(global.Mysql, path, problemID)
 	if updateError != nil {
-		return e.ErrProblemFileUploadFailed
+		return e.ErrMysql
 	}
 	// 删除temp中所有文件
-	err = os.RemoveAll(tempPath)
-	if err != nil {
-		log.Println(err)
-	}
+	os.RemoveAll(tempPath)
 	// 删除本地题目的文件
 	localPath := getLocalProblemPath(path)
 	err = utils.CheckAndDeletePath(localPath)
@@ -288,9 +282,11 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 
 func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error) {
 	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
+	if err == gorm.ErrRecordNotFound {
+		return nil, e.ErrProblemNotExist
+	}
 	if err != nil {
-		log.Println(err)
-		return nil, e.ErrProblemGetFailed
+		return nil, e.ErrMysql
 	}
 	return dto.NewProblemDtoForGet(problem), nil
 }
@@ -298,8 +294,7 @@ func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Erro
 func (q *problemService) GetProblemByNumber(number string) (*dto.ProblemDtoForGet, *e.Error) {
 	problem, err := q.problemDao.GetProblemByNumber(global.Mysql, number)
 	if err != nil {
-		log.Println(err)
-		return nil, e.ErrProblemGetFailed
+		return nil, e.ErrMysql
 	}
 	return dto.NewProblemDtoForGet(problem), nil
 }
@@ -328,7 +323,6 @@ func (q *problemService) GetProblemTemplateCode(problemID uint, language string,
 	}
 	content, err = store.ReadFile(path.Join(codePath, solutionFileName))
 	if err != nil {
-		log.Println(err)
 		return "", e.ErrProblemGetFailed
 	}
 	// 读取begin和end中的数据
@@ -344,7 +338,7 @@ func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Err
 	// 获取题目文件
 	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err != nil {
-		return nil, e.ErrProblemGetFailed
+		return nil, e.ErrMysql
 	}
 	if problem.Path == "" {
 		return nil, e.ErrProblemFileNotExist
@@ -383,7 +377,7 @@ func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int) (*dto.
 	// 获取题目文件
 	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err != nil {
-		return nil, e.ErrProblemGetFailed
+		return nil, e.ErrMysql
 	}
 	if problem.Path == "" {
 		return nil, e.ErrProblemFileNotExist
@@ -420,7 +414,6 @@ func (q *problemService) UpdateProblemField(id uint, field string, value string)
 	if field == "name" || field == "code" || field == "description" || field == "title" {
 		err := q.problemDao.UpdateProblemField(global.Mysql, id, field, value)
 		if err != nil {
-			log.Println(err)
 			return e.ErrProblemUpdateFailed
 		}
 		return nil
@@ -503,16 +496,14 @@ func (q *problemService) UpdateProblemEnable(id uint, enable int) *e.Error {
 	//检测题目文件是否存在
 	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err != nil {
-		log.Println(err)
-		return e.ErrProblemUpdateFailed
+		return e.ErrMysql
 	}
 	if problem.Path == "" {
 		return e.ErrProblemFilePathNotExist
 	}
 	err = q.problemDao.SetProblemEnable(global.Mysql, id, enable)
 	if err != nil {
-		log.Println(err)
-		return e.ErrProblemUpdateFailed
+		return e.ErrMysql
 	}
 	return nil
 }

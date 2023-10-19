@@ -87,11 +87,11 @@ func (s *sysApiService) UpdateApi(api *po.SysApi) *e.Error {
 
 func (s *sysApiService) GetApiByID(id uint) (*po.SysApi, *e.Error) {
 	api, err := s.sysApiDao.GetApiByID(global.Mysql, id)
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return nil, e.ErrMysql
-	}
 	if err == gorm.ErrRecordNotFound {
 		return nil, e.ErrApiNotExist
+	}
+	if err != nil {
+		return nil, e.ErrMysql
 	}
 	return api, nil
 }
