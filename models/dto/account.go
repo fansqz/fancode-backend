@@ -25,7 +25,7 @@ type AccountInfo struct {
 }
 
 func NewAccountInfo(user *po.SysUser) *AccountInfo {
-	answer := &AccountInfo{
+	return &AccountInfo{
 		Avatar:       user.Avatar,
 		LoginName:    user.LoginName,
 		UserName:     user.Username,
@@ -33,12 +33,7 @@ func NewAccountInfo(user *po.SysUser) *AccountInfo {
 		Phone:        user.Phone,
 		Introduction: user.Introduction,
 		BirthDay:     user.BirthDay.Format("2006-01-02"),
+		Sex:          user.Sex,
+		CodingAge:    time.Now().Year() - user.CreatedAt.Year(),
 	}
-	if user.Sex == nil {
-		answer.Sex = 1
-	} else {
-		answer.Sex = *user.Sex
-	}
-	answer.CodingAge = time.Now().Year() - user.CreatedAt.Year()
-	return answer
 }

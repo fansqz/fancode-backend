@@ -6,7 +6,6 @@ import (
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
-	"strconv"
 	"time"
 )
 
@@ -77,12 +76,11 @@ func (a *accountController) UpdateAccountInfo(ctx *gin.Context) {
 	user.Username = ctx.PostForm("username")
 	user.Introduction = ctx.PostForm("introduction")
 	sex := ctx.PostForm("sex")
-	sex2, err := strconv.Atoi(sex)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
+	if sex == "2" {
+		user.Sex = 2
+	} else if sex == "1" {
+		user.Sex = 1
 	}
-	user.Sex = &sex2
 	birthDay := ctx.PostForm("birthDay")
 	t, err2 := time.ParseInLocation("2006-01-02 15:04:05", birthDay, time.Local)
 	if err2 != nil {
