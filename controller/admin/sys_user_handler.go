@@ -127,7 +127,17 @@ func (s *sysUserController) GetSysUserList(ctx *gin.Context) {
 		return
 	}
 	user := &po.SysUser{
-		Username: ctx.Query("username"),
+		Username:     ctx.Query("username"),
+		LoginName:    ctx.Query("loginName"),
+		Email:        ctx.Query("email"),
+		Phone:        ctx.Query("phone"),
+		Introduction: ctx.Query("introduction"),
+	}
+	sexStr := ctx.Query("sex")
+	if sexStr == "1" {
+		user.Sex = 1
+	} else if sexStr == "2" {
+		user.Sex = 2
 	}
 	pageQuery.Query = user
 	pageInfo, err2 := s.sysUserService.GetSysUserList(pageQuery)

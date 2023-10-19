@@ -55,7 +55,7 @@ func (s *sysUserService) GetUserByID(userID uint) (*po.SysUser, *e.Error) {
 
 func (s *sysUserService) InsertSysUser(sysUser *po.SysUser) (uint, *e.Error) {
 	if sysUser.Username == "" {
-		sysUser.Username = "fancode"
+		sysUser.Username = "fancoder"
 	}
 	if sysUser.LoginName == "" {
 		sysUser.LoginName = sysUser.LoginName + utils.GetUUID()
@@ -94,6 +94,10 @@ func (s *sysUserService) DeleteSysUser(id uint) *e.Error {
 
 func (s *sysUserService) GetSysUserList(pageQuery *dto.PageQuery) (*dto.PageInfo, *e.Error) {
 	var pageInfo *dto.PageInfo
+	var userQuery *po.SysUser
+	if pageQuery.Query != nil {
+		userQuery = pageQuery.Query.(*po.SysUser)
+	}
 	err := global.Mysql.Transaction(func(tx *gorm.DB) error {
 		userList, err := s.sysUserDao.GetUserList(global.Mysql, pageQuery)
 		if err != nil {
@@ -108,7 +112,7 @@ func (s *sysUserService) GetSysUserList(pageQuery *dto.PageQuery) (*dto.PageInfo
 			userDtoList[i] = dto.NewSysUserDtoForList(user)
 		}
 		var count int64
-		count, err = s.sysUserDao.GetUserCount(global.Mysql)
+		count, err = s.sysUserDao.GetUserCount(global.Mysql, userQuery)
 		if err != nil {
 			return err
 		}

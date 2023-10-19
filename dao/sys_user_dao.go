@@ -21,7 +21,7 @@ type SysUserDao interface {
 	// GetUserList 获取用户列表
 	GetUserList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysUser, error)
 	// GetUserCount 获取所有用户数量
-	GetUserCount(db *gorm.DB) (int64, error)
+	GetUserCount(db *gorm.DB, user *po.SysUser) (int64, error)
 	// GetUserByLoginName 根据用户登录名称获取用户
 	GetUserByLoginName(db *gorm.DB, loginName string) (*po.SysUser, error)
 	// CheckEmail 检测邮箱是否已经存在
@@ -74,16 +74,48 @@ func (s *sysUserDao) GetUserNameByID(db *gorm.DB, id uint) (string, error) {
 }
 
 func (s *sysUserDao) GetUserList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.SysUser, error) {
-	user := pageQuery.Query.(*po.SysUser)
+	var user *po.SysUser
+	if pageQuery.Query != nil {
+		user = pageQuery.Query.(*po.SysUser)
+	}
 	offset := (pageQuery.Page - 1) * pageQuery.PageSize
 	var users []*po.SysUser
-	err := db.Where("username LIKE ?", "%"+user.Username+"%").
-		Limit(pageQuery.PageSize).Offset(offset).Find(&users).Error
+	if user != nil && user.Username != "" {
+		db = db.Where("username LIKE ?", "%"+user.Username+"%")
+	}
+	if user != nil && user.Sex != 0 {
+		db = db.Where("sex = ?", user.Sex)
+	}
+	if user != nil && user.LoginName != "" {
+		db = db.Where("login_name LIKE ?", "%"+user.LoginName+"%")
+	}
+	if user != nil && user.Phone != "" {
+		db = db.Where("phone LIKE ?", "%"+user.Phone+"%")
+	}
+	if user != nil && user.Email != "" {
+		db = db.Where("email LIKE ?", "%"+user.Email+"%")
+	}
+	err := db.Limit(pageQuery.PageSize).Offset(offset).Find(&users).Error
 	return users, err
 }
 
-func (s *sysUserDao) GetUserCount(db *gorm.DB) (int64, error) {
+func (s *sysUserDao) GetUserCount(db *gorm.DB, user *po.SysUser) (int64, error) {
 	var count int64
+	if user != nil && user.Username != "" {
+		db = db.Where("username LIKE ?", "%"+user.Username+"%")
+	}
+	if user != nil && user.Sex != 0 {
+		db = db.Where("sex = ?", user.Sex)
+	}
+	if user != nil && user.LoginName != "" {
+		db = db.Where("login_name LIKE ?", "%"+user.LoginName+"%")
+	}
+	if user != nil && user.Phone != "" {
+		db = db.Where("phone LIKE ?", "%"+user.Phone+"%")
+	}
+	if user != nil && user.Email != "" {
+		db = db.Where("email LIKE ?", "%"+user.Email+"%")
+	}
 	err := db.Model(&po.SysUser{}).Count(&count).Error
 	return count, err
 }
