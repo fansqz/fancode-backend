@@ -208,3 +208,41 @@ func TestSysUserService_GetAllSimpleRole(t *testing.T) {
 	assert.Nil(t, roleList)
 	assert.Equal(t, e.ErrMysql, err)
 }
+
+func TestSysUserService_UpdateUserRoles(t *testing.T) {
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+
+	userDao := mock.NewMockSysUserDao(mockCtl)
+	db, mock, err := sqlmock.New()
+	defer db.Close()
+	assert.Nil(t, err)
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{
+		SkipInitializeWithVersion: true,
+		Conn:                      db,
+	}), &gorm.Config{})
+	assert.Nil(t, err)
+	global.Mysql = gormDB
+
+	// 测试1
+	userService := NewSysUserService(userDao, nil)
+	userDao.EXPECT().DeleteUserRoleByUserID(gomock.Any(), uint(1)).Return(nil)
+	userDao.EXPECT().InsertRolesToUser(gomock.Any(), uint(1), []uint{1, 2, 3})
+	mock.ExpectBegin()
+	mock.ExpectCommit()
+	err2 := userService.UpdateUserRoles(1, []uint{1, 2, 3})
+	assert.Nil(t, err2)
+
+	userDao.EXPECT().DeleteUserRoleByUserID(gomock.Any(), uint(2)).Return(gorm.ErrInvalidDB)
+	mock.ExpectBegin()
+	mock.ExpectRollback()
+	err2 = userService.UpdateUserRoles(2, []uint{1, 2, 3})
+	assert.Equal(t, e.ErrMysql, err2)
+
+	userDao.EXPECT().DeleteUserRoleByUserID(gomock.Any(), uint(3)).Return(nil)
+	userDao.EXPECT().InsertRolesToUser(gomock.Any(), uint(3), []uint{1, 2, 3}).Return(gorm.ErrInvalidDB)
+	mock.ExpectBegin()
+	mock.ExpectRollback()
+	err2 = userService.UpdateUserRoles(3, []uint{1, 2, 3})
+	assert.Equal(t, e.ErrMysql, err2)
+}
