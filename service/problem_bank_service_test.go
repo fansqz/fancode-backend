@@ -5,10 +5,12 @@ import (
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
+	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -102,4 +104,67 @@ func TestProblemBankService_DeleteProblemBank(t *testing.T) {
 	assert.Nil(t, err)
 	err = bankService.DeleteProblemBank(2, true)
 	assert.Nil(t, err)
+}
+
+func TestProblemBankService_GetProblemBankList(t *testing.T) {
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+
+	bankDao := mock.NewMockProblemBankDao(mockCtl)
+	problemDao := mock.NewMockProblemDao(mockCtl)
+	userDao := mock.NewMockSysUserDao(mockCtl)
+	bankService := NewProblemBankService(bankDao, problemDao, userDao)
+
+	// 测试1
+	testBankList := []*po.ProblemBank{
+		{
+			Name: "bank1", Icon: "icon1", Description: "description1", CreatorID: 1,
+			Model: gorm.Model{ID: 1, UpdatedAt: time.Now(), CreatedAt: time.Now()},
+		},
+		{
+			Name: "bank2", Icon: "icon2", Description: "description2", CreatorID: 2,
+			Model: gorm.Model{ID: 2, UpdatedAt: time.Now(), CreatedAt: time.Now()},
+		},
+		{
+			Name: "bank3", Icon: "icon3", Description: "description3", CreatorID: 3,
+			Model: gorm.Model{ID: 3, UpdatedAt: time.Now(), CreatedAt: time.Now()},
+		},
+	}
+	bankDao.EXPECT().GetProblemBankList(gomock.Any(), &dto.PageQuery{
+		Page: 1, PageSize: 3, SortProperty: "name", SortRule: "desc", Query: &po.ProblemBank{Name: "bank"},
+	}).Return(testBankList, nil)
+	bankDao.EXPECT().GetProblemBankCount(gomock.Any(), &po.ProblemBank{Name: "bank"}).Return(int64(10), nil)
+	problemDao.EXPECT().GetProblemCount(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(db *gorm.DB, problem *po.Problem) (int64, error) {
+			return int64(*problem.BankID), nil
+		}).Times(3)
+	userDao.EXPECT().GetUserNameByID(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(db *gorm.DB, id uint) (string, error) {
+			return "user" + strconv.Itoa(int(id)), nil
+		}).Times(3)
+	pageInfo, err2 := bankService.GetProblemBankList(&dto.PageQuery{
+		Page: 1, PageSize: 3, SortProperty: "name", SortRule: "desc", Query: &po.ProblemBank{Name: "bank"},
+	})
+	assert.Nil(t, err2)
+	assert.Equal(t, &dto.PageInfo{
+		Size:  3,
+		Total: 10,
+		List: []*dto.ProblemBankDtoForList{
+			{
+				ID: 1, Name: "bank1", Icon: "icon1", Description: "description1",
+				CreatorName: "user1", ProblemCount: 1,
+				CreatedAt: utils.Time(testBankList[0].CreatedAt), UpdatedAt: utils.Time(testBankList[0].UpdatedAt),
+			},
+			{
+				ID: 2, Name: "bank2", Icon: "icon2", Description: "description2",
+				CreatorName: "user2", ProblemCount: 2,
+				CreatedAt: utils.Time(testBankList[1].CreatedAt), UpdatedAt: utils.Time(testBankList[1].UpdatedAt),
+			},
+			{
+				ID: 3, Name: "bank3", Icon: "icon3", Description: "description3",
+				CreatorName: "user3", ProblemCount: 3,
+				CreatedAt: utils.Time(testBankList[2].CreatedAt), UpdatedAt: utils.Time(testBankList[2].UpdatedAt),
+			},
+		},
+	}, pageInfo)
 }
