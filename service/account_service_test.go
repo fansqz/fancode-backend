@@ -18,7 +18,6 @@ func TestAccountService_GetAccountInfo(t *testing.T) {
 	defer mockCtl.Finish()
 	userDao := mock.NewMockSysUserDao(mockCtl)
 	// mock数据
-	sex := 1
 	birthDay := time.Now()
 	user := &po.SysUser{
 		Avatar:       "https://avatar/menmei",
@@ -28,9 +27,8 @@ func TestAccountService_GetAccountInfo(t *testing.T) {
 		Email:        "2958556459@qq.com",
 		Phone:        "123456789",
 		Introduction: "测试用户",
-		// 1表示男 0表示女
-		Sex:      &sex,
-		BirthDay: birthDay,
+		Sex:          1,
+		BirthDay:     birthDay,
 	}
 	user.CreatedAt = time.Now()
 	userDao.EXPECT().GetUserByID(global.Mysql, uint(1)).Return(user, nil)
@@ -60,7 +58,6 @@ func TestAccountService_UpdateAccountInfo(t *testing.T) {
 	defer mockCtl.Finish()
 	userDao := mock.NewMockSysUserDao(mockCtl)
 	// mock数据
-	sex := 1
 	birthDay := time.Now()
 	user := &po.SysUser{
 		Avatar:       "https://avatar/menmei",
@@ -70,8 +67,8 @@ func TestAccountService_UpdateAccountInfo(t *testing.T) {
 		Email:        "2958556459@qq.com",
 		Phone:        "123456789",
 		Introduction: "测试用户",
-		// 1表示男 0表示女
-		Sex:      &sex,
+		// 1表示男 2表示女
+		Sex:      1,
 		BirthDay: birthDay,
 	}
 	userDao.EXPECT().UpdateUser(global.Mysql, gomock.Any()).Return(nil).Do(
@@ -86,9 +83,8 @@ func TestAccountService_UpdateAccountInfo(t *testing.T) {
 				Email:        "2958556459@qq.com",
 				Phone:        "123456789",
 				Introduction: "测试用户",
-				// 1表示男 0表示女
-				Sex:      &sex,
-				BirthDay: birthDay,
+				Sex:          1,
+				BirthDay:     birthDay,
 			}
 			user2.ID = 1
 			assert.Equal(t, user, user2)

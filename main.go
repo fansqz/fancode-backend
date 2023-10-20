@@ -42,14 +42,16 @@ func main() {
 	}
 
 	// 模型绑定
-	err := global.Mysql.AutoMigrate(&po.SysUser{},
+	err := global.Mysql.AutoMigrate(
 		&po.SysApi{},
 		&po.SysMenu{},
 		&po.SysRole{},
 		&po.SysUser{},
 		&po.ProblemBank{},
 		&po.Problem{},
-		&po.ProblemAttempt{})
+		&po.ProblemAttempt{},
+		&po.Submission{},
+	)
 	if err != nil {
 		log.Println(err)
 	}

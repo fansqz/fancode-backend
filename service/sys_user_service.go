@@ -99,7 +99,7 @@ func (s *sysUserService) GetSysUserList(pageQuery *dto.PageQuery) (*dto.PageInfo
 		userQuery = pageQuery.Query.(*po.SysUser)
 	}
 	err := global.Mysql.Transaction(func(tx *gorm.DB) error {
-		userList, err := s.sysUserDao.GetUserList(global.Mysql, pageQuery)
+		userList, err := s.sysUserDao.GetUserList(tx, pageQuery)
 		if err != nil {
 			return err
 		}
@@ -112,12 +112,13 @@ func (s *sysUserService) GetSysUserList(pageQuery *dto.PageQuery) (*dto.PageInfo
 			userDtoList[i] = dto.NewSysUserDtoForList(user)
 		}
 		var count int64
-		count, err = s.sysUserDao.GetUserCount(global.Mysql, userQuery)
+		count, err = s.sysUserDao.GetUserCount(tx, userQuery)
 		if err != nil {
 			return err
 		}
 		pageInfo = &dto.PageInfo{
 			Total: count,
+			Size:  int64(len(userDtoList)),
 			List:  userDtoList,
 		}
 		return nil

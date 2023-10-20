@@ -20,7 +20,7 @@ func TestSysRoleService_GetRoleByID(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
 
-	// mock apiDao
+	// mock roleDao
 	roleDao := mock.NewMockSysRoleDao(mockCtl)
 	role := &po.SysRole{
 		Name:        "role名",
@@ -50,7 +50,7 @@ func TestSysRoleService_InsertSysRole(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
 
-	// mock apiDao
+	// mock roleDao
 	roleDao := mock.NewMockSysRoleDao(mockCtl)
 	role := &po.SysRole{
 		Name:        "menu名",
@@ -78,7 +78,7 @@ func TestSysRoleService_UpdateSysRole(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
 
-	// mock apiDao
+	// mock roleDao
 	roleDao := mock.NewMockSysRoleDao(mockCtl)
 	role := &po.SysRole{
 		Name:        "role名",
@@ -106,7 +106,7 @@ func TestSysRoleService_DeleteSysRole(t *testing.T) {
 	mockCtl := gomock.NewController(t)
 	defer mockCtl.Finish()
 
-	// mock apiDao
+	// mock roleDao
 	roleDao := mock.NewMockSysRoleDao(mockCtl)
 	roleDao.EXPECT().DeleteRoleByID(gomock.Any(), uint(1)).Return(nil)
 	roleDao.EXPECT().DeleteRoleByID(gomock.Any(), uint(2)).Return(gorm.ErrInvalidDB)
@@ -143,6 +143,11 @@ func TestSysRoleService_GetSysRoleList(t *testing.T) {
 	roleDao.EXPECT().GetRoleList(gomock.Any(), gomock.Any()).Return([]*po.SysRole{}, nil)
 	roleDao.EXPECT().GetRoleCount(gomock.Any(), gomock.Any()).Return(int64(0), gorm.ErrInvalidDB)
 
+	// 测试4
+	roleDao.EXPECT().GetRoleList(gomock.Any(), &dto.PageQuery{
+		Page: 1, PageSize: 3, SortProperty: "name", SortRule: "desc",
+	}).Return([]*po.SysRole{}, nil)
+	roleDao.EXPECT().GetRoleCount(gomock.Any(), nil).Return(0, nil)
 	// 测试
 	roleService := NewSysRoleService(roleDao)
 	roleList, err := roleService.GetSysRoleList(&dto.PageQuery{
