@@ -1,11 +1,12 @@
 package global
 
 import (
+	"FanCode/config"
 	"github.com/go-redis/redis"
 )
 
 // InitRedis
-func InitRedis(cfg *RedisConfig) error {
+func InitRedis(cfg *config.RedisConfig) error {
 	Redis = redis.NewClient(&redis.Options{
 		Addr:     cfg.Host + ":" + cfg.Port,
 		Password: cfg.Password,

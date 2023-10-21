@@ -5,8 +5,8 @@
 package routers
 
 import (
+	conf "FanCode/config"
 	c "FanCode/controller"
-	"FanCode/global"
 	"FanCode/interceptor"
 	"FanCode/routers/admin"
 	"FanCode/routers/user"
@@ -17,11 +17,12 @@ import (
 //
 //	@Description: 启动路由
 func SetupRouter(
+	config *conf.AppConfig,
 	controller *c.Controller,
 	corsInterceptor *interceptor.CorsInterceptor,
 	requestInterceptor *interceptor.RequestInterceptor,
 ) *gin.Engine {
-	if global.Conf.Release {
+	if config.Release {
 		gin.SetMode(gin.ReleaseMode)
 	}
 

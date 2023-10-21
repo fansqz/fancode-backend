@@ -33,7 +33,7 @@ func TestAccountService_GetAccountInfo(t *testing.T) {
 	user.CreatedAt = time.Now()
 	userDao.EXPECT().GetUserByID(global.Mysql, uint(1)).Return(user, nil)
 
-	accountService := NewAccountService(userDao)
+	accountService := NewAccountService(nil, userDao)
 	ctx := &gin.Context{}
 	ctx.Keys = make(map[string]interface{})
 	ctx.Keys["user"] = &dto.UserInfo{
@@ -94,7 +94,7 @@ func TestAccountService_UpdateAccountInfo(t *testing.T) {
 	ctx.Keys["user"] = &dto.UserInfo{
 		ID: 1,
 	}
-	accountService := NewAccountService(userDao)
+	accountService := NewAccountService(nil, userDao)
 	err := accountService.UpdateAccountInfo(ctx, user)
 	assert.Nil(t, err)
 }

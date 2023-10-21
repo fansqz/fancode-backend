@@ -1,6 +1,7 @@
 package service
 
 import (
+	conf "FanCode/config"
 	"FanCode/constants"
 	"FanCode/dao"
 	e "FanCode/error"
@@ -32,13 +33,15 @@ type AuthService interface {
 }
 
 type authService struct {
+	config     *conf.AppConfig
 	sysUserDao dao.SysUserDao
 	sysMenuDao dao.SysMenuDao
 	sysRoleDao dao.SysRoleDao
 }
 
-func NewAuthService(userDao dao.SysUserDao, menuDao dao.SysMenuDao, roleDao dao.SysRoleDao) AuthService {
+func NewAuthService(config *conf.AppConfig, userDao dao.SysUserDao, menuDao dao.SysMenuDao, roleDao dao.SysRoleDao) AuthService {
 	return &authService{
+		config:     config,
 		sysUserDao: userDao,
 		sysMenuDao: menuDao,
 		sysRoleDao: roleDao,
@@ -162,7 +165,7 @@ func (u *authService) SendAuthCode(email string, kind string) (string, *e.Error)
 		Subject: subject,
 		Body:    "验证码：" + code,
 	}
-	err := utils.SendMail(global.Conf.EmailConfig, message)
+	err := utils.SendMail(u.config.EmailConfig, message)
 	if err != nil {
 		log.Println(err)
 		return "", e.ErrUserUnknownError

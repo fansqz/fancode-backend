@@ -1,4 +1,4 @@
-package global
+package config
 
 import "gopkg.in/ini.v1"
 

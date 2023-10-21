@@ -44,7 +44,7 @@ func TestProblemBankService_InsertProblemBank(t *testing.T) {
 	ctx.Keys["user"] = &dto.UserInfo{
 		ID: 1,
 	}
-	bankService := NewProblemBankService(problemBankDao, nil, nil)
+	bankService := NewProblemBankService(nil, problemBankDao, nil, nil)
 	id, err := bankService.InsertProblemBank(bank, ctx)
 	assert.Equal(t, id, resultID)
 	assert.Nil(t, err)
@@ -72,7 +72,7 @@ func TestProblemBankService_UpdateProblemBank(t *testing.T) {
 			assert.Equal(t, bank, bank2)
 		})
 
-	bankService := NewProblemBankService(problemBankDao, nil, nil)
+	bankService := NewProblemBankService(nil, problemBankDao, nil, nil)
 	err := bankService.UpdateProblemBank(bank)
 	assert.Nil(t, err)
 }
@@ -95,7 +95,7 @@ func TestProblemBankService_DeleteProblemBank(t *testing.T) {
 
 	problemBankDao.EXPECT().DeleteProblemBankByID(global.Mysql, gomock.Any()).Return(nil).MaxTimes(4)
 
-	bankService := NewProblemBankService(problemBankDao, problemDao, nil)
+	bankService := NewProblemBankService(nil, problemBankDao, problemDao, nil)
 	err := bankService.DeleteProblemBank(1, false)
 	assert.NotNil(t, err)
 	assert.Equal(t, err.Message, "题库不为空，请问是否需要强制删除")
@@ -114,7 +114,7 @@ func TestProblemBankService_GetProblemBankList(t *testing.T) {
 	bankDao := mock.NewMockProblemBankDao(mockCtl)
 	problemDao := mock.NewMockProblemDao(mockCtl)
 	userDao := mock.NewMockSysUserDao(mockCtl)
-	bankService := NewProblemBankService(bankDao, problemDao, userDao)
+	bankService := NewProblemBankService(nil, bankDao, problemDao, userDao)
 
 	// 测试1
 	testBankList := []*po.ProblemBank{
@@ -175,7 +175,7 @@ func TestProblemBankService_GetSimpleProblemBankList(t *testing.T) {
 	defer mockCtl.Finish()
 
 	bankDao := mock.NewMockProblemBankDao(mockCtl)
-	bankService := NewProblemBankService(bankDao, nil, nil)
+	bankService := NewProblemBankService(nil, bankDao, nil, nil)
 
 	//测试1
 	bankDao.EXPECT().GetSimpleProblemBankList(gomock.Any()).Return([]*po.ProblemBank{
@@ -212,7 +212,7 @@ func TestProblemBankService_GetAllProblemBank(t *testing.T) {
 	defer mockCtl.Finish()
 
 	bankDao := mock.NewMockProblemBankDao(mockCtl)
-	bankService := NewProblemBankService(bankDao, nil, nil)
+	bankService := NewProblemBankService(nil, bankDao, nil, nil)
 
 	//测试1
 	testBankList := []*po.ProblemBank{

@@ -1,6 +1,7 @@
 package service
 
 import (
+	conf "FanCode/config"
 	"FanCode/constants"
 	"FanCode/dao"
 	e "FanCode/error"
@@ -57,12 +58,14 @@ type ProblemService interface {
 }
 
 type problemService struct {
+	config            *conf.AppConfig
 	problemDao        dao.ProblemDao
 	problemAttemptDao dao.ProblemAttemptDao
 }
 
-func NewProblemService(problemDao dao.ProblemDao, attemptDao dao.ProblemAttemptDao) ProblemService {
+func NewProblemService(config *conf.AppConfig, problemDao dao.ProblemDao, attemptDao dao.ProblemAttemptDao) ProblemService {
 	return &problemService{
+		config:            config,
 		problemDao:        problemDao,
 		problemAttemptDao: attemptDao,
 	}
@@ -86,7 +89,7 @@ func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (u
 		problem.Title = "标题信息"
 	}
 	if problem.Description == "" {
-		problemDescription, err := os.ReadFile(global.Conf.FilePathConfig.ProblemDescriptionTemplate)
+		problemDescription, err := os.ReadFile(q.config.FilePathConfig.ProblemDescriptionTemplate)
 		if err != nil {
 			return 0, e.ErrProblemInsertFailed
 		}
@@ -154,13 +157,13 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 	}
 	if problem.Path != "" {
 		// 删除题目文件
-		s := file_store.NewProblemCOS()
+		s := file_store.NewProblemCOS(q.config.COSConfig)
 		err = s.DeleteFolder(problem.Path)
 		if err != nil {
 			return e.ErrProblemDeleteFailed
 		}
 		// 删除本地文件
-		localPath := getLocalProblemPath(problem.Path)
+		localPath := getLocalProblemPath(q.config, problem.Path)
 		err = utils.CheckAndDeletePath(localPath)
 		if err != nil {
 			return e.ErrProblemDeleteFailed
@@ -246,7 +249,7 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 	path := strconv.Itoa(int(problemID))
 	filename := file.Filename
 	// 保存文件到本地
-	tempPath := global.Conf.FilePathConfig.TempDir
+	tempPath := q.config.FilePathConfig.TempDir
 	tempPath = tempPath + "/" + utils.GetUUID()
 	err := ctx.SaveUploadedFile(file, tempPath+"/"+filename)
 	if err != nil {
@@ -261,7 +264,7 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 	}
 	//检测文件内有一个文件夹，或者是多个文件
 	ProblemPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + path)
-	s := file_store.NewProblemCOS()
+	s := file_store.NewProblemCOS(q.config.COSConfig)
 	err = s.DeleteFolder(strconv.Itoa(int(problemID)))
 	s.UploadFolder(path, ProblemPathInLocal)
 	// 存储到数据库
@@ -272,7 +275,7 @@ func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.Fil
 	// 删除temp中所有文件
 	os.RemoveAll(tempPath)
 	// 删除本地题目的文件
-	localPath := getLocalProblemPath(path)
+	localPath := getLocalProblemPath(q.config, path)
 	err = utils.CheckAndDeletePath(localPath)
 	if err != nil {
 		_ = utils.CheckAndDeletePath(localPath)
@@ -311,7 +314,7 @@ func (q *problemService) GetProblemTemplateCode(problemID uint, language string,
 
 	// 读取核心代码模板
 	p, err := q.problemDao.GetProblemFilePathByID(global.Mysql, problemID)
-	store := file_store.NewProblemCOS()
+	store := file_store.NewProblemCOS(q.config.COSConfig)
 	var content []byte
 	codePath, err2 := getCodePathByProblemPath(p, language)
 	if err2 != nil {
@@ -344,12 +347,12 @@ func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Err
 		return nil, e.ErrProblemFileNotExist
 	}
 	// 下载文件到本地
-	err = checkAndDownloadQuestionFile(problem.Path)
+	err = checkAndDownloadQuestionFile(q.config, problem.Path)
 	if err != nil {
 		return nil, e.ErrProblemGetFailed
 	}
 	// 读取文件,仅会读取一个层级的文件
-	localPath := getLocalProblemPath(problem.Path)
+	localPath := getLocalProblemPath(q.config, problem.Path)
 	files, err2 := os.ReadDir(localPath)
 	if err2 != nil {
 		return nil, e.ErrExecuteFailed
@@ -383,13 +386,13 @@ func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int) (*dto.
 		return nil, e.ErrProblemFileNotExist
 	}
 	// 下载文件到本地
-	err = checkAndDownloadQuestionFile(problem.Path)
+	err = checkAndDownloadQuestionFile(q.config, problem.Path)
 	if err != nil {
 		return nil, e.ErrProblemGetFailed
 	}
 	//根据输入类型获取输入文件列表
 	ioFileList := make([]string, 10)
-	files, _ := os.ReadDir(getCaseFolderByPath(problem.Path))
+	files, _ := os.ReadDir(getCaseFolderByPath(q.config, problem.Path))
 	for _, fileInfo := range files {
 		if strings.HasSuffix(fileInfo.Name(), ".in") {
 			ioFileList = append(ioFileList, fileInfo.Name())
@@ -421,8 +424,8 @@ func (q *problemService) UpdateProblemField(id uint, field string, value string)
 	return e.ErrProblemUpdateFailed
 }
 
-func getCaseFolderByPath(path string) string {
-	localpath := getLocalProblemPath(path)
+func getCaseFolderByPath(config *conf.AppConfig, path string) string {
+	localpath := getLocalProblemPath(config, path)
 	return localpath + "/io"
 }
 
@@ -448,7 +451,7 @@ func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint
 		result.Error(e.ErrProblemZipFileDownloadFailed)
 		return
 	}
-	temp := getTempDir()
+	temp := getTempDir(q.config)
 	// 最后删除临时文件夹
 	defer func() {
 		// 删除临时文件夹和压缩包
@@ -459,7 +462,7 @@ func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint
 	}()
 	localPath := temp + "/" + strconv.Itoa(int(problemID))
 	zipPath := localPath + ".zip"
-	store := file_store.NewProblemCOS()
+	store := file_store.NewProblemCOS(q.config.COSConfig)
 	err = store.DownloadAndCompressFolder(path, localPath, zipPath)
 	if err != nil {
 		result.Error(e.ErrProblemZipFileDownloadFailed)
@@ -479,7 +482,7 @@ func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint
 
 func (q *problemService) DownloadProblemTemplateFile(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	path := global.Conf.FilePathConfig.ProblemFileTemplate
+	path := q.config.FilePathConfig.ProblemFileTemplate
 	content, err := os.ReadFile(path)
 	if err != nil {
 		result.Error(e.ErrProblemZipFileDownloadFailed)

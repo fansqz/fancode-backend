@@ -1,4 +1,4 @@
-package global
+package config
 
 // AppConfig
 // @Description:应用配置

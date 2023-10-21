@@ -1,6 +1,7 @@
 package service
 
 import (
+	conf "FanCode/config"
 	"FanCode/constants"
 	"FanCode/dao"
 	e "FanCode/error"
@@ -41,6 +42,7 @@ type JudgeService interface {
 }
 
 type judgeService struct {
+	config            *conf.AppConfig
 	judgeCore         *judger.JudgeCore
 	problemService    ProblemService
 	submissionDao     dao.SubmissionDao
@@ -48,9 +50,10 @@ type judgeService struct {
 	problemDao        dao.ProblemDao
 }
 
-func NewJudgeService(problemService ProblemService, submissionDao dao.SubmissionDao,
+func NewJudgeService(config *conf.AppConfig, problemService ProblemService, submissionDao dao.SubmissionDao,
 	attemptDao dao.ProblemAttemptDao, problemDao dao.ProblemDao) JudgeService {
 	return &judgeService{
+		config:            config,
 		judgeCore:         judger.NewJudgeCore(),
 		problemService:    problemService,
 		submissionDao:     submissionDao,
@@ -145,13 +148,13 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
-	err = checkAndDownloadQuestionFile(problem.Path)
+	err = checkAndDownloadQuestionFile(j.config, problem.Path)
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
 
 	// executePath 执行路径，用户的临时文件
-	executePath := getExecutePath()
+	executePath := getExecutePath(j.config)
 	err = os.MkdirAll(executePath, os.ModePerm)
 	if err != nil {
 		log.Println(err)
@@ -160,7 +163,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	defer os.RemoveAll(executePath)
 
 	// 保存题目文件的路径
-	problemPath := getLocalProblemPath(problem.Path)
+	problemPath := getLocalProblemPath(j.config, problem.Path)
 	localCodePath, err2 := getCodePathByProblemPath(problemPath, judgeRequest.Language)
 	if err2 != nil {
 		return nil, err2
@@ -323,13 +326,13 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
-	err = checkAndDownloadQuestionFile(problem.Path)
+	err = checkAndDownloadQuestionFile(j.config, problem.Path)
 	if err != nil {
 		return nil, e.ErrExecuteFailed
 	}
 
 	// executePath 用户执行目录
-	executePath := getExecutePath()
+	executePath := getExecutePath(j.config)
 	err = os.MkdirAll(executePath, os.ModePerm)
 	if err != nil {
 		log.Println(err)
@@ -338,7 +341,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	defer os.RemoveAll(executePath)
 
 	// 保存题目文件的目录
-	problemPath := getLocalProblemPath(problem.Path)
+	problemPath := getLocalProblemPath(j.config, problem.Path)
 	localCodePath, err2 := getCodePathByProblemPath(problemPath, judgeRequest.Language)
 	if err2 != nil {
 		return nil, err2
@@ -495,11 +498,11 @@ func (j *judgeService) compareAnswer(data1 string, data2 string) bool {
 	return data1 == data2
 }
 
-func checkAndDownloadQuestionFile(questionPath string) error {
-	localPath := path.Join(global.Conf.FilePathConfig.ProblemFileDir, questionPath)
+func checkAndDownloadQuestionFile(config *conf.AppConfig, questionPath string) error {
+	localPath := path.Join(config.FilePathConfig.ProblemFileDir, questionPath)
 	if !utils.CheckFolderExists(localPath) {
 		// 拉取文件
-		store := file_store.NewProblemCOS()
+		store := file_store.NewProblemCOS(config.COSConfig)
 		err := store.DownloadFolder(questionPath, localPath)
 		if err != nil {
 			return err

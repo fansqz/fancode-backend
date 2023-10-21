@@ -1,9 +1,9 @@
 package service
 
 import (
+	"FanCode/config"
 	"FanCode/constants"
 	e "FanCode/error"
-	"FanCode/global"
 	"FanCode/utils"
 	"os"
 	"path"
@@ -90,21 +90,21 @@ func getCasePathByLocalProblemPath(localProblemPath string) string {
 }
 
 // 根据题目的相对路径，获取题目的本地路径
-func getLocalProblemPath(p string) string {
-	return path.Join(global.Conf.FilePathConfig.ProblemFileDir, p)
+func getLocalProblemPath(config *config.AppConfig, p string) string {
+	return path.Join(config.FilePathConfig.ProblemFileDir, p)
 }
 
 // 给用户的此次运行生成一个临时目录
-func getExecutePath() string {
+func getExecutePath(config *config.AppConfig) string {
 	uuid := utils.GetUUID()
-	executePath := path.Join(global.Conf.FilePathConfig.TempDir, uuid)
+	executePath := path.Join(config.FilePathConfig.TempDir, uuid)
 	return executePath
 }
 
 // getTempDir 获取一个随机的临时文件夹
-func getTempDir() string {
+func getTempDir(config *config.AppConfig) string {
 	uuid := utils.GetUUID()
-	executePath := global.Conf.FilePathConfig.TempDir + "/" + uuid
+	executePath := config.FilePathConfig.TempDir + "/" + uuid
 	return executePath
 }
 

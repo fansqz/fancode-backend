@@ -135,20 +135,6 @@ func TestSysRoleService_GetSysRoleList(t *testing.T) {
 		Page: 1, PageSize: 3, SortProperty: "name", SortRule: "desc", Query: &po.SysRole{Name: "role", Description: "description"},
 	}).Return(testRoleList, nil)
 	roleDao.EXPECT().GetRoleCount(gomock.Any(), &po.SysRole{Name: "role", Description: "description"}).Return(int64(10), nil)
-
-	// 测试2
-	roleDao.EXPECT().GetRoleList(gomock.Any(), gomock.Any()).Return(nil, gorm.ErrInvalidDB)
-
-	// 测试3
-	roleDao.EXPECT().GetRoleList(gomock.Any(), gomock.Any()).Return([]*po.SysRole{}, nil)
-	roleDao.EXPECT().GetRoleCount(gomock.Any(), gomock.Any()).Return(int64(0), gorm.ErrInvalidDB)
-
-	// 测试4
-	roleDao.EXPECT().GetRoleList(gomock.Any(), &dto.PageQuery{
-		Page: 1, PageSize: 3, SortProperty: "name", SortRule: "desc",
-	}).Return([]*po.SysRole{}, nil)
-	roleDao.EXPECT().GetRoleCount(gomock.Any(), nil).Return(0, nil)
-	// 测试
 	roleService := NewSysRoleService(roleDao)
 	roleList, err := roleService.GetSysRoleList(&dto.PageQuery{
 		Page: 1, PageSize: 3, SortProperty: "name", SortRule: "desc", Query: &po.SysRole{Name: "role", Description: "description"},
@@ -160,13 +146,19 @@ func TestSysRoleService_GetSysRoleList(t *testing.T) {
 		{Name: "role3", Description: "description3", ID: 2, UpdatedAt: utils.Time(testRoleList[2].UpdatedAt)},
 	}}, roleList)
 
+	// 测试2
+	roleDao.EXPECT().GetRoleList(gomock.Any(), gomock.Any()).Return(nil, gorm.ErrInvalidDB)
 	roleList, err = roleService.GetSysRoleList(&dto.PageQuery{})
 	assert.Nil(t, roleList)
 	assert.Equal(t, err, e.ErrMysql)
 
+	// 测试3
+	roleDao.EXPECT().GetRoleList(gomock.Any(), gomock.Any()).Return([]*po.SysRole{}, nil)
+	roleDao.EXPECT().GetRoleCount(gomock.Any(), gomock.Any()).Return(int64(0), gorm.ErrInvalidDB)
 	roleList, err = roleService.GetSysRoleList(&dto.PageQuery{})
 	assert.Nil(t, roleList)
 	assert.Equal(t, err, e.ErrMysql)
+
 }
 
 func TestSysRoleService_GetApiIDsByRoleID(t *testing.T) {

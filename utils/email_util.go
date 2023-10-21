@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"FanCode/global"
+	"FanCode/config"
 	"gopkg.in/gomail.v2"
 )
 
@@ -11,7 +11,7 @@ type EmailMessage struct {
 	Body    string
 }
 
-func SendMail(config *global.EmailConfig, message EmailMessage) error {
+func SendMail(config *config.EmailConfig, message EmailMessage) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", m.FormatAddress(config.User, "fancode")) // 添加别名
 	m.SetHeader("To", message.To...)                             // 发送给用户(可以多个)

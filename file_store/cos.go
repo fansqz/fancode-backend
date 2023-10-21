@@ -1,7 +1,7 @@
 package file_store
 
 import (
-	"FanCode/global"
+	"FanCode/config"
 	"archive/zip"
 	"context"
 	"fmt"
@@ -20,23 +20,22 @@ type cosStore struct {
 	client *cos.Client
 }
 
-func NewImageCOS() Store {
-	return NewCOS(global.Conf.ImageBucketName)
+func NewImageCOS(config *config.COSConfig) Store {
+	return NewCOS(config, config.ImageBucketName)
 }
 
-func NewProblemCOS() Store {
-	return NewCOS(global.Conf.ProblemBucketName)
+func NewProblemCOS(config *config.COSConfig) Store {
+	return NewCOS(config, config.ProblemBucketName)
 }
 
-func NewCOS(bucketName string) Store {
-	storeConfig := global.Conf.COSConfig
+func NewCOS(config *config.COSConfig, bucketName string) Store {
 	u, _ := url.Parse(fmt.Sprintf("http://%s-%s.cos.%s.myqcloud.com",
-		bucketName, storeConfig.AppID, storeConfig.Region))
+		bucketName, config.AppID, config.Region))
 	b := &cos.BaseURL{BucketURL: u}
 	client := cos.NewClient(b, &http.Client{
 		Transport: &cos.AuthorizationTransport{
-			SecretID:  storeConfig.SecretID,
-			SecretKey: storeConfig.SecretKey,
+			SecretID:  config.SecretID,
+			SecretKey: config.SecretKey,
 			Transport: &debug.DebugRequestTransport{
 				RequestHeader:  true,
 				RequestBody:    true,

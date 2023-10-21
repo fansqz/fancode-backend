@@ -41,7 +41,7 @@ func TestSysUserService_GetUserByID(t *testing.T) {
 	userDao.EXPECT().GetUserByID(gomock.Any(), uint(3)).Return(nil, gorm.ErrInvalidDB)
 
 	// 测试
-	userService := NewSysUserService(userDao, nil)
+	userService := NewSysUserService(nil, userDao, nil)
 	user2, err := userService.GetUserByID(1)
 	assert.Equal(t, user2, user)
 	assert.Nil(t, err)
@@ -85,7 +85,7 @@ func TestSysUserService_UpdateSysUser(t *testing.T) {
 	userDao.EXPECT().UpdateUser(gomock.Any(), gomock.Any()).Return(gorm.ErrInvalidDB)
 
 	// 测试
-	userService := NewSysUserService(userDao, nil)
+	userService := NewSysUserService(nil, userDao, nil)
 	err := userService.UpdateSysUser(user)
 	assert.Nil(t, err)
 	err = userService.UpdateSysUser(&po.SysUser{})
@@ -102,7 +102,7 @@ func TestSysUserService_DeleteSysUser(t *testing.T) {
 	userDao.EXPECT().DeleteUserByID(gomock.Any(), uint(2)).Return(gorm.ErrInvalidDB)
 
 	// 测试
-	userService := NewSysUserService(userDao, nil)
+	userService := NewSysUserService(nil, userDao, nil)
 	err := userService.DeleteSysUser(1)
 	assert.Nil(t, err)
 	err = userService.DeleteSysUser(2)
@@ -157,7 +157,7 @@ func TestSysUserService_GetSysUserList(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 	global.Mysql = gormDB
-	userService := NewSysUserService(userDao, nil)
+	userService := NewSysUserService(nil, userDao, nil)
 	pageInfo, err2 := userService.GetSysUserList(&dto.PageQuery{
 		Page: 1, PageSize: 3, SortProperty: "name", SortRule: "desc", Query: &po.SysUser{Username: "user"},
 	})
@@ -198,7 +198,7 @@ func TestSysUserService_GetAllSimpleRole(t *testing.T) {
 	}, nil)
 	roleDao.EXPECT().GetAllSimpleRoleList(gomock.Any()).Return(nil, gorm.ErrInvalidDB)
 
-	userService := NewSysUserService(nil, roleDao)
+	userService := NewSysUserService(nil, nil, roleDao)
 	roleList, err := userService.GetAllSimpleRole()
 	assert.Equal(t, []*dto.SimpleRoleDto{
 		{ID: 1, Name: "role1"}, {ID: 2, Name: "role2"}, {ID: 3, Name: "role3"},
@@ -225,7 +225,7 @@ func TestSysUserService_UpdateUserRoles(t *testing.T) {
 	global.Mysql = gormDB
 
 	// 测试1
-	userService := NewSysUserService(userDao, nil)
+	userService := NewSysUserService(nil, userDao, nil)
 	userDao.EXPECT().DeleteUserRoleByUserID(gomock.Any(), uint(1)).Return(nil)
 	userDao.EXPECT().InsertRolesToUser(gomock.Any(), uint(1), []uint{1, 2, 3})
 	mock.ExpectBegin()
@@ -252,7 +252,7 @@ func TestSysUserService_InsertSysUser(t *testing.T) {
 	defer mockCtl.Finish()
 
 	userDao := mock.NewMockSysUserDao(mockCtl)
-	userService := NewSysUserService(userDao, nil)
+	userService := NewSysUserService(nil, userDao, nil)
 
 	//测试1
 	user := &po.SysUser{

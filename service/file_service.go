@@ -1,6 +1,7 @@
 package service
 
 import (
+	conf "FanCode/config"
 	e "FanCode/error"
 	"crypto/md5"
 	"crypto/sha1"
@@ -28,14 +29,17 @@ type FileService interface {
 }
 
 type fileService struct {
+	config *conf.AppConfig
 }
 
-func NewFileService() FileService {
-	return &fileService{}
+func NewFileService(config *conf.AppConfig) FileService {
+	return &fileService{
+		config: config,
+	}
 }
 
 func (f *fileService) StartUpload() (string, *e.Error) {
-	tempPath := getTempDir()
+	tempPath := getTempDir(f.config)
 	err := os.MkdirAll(tempPath, 0755)
 	if err != nil {
 		return "", e.ErrServer

@@ -1,6 +1,7 @@
 package service
 
 import (
+	conf "FanCode/config"
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/file_store"
@@ -44,13 +45,15 @@ type ProblemBankService interface {
 }
 
 type problemBankService struct {
+	config         *conf.AppConfig
 	problemBankDao dao.ProblemBankDao
 	problemDao     dao.ProblemDao
 	sysUserDao     dao.SysUserDao
 }
 
-func NewProblemBankService(bankDao dao.ProblemBankDao, problemDao dao.ProblemDao, userDao dao.SysUserDao) ProblemBankService {
+func NewProblemBankService(config *conf.AppConfig, bankDao dao.ProblemBankDao, problemDao dao.ProblemDao, userDao dao.SysUserDao) ProblemBankService {
 	return &problemBankService{
+		config:         config,
 		problemBankDao: bankDao,
 		problemDao:     problemDao,
 		sysUserDao:     userDao,
@@ -58,7 +61,7 @@ func NewProblemBankService(bankDao dao.ProblemBankDao, problemDao dao.ProblemDao
 }
 
 func (p *problemBankService) UploadProblemBankIcon(file *multipart.FileHeader) (string, *e.Error) {
-	cos := file_store.NewImageCOS()
+	cos := file_store.NewImageCOS(p.config.COSConfig)
 	fileName := file.Filename
 	fileName = utils.GetUUID() + "." + path.Base(fileName)
 	file2, err := file.Open()
@@ -69,12 +72,12 @@ func (p *problemBankService) UploadProblemBankIcon(file *multipart.FileHeader) (
 	if err != nil {
 		return "", e.ErrServer
 	}
-	return global.Conf.ProUrl + path.Join("/manage/problemBank/icon", fileName), nil
+	return p.config.ProUrl + path.Join("/manage/problemBank/icon", fileName), nil
 }
 
 func (p *problemBankService) ReadProblemBankIcon(ctx *gin.Context, iconName string) {
 	result := r.NewResult(ctx)
-	cos := file_store.NewImageCOS()
+	cos := file_store.NewImageCOS(p.config.COSConfig)
 	bytes, err := cos.ReadFile(path.Join(ProblemBankIconPath, iconName))
 	if err != nil {
 		result.Error(e.ErrServer)

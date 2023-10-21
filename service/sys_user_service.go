@@ -1,6 +1,7 @@
 package service
 
 import (
+	conf "FanCode/config"
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/global"
@@ -31,12 +32,14 @@ type SysUserService interface {
 }
 
 type sysUserService struct {
+	config     *conf.AppConfig
 	sysUserDao dao.SysUserDao
 	sysRoleDao dao.SysRoleDao
 }
 
-func NewSysUserService(userDao dao.SysUserDao, roleDao dao.SysRoleDao) SysUserService {
+func NewSysUserService(config *conf.AppConfig, userDao dao.SysUserDao, roleDao dao.SysRoleDao) SysUserService {
 	return &sysUserService{
+		config:     config,
 		sysUserDao: userDao,
 		sysRoleDao: roleDao,
 	}
@@ -64,7 +67,7 @@ func (s *sysUserService) InsertSysUser(sysUser *po.SysUser) (uint, *e.Error) {
 	}
 	// 设置默认密码
 	if sysUser.Password == "" {
-		sysUser.Password = global.Conf.DefaultPassword
+		sysUser.Password = s.config.DefaultPassword
 	}
 	// 设置默认出生时间
 	t := time.Time{}

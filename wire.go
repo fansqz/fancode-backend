@@ -4,6 +4,7 @@
 package main
 
 import (
+	"FanCode/config"
 	"FanCode/controller"
 	"FanCode/dao"
 	"FanCode/interceptor"
@@ -13,7 +14,7 @@ import (
 	"net/http"
 )
 
-func initApp() (*http.Server, error) {
+func initApp(*config.AppConfig) (*http.Server, error) {
 	panic(wire.Build(
 		dao.ProviderSet,
 		service.ProviderSet,

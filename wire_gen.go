@@ -7,6 +7,7 @@
 package main
 
 import (
+	"FanCode/config"
 	"FanCode/controller"
 	"FanCode/controller/admin"
 	"FanCode/controller/user"
@@ -19,14 +20,14 @@ import (
 
 // Injectors from wire.go:
 
-func initApp() (*http.Server, error) {
+func initApp(appConfig *config.AppConfig) (*http.Server, error) {
 	problemBankDao := dao.NewProblemBankDao()
 	problemDao := dao.NewProblemDao()
 	sysUserDao := dao.NewSysUserDao()
-	problemBankService := service.NewProblemBankService(problemBankDao, problemDao, sysUserDao)
+	problemBankService := service.NewProblemBankService(appConfig, problemBankDao, problemDao, sysUserDao)
 	problemBankManagementController := admin.NewProblemBankManagementController(problemBankService)
 	problemAttemptDao := dao.NewProblemAttemptDao()
-	problemService := service.NewProblemService(problemDao, problemAttemptDao)
+	problemService := service.NewProblemService(appConfig, problemDao, problemAttemptDao)
 	problemManagementController := admin.NewProblemManagementController(problemService)
 	sysApiDao := dao.NewSysApiDao()
 	sysApiService := service.NewSysApiService(sysApiDao)
@@ -37,23 +38,23 @@ func initApp() (*http.Server, error) {
 	sysRoleDao := dao.NewSysRoleDao()
 	sysRoleService := service.NewSysRoleService(sysRoleDao)
 	sysRoleController := admin.NewSysRoleController(sysRoleService)
-	sysUserService := service.NewSysUserService(sysUserDao, sysRoleDao)
+	sysUserService := service.NewSysUserService(appConfig, sysUserDao, sysRoleDao)
 	sysUserController := admin.NewSysUserController(sysUserService)
 	submissionDao := dao.NewSubmissionDao()
-	judgeService := service.NewJudgeService(problemService, submissionDao, problemAttemptDao, problemDao)
+	judgeService := service.NewJudgeService(appConfig, problemService, submissionDao, problemAttemptDao, problemDao)
 	judgeController := user.NewJudgeController(judgeService)
 	problemController := user.NewProblemController(problemService)
 	problemBankController := user.NewProblemBankController(problemBankService)
 	submissionService := service.NewSubmissionService(submissionDao, problemDao)
 	submissionController := user.NewSubmissionController(submissionService)
-	accountService := service.NewAccountService(sysUserDao)
+	accountService := service.NewAccountService(appConfig, sysUserDao)
 	accountController := controller.NewAccountController(accountService)
-	authService := service.NewAuthService(sysUserDao, sysMenuDao, sysRoleDao)
+	authService := service.NewAuthService(appConfig, sysUserDao, sysMenuDao, sysRoleDao)
 	authController := controller.NewAuthController(authService)
 	controllerController := controller.NewController(problemBankManagementController, problemManagementController, sysApiController, sysMenuController, sysRoleController, sysUserController, judgeController, problemController, problemBankController, submissionController, accountController, authController)
 	corsInterceptor := interceptor.NewCorsInterceptor()
 	requestInterceptor := interceptor.NewRequestInterceptor(sysRoleService, sysUserService)
-	engine := routers.SetupRouter(controllerController, corsInterceptor, requestInterceptor)
-	server := newApp(engine)
+	engine := routers.SetupRouter(appConfig, controllerController, corsInterceptor, requestInterceptor)
+	server := newApp(engine, appConfig)
 	return server, nil
 }

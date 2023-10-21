@@ -1,6 +1,7 @@
 package service
 
 import (
+	conf "FanCode/config"
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/file_store"
@@ -36,18 +37,20 @@ type AccountService interface {
 	ResetPassword(ctx *gin.Context) *e.Error
 }
 
-func NewAccountService(userDao dao.SysUserDao) AccountService {
+func NewAccountService(config *conf.AppConfig, userDao dao.SysUserDao) AccountService {
 	return &accountService{
+		config:     config,
 		sysUserDao: userDao,
 	}
 }
 
 type accountService struct {
+	config     *conf.AppConfig
 	sysUserDao dao.SysUserDao
 }
 
 func (a *accountService) UploadAvatar(file *multipart.FileHeader) (string, *e.Error) {
-	cos := file_store.NewImageCOS()
+	cos := file_store.NewImageCOS(a.config.COSConfig)
 	fileName := file.Filename
 	fileName = utils.GetUUID() + "." + path.Base(fileName)
 	file2, err := file.Open()
@@ -59,12 +62,12 @@ func (a *accountService) UploadAvatar(file *multipart.FileHeader) (string, *e.Er
 		log.Println(err)
 		return "", e.ErrServer
 	}
-	return global.Conf.ProUrl + UserAvatarPath + "/" + fileName, nil
+	return a.config.ProUrl + UserAvatarPath + "/" + fileName, nil
 }
 
 func (a *accountService) ReadAvatar(ctx *gin.Context, avatarName string) {
 	result := r.NewResult(ctx)
-	cos := file_store.NewImageCOS()
+	cos := file_store.NewImageCOS(a.config.COSConfig)
 	bytes, err := cos.ReadFile(UserAvatarPath + "/" + avatarName)
 	if err != nil {
 		result.Error(e.ErrServer)
@@ -148,7 +151,7 @@ func (a *accountService) ResetPassword(ctx *gin.Context) *e.Error {
 		Subject: "fancode-重置密码",
 		Body:    "新密码：" + password,
 	}
-	err = utils.SendMail(global.Conf.EmailConfig, message)
+	err = utils.SendMail(a.config.EmailConfig, message)
 	if err != nil {
 		tx.Rollback()
 		return e.ErrUserUnknownError

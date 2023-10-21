@@ -6,9 +6,6 @@ import (
 )
 
 var (
-	// Mode project mode: development/staging/production
-	// RuntimeRoot runtime root path prefix
-	Conf  *AppConfig
 	Mysql *gorm.DB
 	Redis *redis.Client
 )
