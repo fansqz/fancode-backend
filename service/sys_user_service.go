@@ -15,9 +15,9 @@ type SysUserService interface {
 	// GetUserByID 根据用户id获取用户信息
 	GetUserByID(userID uint) (*po.SysUser, *e.Error)
 	// InsertSysUser 添加用户
-	InsertSysUser(sysSysUser *po.SysUser) (uint, *e.Error)
+	InsertSysUser(sysUser *po.SysUser) (uint, *e.Error)
 	// UpdateSysUser 更新用户，但是不更新密码
-	UpdateSysUser(SysUser *po.SysUser) *e.Error
+	UpdateSysUser(sysUser *po.SysUser) *e.Error
 	// DeleteSysUser 删除用户
 	DeleteSysUser(id uint) *e.Error
 	// GetSysUserList 获取用户列表
@@ -54,14 +54,26 @@ func (s *sysUserService) GetUserByID(userID uint) (*po.SysUser, *e.Error) {
 }
 
 func (s *sysUserService) InsertSysUser(sysUser *po.SysUser) (uint, *e.Error) {
+	// 设置默认用户名
 	if sysUser.Username == "" {
 		sysUser.Username = "fancoder"
 	}
+	// 随机登录名称
 	if sysUser.LoginName == "" {
 		sysUser.LoginName = sysUser.LoginName + utils.GetUUID()
 	}
+	// 设置默认密码
 	if sysUser.Password == "" {
 		sysUser.Password = global.Conf.DefaultPassword
+	}
+	// 设置默认出生时间
+	t := time.Time{}
+	if sysUser.BirthDay == t {
+		sysUser.BirthDay = time.Now()
+	}
+	// 设置默认性别
+	if sysUser.Sex != 1 && sysUser.Sex != 2 {
+		sysUser.Sex = 1
 	}
 	p, err := utils.GetPwd(sysUser.Password)
 	if err != nil {

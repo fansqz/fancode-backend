@@ -246,3 +246,34 @@ func TestSysUserService_UpdateUserRoles(t *testing.T) {
 	err2 = userService.UpdateUserRoles(3, []uint{1, 2, 3})
 	assert.Equal(t, e.ErrMysql, err2)
 }
+
+func TestSysUserService_InsertSysUser(t *testing.T) {
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+
+	userDao := mock.NewMockSysUserDao(mockCtl)
+	userService := NewSysUserService(userDao, nil)
+
+	//测试1
+	user := &po.SysUser{
+		Avatar:       "aaa",
+		Username:     "",
+		LoginName:    "",
+		Password:     "12345",
+		Email:        "123456@qq.com",
+		Phone:        "",
+		Introduction: "introduction",
+		Sex:          1,
+		BirthDay:     time.Time{},
+	}
+	userDao.EXPECT().InsertUser(gomock.Any(), user).DoAndReturn(func(db *gorm.DB, sysUser *po.SysUser) error {
+		assert.Equal(t, sysUser.Username, "fancoder")
+		assert.NotEqual(t, sysUser.LoginName, "")
+		assert.NotEqual(t, sysUser.BirthDay, time.Time{})
+		sysUser.ID = 1
+		return nil
+	})
+	id, err := userService.InsertSysUser(user)
+	assert.Equal(t, uint(1), id)
+	assert.Nil(t, err)
+}
