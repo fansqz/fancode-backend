@@ -2,6 +2,7 @@ package service
 
 import (
 	"FanCode/dao/mock"
+	e "FanCode/error"
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
@@ -167,4 +168,88 @@ func TestProblemBankService_GetProblemBankList(t *testing.T) {
 			},
 		},
 	}, pageInfo)
+}
+
+func TestProblemBankService_GetSimpleProblemBankList(t *testing.T) {
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+
+	bankDao := mock.NewMockProblemBankDao(mockCtl)
+	bankService := NewProblemBankService(bankDao, nil, nil)
+
+	//测试1
+	bankDao.EXPECT().GetSimpleProblemBankList(gomock.Any()).Return([]*po.ProblemBank{
+		{
+			Name: "bank1", Icon: "icon1", Description: "description1", CreatorID: 1,
+			Model: gorm.Model{ID: 1, UpdatedAt: time.Now(), CreatedAt: time.Now()},
+		},
+		{
+			Name: "bank2", Icon: "icon2", Description: "description2", CreatorID: 2,
+			Model: gorm.Model{ID: 2, UpdatedAt: time.Now(), CreatedAt: time.Now()},
+		},
+		{
+			Name: "bank3", Icon: "icon3", Description: "description3", CreatorID: 3,
+			Model: gorm.Model{ID: 3, UpdatedAt: time.Now(), CreatedAt: time.Now()},
+		},
+	}, nil)
+	bankList, err := bankService.GetSimpleProblemBankList()
+	assert.Nil(t, err)
+	assert.Equal(t, bankList, []*dto.ProblemBankDtoForSimpleList{
+		{ID: 1, Name: "bank1"},
+		{ID: 2, Name: "bank2"},
+		{ID: 3, Name: "bank3"},
+	})
+
+	//测试2
+	bankDao.EXPECT().GetSimpleProblemBankList(gomock.Any()).Return(nil, gorm.ErrInvalidDB)
+	bankList, err = bankService.GetSimpleProblemBankList()
+	assert.Equal(t, e.ErrMysql, err)
+	assert.Nil(t, bankList)
+}
+
+func TestProblemBankService_GetAllProblemBank(t *testing.T) {
+	mockCtl := gomock.NewController(t)
+	defer mockCtl.Finish()
+
+	bankDao := mock.NewMockProblemBankDao(mockCtl)
+	bankService := NewProblemBankService(bankDao, nil, nil)
+
+	//测试1
+	testBankList := []*po.ProblemBank{
+		{
+			Name: "bank1", Icon: "icon1", Description: "description1", CreatorID: 1,
+			Model: gorm.Model{ID: 1, UpdatedAt: time.Now(), CreatedAt: time.Now()},
+		},
+		{
+			Name: "bank2", Icon: "icon2", Description: "description2", CreatorID: 2,
+			Model: gorm.Model{ID: 2, UpdatedAt: time.Now(), CreatedAt: time.Now()},
+		},
+		{
+			Name: "bank3", Icon: "icon3", Description: "description3", CreatorID: 3,
+			Model: gorm.Model{ID: 3, UpdatedAt: time.Now(), CreatedAt: time.Now()},
+		},
+	}
+	bankDao.EXPECT().GetAllProblemBank(gomock.Any()).Return(testBankList, nil)
+	bankList, err := bankService.GetAllProblemBank()
+	assert.Nil(t, err)
+	assert.Equal(t, bankList, []*dto.ProblemBankDtoForList{
+		{
+			ID: 1, Name: "bank1", Icon: "icon1", Description: "description1",
+			CreatedAt: utils.Time(testBankList[0].CreatedAt), UpdatedAt: utils.Time(testBankList[0].UpdatedAt),
+		},
+		{
+			ID: 2, Name: "bank2", Icon: "icon2", Description: "description2",
+			CreatedAt: utils.Time(testBankList[1].CreatedAt), UpdatedAt: utils.Time(testBankList[1].UpdatedAt),
+		},
+		{
+			ID: 3, Name: "bank3", Icon: "icon3", Description: "description3",
+			CreatedAt: utils.Time(testBankList[2].CreatedAt), UpdatedAt: utils.Time(testBankList[2].UpdatedAt),
+		},
+	})
+
+	//测试2
+	bankDao.EXPECT().GetAllProblemBank(gomock.Any()).Return(nil, gorm.ErrInvalidDB)
+	bankList, err = bankService.GetAllProblemBank()
+	assert.Equal(t, e.ErrMysql, err)
+	assert.Nil(t, bankList)
 }
