@@ -119,8 +119,8 @@ func (j *JudgeCore) compileJava(compileFiles []string, outFilePath string, optio
 		ctx = context.Background()
 	}
 	cmd := exec.CommandContext(ctx, "javac", compileFiles...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = &bytes.Buffer{}
+	cmd.Stderr = &bytes.Buffer{}
 
 	var err error
 	if err = cmd.Start(); err == nil {
