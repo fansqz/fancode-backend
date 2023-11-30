@@ -42,8 +42,8 @@ func (j *JudgeCore) Compile(compileFiles []string, outFilePath string, options *
 		compileFiles = append([]string{"-o", outFilePath}, compileFiles...)
 		// 创建一个带有超时时间的上下文
 		var cancel context.CancelFunc
-		if options != nil && options.Timeout != 0 {
-			ctx, cancel = context.WithTimeout(context.Background(), options.Timeout)
+		if options != nil && options.LimitTime != 0 {
+			ctx, cancel = context.WithTimeout(context.Background(), time.Duration(options.LimitTime))
 			defer cancel()
 		} else {
 			ctx = context.Background()
@@ -54,8 +54,8 @@ func (j *JudgeCore) Compile(compileFiles []string, outFilePath string, options *
 	case constants.ProgramGo:
 		compileFiles = append([]string{"build", "-o", outFilePath}, compileFiles...)
 		var cancel context.CancelFunc
-		if options != nil && options.Timeout != 0 {
-			ctx, cancel = context.WithTimeout(context.Background(), options.Timeout)
+		if options != nil && options.LimitTime != 0 {
+			ctx, cancel = context.WithTimeout(context.Background(), time.Duration(options.LimitTime))
 			defer cancel()
 		} else {
 			ctx = context.Background()
@@ -112,8 +112,8 @@ func (j *JudgeCore) compileJava(compileFiles []string, outFilePath string, optio
 	// 设置超时
 	var cancel context.CancelFunc
 	var ctx context.Context
-	if options != nil && options.Timeout != 0 {
-		ctx, cancel = context.WithTimeout(context.Background(), options.Timeout)
+	if options != nil && options.LimitTime != 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), time.Duration(options.LimitTime))
 		defer cancel()
 	} else {
 		ctx = context.Background()
@@ -278,7 +278,7 @@ func (j *JudgeCore) Execute(execFile string, inputCh <-chan []byte, outputCh cha
 				beginTime := time.Now()
 				if err = cmd2.Start(); err != nil {
 					result.Executed = false
-					result.ErrorMessage = err.Error() + "\n" + string(cmd2.Stderr.(*bytes.Buffer).Bytes())
+					result.ErrorMessage = err.Error() + "\n"
 					outputCh <- result
 					break
 				}
@@ -286,7 +286,7 @@ func (j *JudgeCore) Execute(execFile string, inputCh <-chan []byte, outputCh cha
 				// 将进程写入cgroup组
 				if err = cgroup.AddPID(cmd2.Process.Pid); err != nil {
 					result.Executed = false
-					result.ErrorMessage = err.Error() + "\n" + string(cmd2.Stderr.(*bytes.Buffer).Bytes())
+					result.ErrorMessage = err.Error() + "\n"
 					outputCh <- result
 					break
 				}
@@ -299,6 +299,12 @@ func (j *JudgeCore) Execute(execFile string, inputCh <-chan []byte, outputCh cha
 				result.UsedMemory = rusage.Maxrss * 1024
 				result.UsedTime = int64(time.Now().Sub(beginTime))
 
+				// 输出的错误信息
+				errMessage := string(cmd2.Stderr.(*bytes.Buffer).Bytes())
+				if options != nil && len(options.ExcludedPaths) != 0 {
+					errMessage = j.maskPath(errMessage, options.ExcludedPaths, options.ReplacementPath)
+				}
+				outMessage := cmd2.Stdout.(*bytes.Buffer).Bytes()
 				// 检测内存占用，cpu占用，以及执行时间
 				if options != nil && options.LimitTime < result.UsedTime {
 					result.Executed = false
@@ -309,9 +315,12 @@ func (j *JudgeCore) Execute(execFile string, inputCh <-chan []byte, outputCh cha
 				} else if options != nil && options.CPUQuota < result.UsedCpuTime {
 					result.Executed = false
 					result.ErrorMessage = "cpu超出限制\n"
+				} else if len(errMessage) != 0 {
+					result.Executed = false
+					result.ErrorMessage = errMessage
 				} else {
 					result.Executed = true
-					result.Output = cmd2.Stdout.(*bytes.Buffer).Bytes()
+					result.Output = outMessage
 				}
 				outputCh <- result
 			case <-exitCh:

@@ -1,14 +1,13 @@
 package judger
 
-import "time"
-
 // ExecuteOptions 执行文件可选操作
 type ExecuteOptions struct {
-	Language string
-	// 资源限制
-	LimitTime   int64
-	MemoryLimit int64
-	CPUQuota    int64
+	Language        string
+	LimitTime       int64 // 资源限制
+	MemoryLimit     int64
+	CPUQuota        int64
+	ExcludedPaths   []string // 屏蔽的敏感路径
+	ReplacementPath string   // 取代敏感路径的路径
 }
 
 // ExecuteResult 程序执行结果
@@ -24,7 +23,7 @@ type ExecuteResult struct {
 // CompileOptions 编译文件可选参数
 type CompileOptions struct {
 	Language        string
-	Timeout         time.Duration
+	LimitTime       int64
 	ExcludedPaths   []string // 屏蔽的敏感路径
 	ReplacementPath string   // 取代敏感路径的路径
 }

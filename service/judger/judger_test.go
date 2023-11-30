@@ -31,8 +31,8 @@ func execute(language string, t *testing.T) {
 		compileFiles = []string{"./test_file/test_execute.java"}
 	}
 	_, err := judgeCore.Compile(compileFiles, "./test_file/test_execute", &CompileOptions{
-		Language: language,
-		Timeout:  1000 * time.Second,
+		Language:  language,
+		LimitTime: int64(1000 * time.Second),
 	})
 	if err != nil {
 		assert.NilError(t, err)
@@ -79,7 +79,7 @@ func TestJudgeCore_Timeout(t *testing.T) {
 
 	// 编译
 	_, err := judgeCore.Compile([]string{"./test_file/test_timeout.c"}, "./test_file/test_timeout",
-		&CompileOptions{Timeout: 2 * time.Second})
+		&CompileOptions{LimitTime: int64(2 * time.Second)})
 	assert.NilError(t, err)
 	defer func() {
 		// 删除文件
@@ -113,7 +113,7 @@ func TestJudgeCore_MemoryOut(t *testing.T) {
 
 	// 编译
 	_, err := judgeCore.Compile([]string{"./test_file/test_memory_limit.c"}, "./test_file/test_memory_limit",
-		&CompileOptions{Timeout: 2 * time.Second})
+		&CompileOptions{LimitTime: int64(2 * time.Second)})
 	assert.NilError(t, err)
 	defer func() {
 		// 删除文件
@@ -143,7 +143,7 @@ func TestJudgeCore_Compile(t *testing.T) {
 	// 编译
 	compileResult, err := judgeCore.Compile([]string{"./test_file/test_compile_err.c"}, "./test_file/test_compile_err",
 		&CompileOptions{
-			Timeout:       2 * time.Second,
+			LimitTime:     int64(2 * time.Second),
 			ExcludedPaths: []string{"./test_file"},
 		})
 	assert.NilError(t, err)
