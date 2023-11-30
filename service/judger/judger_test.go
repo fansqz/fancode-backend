@@ -30,8 +30,10 @@ func execute(language string, t *testing.T) {
 	case constants.ProgramJava:
 		compileFiles = []string{"./test_file/test_execute.java"}
 	}
-	err := judgeCore.Compile(language, compileFiles,
-		"./test_file/test_execute", 1000*time.Second)
+	_, err := judgeCore.Compile(compileFiles, "./test_file/test_execute", &CompileOptions{
+		Language: language,
+		Timeout:  1000 * time.Second,
+	})
 	if err != nil {
 		assert.NilError(t, err)
 		return
@@ -39,18 +41,14 @@ func execute(language string, t *testing.T) {
 	defer os.Remove("./test_file/test_execute")
 
 	// 运行
-	executeOption := &ExecuteOption{
+	executeOption := &ExecuteOptions{
 		Language:    language,
-		OutputCh:    output,
-		InputCh:     input,
-		ExitCh:      exitCh,
-		ExecFile:    "./test_file/test_execute",
 		LimitTime:   int64(10 * time.Second),
-		MemoryLimit: 40 * 1024 * 1024,
+		MemoryLimit: 100 * 1024 * 1024,
 		CPUQuota:    100000,
 	}
 
-	err = judgeCore.Execute(executeOption)
+	err = judgeCore.Execute("./test_file/test_execute", input, output, exitCh, executeOption)
 	if err != nil {
 		assert.NilError(t, err)
 		return
@@ -80,11 +78,9 @@ func TestJudgeCore_Timeout(t *testing.T) {
 	exitCh := make(chan string)
 
 	// 编译
-	err := judgeCore.Compile(constants.ProgramC, []string{"./test_file/test_timeout.c"}, "./test_file/test_timeout", 2*time.Second)
-	if err != nil {
-		assert.NilError(t, err)
-		return
-	}
+	_, err := judgeCore.Compile([]string{"./test_file/test_timeout.c"}, "./test_file/test_timeout",
+		&CompileOptions{Timeout: 2 * time.Second})
+	assert.NilError(t, err)
 	defer func() {
 		// 删除文件
 		err = os.Remove("./test_file/test_timeout")
@@ -92,25 +88,65 @@ func TestJudgeCore_Timeout(t *testing.T) {
 		exitCh <- "exit"
 	}()
 
-	executeOption := &ExecuteOption{
+	executeOption := &ExecuteOptions{
 		Language:    constants.ProgramC,
-		OutputCh:    output,
-		InputCh:     input,
-		ExitCh:      exitCh,
-		ExecFile:    "./test_file/test_timeout",
 		LimitTime:   int64(1 * time.Second),
 		MemoryLimit: 1 * 1024 * 1024, //限制1m
 		CPUQuota:    10000,           //限制cpu
 	}
-	err = judgeCore.Execute(executeOption)
-	if err != nil {
-		assert.NilError(t, err)
-		return
-	}
+	err = judgeCore.Execute("./test_file/test_timeout", input, output, exitCh, executeOption)
+	assert.NilError(t, err)
 	input <- []byte("1 2")
 	select {
 	case result := <-output:
 		assert.Equal(t, false, result.Executed)
 		assert.Equal(t, "运行超时\n", result.ErrorMessage)
 	}
+}
+
+func TestJudgeCore_MemoryOut(t *testing.T) {
+	judgeCore := NewJudgeCore()
+	// 程序进行编译
+	input := make(chan []byte)
+	output := make(chan ExecuteResult)
+	exitCh := make(chan string)
+
+	// 编译
+	_, err := judgeCore.Compile([]string{"./test_file/test_memory_limit.c"}, "./test_file/test_memory_limit",
+		&CompileOptions{Timeout: 2 * time.Second})
+	assert.NilError(t, err)
+	defer func() {
+		// 删除文件
+		err = os.Remove("./test_file/test_memory_limit")
+		assert.NilError(t, err)
+		exitCh <- "exit"
+	}()
+
+	executeOption := &ExecuteOptions{
+		Language:    constants.ProgramC,
+		LimitTime:   int64(1 * time.Second),
+		MemoryLimit: 1 * 1024 * 1024, //限制1m
+		CPUQuota:    10000,           //限制cpu
+	}
+	err = judgeCore.Execute("./test_file/test_memory_limit", input, output, exitCh, executeOption)
+	assert.NilError(t, err)
+	input <- []byte("1 2")
+	select {
+	case result := <-output:
+		assert.Equal(t, false, result.Executed)
+		assert.Equal(t, "内存超出限制\n", result.ErrorMessage)
+	}
+}
+
+func TestJudgeCore_Compile(t *testing.T) {
+	judgeCore := NewJudgeCore()
+	// 编译
+	compileResult, err := judgeCore.Compile([]string{"./test_file/test_compile_err.c"}, "./test_file/test_compile_err",
+		&CompileOptions{
+			Timeout:       2 * time.Second,
+			ExcludedPaths: []string{"./test_file"},
+		})
+	assert.NilError(t, err)
+	assert.Equal(t, false, compileResult.Compiled)
+	return
 }

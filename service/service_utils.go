@@ -28,11 +28,11 @@ const (
 )
 
 const (
-	CMainFile        = "c"
+	CMainFile        = "main.c"
 	CSolutionFile    = "solution.c"
-	JavaMainFile     = "java"
+	JavaMainFile     = "Main.java"
 	JavaSolutionFile = "Solution.java"
-	GoMainFile       = "go"
+	GoMainFile       = "main.go"
 	GoSolutionFile   = "solution.go"
 )
 

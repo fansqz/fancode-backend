@@ -1,17 +1,10 @@
 package judger
 
-// ExecuteOption 程序请求参数
-type ExecuteOption struct {
-	ExecFile string
+import "time"
+
+// ExecuteOptions 执行文件可选操作
+type ExecuteOptions struct {
 	Language string
-
-	// 用例输入管道
-	InputCh <-chan []byte
-	// 退出管道
-	ExitCh <-chan string
-	// 结果输出管道
-	OutputCh chan<- ExecuteResult
-
 	// 资源限制
 	LimitTime   int64
 	MemoryLimit int64
@@ -26,4 +19,19 @@ type ExecuteResult struct {
 	UsedTime     int64  // 执行时间（以纳秒为单位）
 	UsedMemory   int64  // 内存使用量（以字节为单位）
 	UsedCpuTime  int64  // cpu使用
+}
+
+// CompileOptions 编译文件可选参数
+type CompileOptions struct {
+	Language        string
+	Timeout         time.Duration
+	ExcludedPaths   []string // 屏蔽的敏感路径
+	ReplacementPath string   // 取代敏感路径的路径
+}
+
+// CompileResult 系统编译结果
+type CompileResult struct {
+	Compiled         bool   // 判题是否编译成功
+	ErrorMessage     string // 异常信息
+	CompiledFilePath string // 输出文件路径
 }

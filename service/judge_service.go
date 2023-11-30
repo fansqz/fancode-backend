@@ -24,7 +24,7 @@ import (
 const (
 	// 限制时间和内存
 	LimitExecuteTime   = int64(15 * time.Second)
-	LimitExecuteMemory = 20 * 1024 * 1024
+	LimitExecuteMemory = 100 * 1024 * 1024
 	QuotaExecuteCpu    = 100000
 	// 限制编译时间
 	LimitCompileTime = 10 * time.Second
