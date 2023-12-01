@@ -39,7 +39,7 @@ func (j *JudgeCore) Compile(compileFiles []string, outFilePath string, options *
 	language := j.getLanguage(options)
 	switch language {
 	case constants.ProgramC:
-		compileFiles = append([]string{"-o", outFilePath}, compileFiles...)
+		compileFiles = append([]string{"-g", "-o", outFilePath}, compileFiles...)
 		// 创建一个带有超时时间的上下文
 		var cancel context.CancelFunc
 		if options != nil && options.LimitTime != 0 {
