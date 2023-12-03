@@ -75,8 +75,7 @@ func (p *problemController) GetProblemTemplateCode(ctx *gin.Context) {
 		return
 	}
 	language := ctx.Param("language")
-	codeType := ctx.Param("codeType")
-	code, err2 := p.problemService.GetProblemTemplateCode(uint(problemID), language, codeType)
+	code, err2 := p.problemService.GetProblemTemplateCode(uint(problemID), language)
 	if err2 != nil {
 		result.Error(err2)
 		return

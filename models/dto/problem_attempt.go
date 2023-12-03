@@ -13,7 +13,6 @@ func NewUserCodeDto(attempt *po.ProblemAttempt) *UserCodeDto {
 	return &UserCodeDto{
 		ProblemID: attempt.ProblemID,
 		Code:      attempt.Code,
-		CodeType:  attempt.CodeType,
 		Language:  attempt.Language,
 	}
 }

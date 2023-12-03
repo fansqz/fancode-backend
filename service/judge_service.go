@@ -17,7 +17,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 	time "time"
 )
@@ -37,7 +36,7 @@ type JudgeService interface {
 	// Execute 执行
 	Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error)
 	// SaveCode 保存用户代码
-	SaveCode(ctx *gin.Context, problemID uint, language string, codeType string, code string) *e.Error
+	SaveCode(ctx *gin.Context, problemID uint, language string, code string) *e.Error
 	// GetCode 读取用户代码
 	GetCode(ctx *gin.Context, problemID uint) (*dto.UserCodeDto, *e.Error)
 }
@@ -88,7 +87,6 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 			ProblemID: judgeRequest.ProblemID,
 			Code:      judgeRequest.Code,
 			Language:  judgeRequest.Language,
-			CodeType:  judgeRequest.CodeType,
 			Status:    constants.InProgress,
 		}
 		problemAttempt.SubmissionCount++
@@ -112,7 +110,6 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 	problemAttempt.Code = judgeRequest.Code
 	problemAttempt.Language = judgeRequest.Language
-	problemAttempt.CodeType = judgeRequest.CodeType
 	// 有记录则更新
 	problemAttempt.SubmissionCount++
 	if submission.Status == constants.Accepted {
@@ -136,7 +133,6 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 	// 提交结果对象
 	submission := &po.Submission{
-		CodeType:  judgeRequest.CodeType,
 		Language:  judgeRequest.Language,
 		Code:      judgeRequest.Code,
 		ProblemID: judgeRequest.ProblemID,
@@ -161,15 +157,12 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 	// 保存题目文件的路径
 	problemPath := getLocalProblemPath(j.config, problem.Path)
-	localCodePath, err2 := getCodePathByProblemPath(problemPath, judgeRequest.Language)
-	if err2 != nil {
-		return nil, err2
-	}
 
 	// 保存用户代码到用户的执行路径，并获取编译文件列表
 	var compileFiles []string
+	var err2 *e.Error
 	if compileFiles, err2 = j.saveUserCode(judgeRequest.Language,
-		judgeRequest.CodeType, judgeRequest.Code, localCodePath, executePath); err2 != nil {
+		judgeRequest.Code, executePath); err2 != nil {
 		return nil, err2
 	}
 
@@ -178,7 +171,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 	// 执行编译
 	compileOptions := &judger.CompileOptions{
-		ExcludedPaths: []string{executePath, localCodePath},
+		ExcludedPaths: []string{executePath},
 		Language:      judgeRequest.Language,
 		LimitTime:     LimitCompileTime,
 	}
@@ -209,7 +202,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		LimitTime:     LimitExecuteTime,
 		MemoryLimit:   LimitExecuteMemory,
 		CPUQuota:      QuotaExecuteCpu,
-		ExcludedPaths: []string{executePath, localCodePath},
+		ExcludedPaths: []string{executePath},
 	}
 	// 运行可执行文件
 	if err = j.judgeCore.Execute(executeFilePath, inputCh, outputCh, exitCh, executeOption); err != nil {
@@ -266,44 +259,22 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 // saveUserCode
 // 保存用户代码到用户的executePath，并返回需要编译的文件列表
-func (j *judgeService) saveUserCode(language string, codeType string, codeStr string, localCodePath string, executePath string) ([]string, *e.Error) {
+func (j *judgeService) saveUserCode(language string, codeStr string, executePath string) ([]string, *e.Error) {
 	var compileFiles []string
 	var mainFile string
-	var solutionFile string
 	var err *e.Error
 	var err2 error
-	if codeType == constants.CodeTypeCore {
 
-		if mainFile, err = getMainFileNameByLanguage(language); err != nil {
-			return nil, err
-		}
-		if solutionFile, err = getSolutionFileNameByLanguage(language); err != nil {
-			return nil, err
-		}
-
-		// 用户代码加上上下文，写到code.c中
-		var code []byte
-		if code, err2 = os.ReadFile(path.Join(localCodePath, solutionFile)); err2 != nil {
-			return nil, e.ErrServer
-		}
-		re := regexp.MustCompile(`/\*begin\*/(?s).*/\*end\*/`)
-		code = re.ReplaceAll(code, []byte(codeStr))
-		if err2 = os.WriteFile(path.Join(executePath, solutionFile), code, 0644); err2 != nil {
-			return nil, e.ErrServer
-		}
-		// 将main文件和solution文件一起编译
-		compileFiles = []string{path.Join(localCodePath, mainFile), path.Join(executePath, solutionFile)}
-	} else {
-		// acm
-		if mainFile, err = getMainFileNameByLanguage(language); err != nil {
-			return nil, err
-		}
-		if err2 = os.WriteFile(path.Join(executePath, mainFile), []byte(codeStr), 0644); err2 != nil {
-			return nil, e.ErrServer
-		}
-		// 将main文件进行编译即可
-		compileFiles = []string{path.Join(executePath, mainFile)}
+	// acm
+	if mainFile, err = getMainFileNameByLanguage(language); err != nil {
+		return nil, err
 	}
+	if err2 = os.WriteFile(path.Join(executePath, mainFile), []byte(codeStr), 0644); err2 != nil {
+		return nil, e.ErrServer
+	}
+	// 将main文件进行编译即可
+	compileFiles = []string{path.Join(executePath, mainFile)}
+
 	return compileFiles, nil
 }
 
@@ -337,8 +308,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 
 	// 保存用户代码到用户的执行路径，并获取编译文件列表
 	var compileFiles []string
-	if compileFiles, err2 = j.saveUserCode(judgeRequest.Language,
-		judgeRequest.CodeType, judgeRequest.Code, localCodePath, executePath); err2 != nil {
+	if compileFiles, err2 = j.saveUserCode(judgeRequest.Language, judgeRequest.Code, executePath); err2 != nil {
 		return nil, err2
 	}
 
@@ -394,7 +364,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	return executeResult, nil
 }
 
-func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, language string, codeType string, code string) *e.Error {
+func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, language string, code string) *e.Error {
 	userInfo := ctx.Keys["user"].(*dto.UserInfo)
 	tx := global.Mysql.Begin()
 	problemAttempt, err := j.problemAttemptDao.GetProblemAttemptByID(tx, userInfo.ID, problemID)
@@ -409,7 +379,6 @@ func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, language strin
 			ProblemID:       problemID,
 			Code:            code,
 			Language:        language,
-			CodeType:        codeType,
 			SubmissionCount: 0,
 			Status:          0,
 		}
@@ -427,7 +396,6 @@ func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, language strin
 		ProblemID: problemID,
 		Code:      code,
 		Language:  language,
-		CodeType:  codeType,
 	}
 	if err = j.problemAttemptDao.UpdateProblemAttempt(tx, problemAttempt2); err != nil {
 		tx.Rollback()
@@ -452,7 +420,7 @@ func (j *judgeService) GetCode(ctx *gin.Context, problemID uint) (*dto.UserCodeD
 			return nil, e.ErrMysql
 		}
 		code, err2 := j.problemService.GetProblemTemplateCode(problemID,
-			strings.Split(problem.Languages, ",")[0], constants.CodeTypeCore)
+			strings.Split(problem.Languages, ",")[0])
 		if err2 != nil {
 			return nil, err2
 		}
@@ -460,7 +428,6 @@ func (j *judgeService) GetCode(ctx *gin.Context, problemID uint) (*dto.UserCodeD
 			ProblemID: problemID,
 			Code:      code,
 			Language:  strings.Split(problem.Languages, ",")[0],
-			CodeType:  constants.CodeTypeCore,
 		}, nil
 	}
 

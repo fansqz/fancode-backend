@@ -10,10 +10,10 @@ type DebugHandler interface {
 	Compile(compileFiles []string, outFilePath string, options *CompileOptions) (*CompileResult, error)
 	// Reset 重置DebugHandler对象
 	Reset() error
-	// StartDebug 开启调试
-	// execFile:执行文件， workPath工作目录，调试过程中产生的文件可能会在该目录内
-	// workPath最好是execFile所在目录，调试过程中会将该目录屏蔽，用/代替
-	StartDebug(execFile string, workPath string, options *DebugOptions) (*DebugResult, error)
+	// Start 开启调试
+	Start(execFile string, options *StartDebugOptions) (*DebugResult, error)
+	// Restart 重新开始调试
+	Restart(options *DebugOptions) (*DebugResult, error)
 	// Next 下num步，不会进入函数内部
 	Next(num int, options *DebugOptions) (*DebugResult, error)
 	// Step 下num步，会进入函数内部

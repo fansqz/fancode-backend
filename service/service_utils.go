@@ -28,12 +28,9 @@ const (
 )
 
 const (
-	CMainFile        = "main.c"
-	CSolutionFile    = "solution.c"
-	JavaMainFile     = "Main.java"
-	JavaSolutionFile = "Solution.java"
-	GoMainFile       = "main.go"
-	GoSolutionFile   = "solution.go"
+	CMainFile    = "main.c"
+	JavaMainFile = "Main.java"
+	GoMainFile   = "main.go"
 )
 
 const (
@@ -65,20 +62,6 @@ func getMainFileNameByLanguage(language string) (string, *e.Error) {
 		return JavaMainFile, nil
 	case constants.ProgramGo:
 		return GoMainFile, nil
-	default:
-		return "", e.ErrLanguageNotSupported
-	}
-}
-
-// 根据编程语言获取该编程语言的Solution文件名称
-func getSolutionFileNameByLanguage(language string) (string, *e.Error) {
-	switch language {
-	case constants.ProgramC:
-		return CSolutionFile, nil
-	case constants.ProgramJava:
-		return JavaSolutionFile, nil
-	case constants.ProgramGo:
-		return GoSolutionFile, nil
 	default:
 		return "", e.ErrLanguageNotSupported
 	}

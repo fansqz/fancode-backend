@@ -66,7 +66,6 @@ func (j *judgeController) Submit(ctx *gin.Context) {
 	}
 	judgeRequest := &dto.SubmitRequestDto{
 		Code:      ctx.PostForm("code"),
-		CodeType:  ctx.PostForm("codeType"),
 		Language:  ctx.PostForm("language"),
 		ProblemID: uint(problemID),
 	}
@@ -85,13 +84,12 @@ func (j *judgeController) SaveCode(ctx *gin.Context) {
 	problemIDStr := ctx.PostForm("problemID")
 	code := ctx.PostForm("code")
 	language := ctx.PostForm("language")
-	codeType := ctx.PostForm("codeType")
 	problemID, err := strconv.Atoi(problemIDStr)
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err2 := j.judgeService.SaveCode(ctx, uint(problemID), language, codeType, code)
+	err2 := j.judgeService.SaveCode(ctx, uint(problemID), language, code)
 	if err2 != nil {
 		result.Error(err2)
 		return

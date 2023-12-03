@@ -10,7 +10,6 @@ type SubmitRequestDto struct {
 	ProblemID uint
 	Code      string
 	Language  string
-	CodeType  string
 }
 
 type SubmitResultDto struct {
