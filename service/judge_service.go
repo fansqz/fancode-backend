@@ -186,8 +186,9 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 
 	// 运行
-	caseFilePath := getCasePathByLocalProblemPath(problemPath)
-	files, err3 := os.ReadDir(caseFilePath)
+	casePathForIn := path.Join(problemPath, "in")
+	casePathForOut := path.Join(problemPath, "out")
+	files, err3 := os.ReadDir(casePathForIn)
 	if err3 != nil {
 		return nil, e.ErrServer
 	}
@@ -215,7 +216,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 			// 输入数据
 			var input []byte
-			input, err = os.ReadFile(path.Join(caseFilePath, fileInfo.Name()))
+			input, err = os.ReadFile(path.Join(casePathForIn, fileInfo.Name()))
 			if err != nil {
 				log.Println(err)
 				return nil, e.ErrExecuteFailed
@@ -233,7 +234,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 				}
 
 				// 读取.out文件
-				outFilePath := path.Join(caseFilePath, strings.ReplaceAll(fileInfo.Name(), ".in", ".out"))
+				outFilePath := path.Join(casePathForOut, strings.ReplaceAll(fileInfo.Name(), ".in", ".out"))
 				var outFileContent []byte
 				if outFileContent, err = os.ReadFile(outFilePath); err != nil {
 					return nil, e.ErrExecuteFailed
@@ -265,7 +266,6 @@ func (j *judgeService) saveUserCode(language string, codeStr string, executePath
 	var err *e.Error
 	var err2 error
 
-	// acm
 	if mainFile, err = getMainFileNameByLanguage(language); err != nil {
 		return nil, err
 	}
@@ -276,6 +276,20 @@ func (j *judgeService) saveUserCode(language string, codeStr string, executePath
 	compileFiles = []string{path.Join(executePath, mainFile)}
 
 	return compileFiles, nil
+}
+
+// 根据编程语言获取该编程语言的Main文件名称
+func getMainFileNameByLanguage(language string) (string, *e.Error) {
+	switch language {
+	case constants.ProgramC:
+		return "main.c", nil
+	case constants.ProgramJava:
+		return "Main.java", nil
+	case constants.ProgramGo:
+		return "main.go", nil
+	default:
+		return "", e.ErrLanguageNotSupported
+	}
 }
 
 func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error) {
@@ -299,15 +313,9 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	}
 	defer os.RemoveAll(executePath)
 
-	// 保存题目文件的目录
-	problemPath := getLocalProblemPath(j.config, problem.Path)
-	localCodePath, err2 := getCodePathByProblemPath(problemPath, judgeRequest.Language)
-	if err2 != nil {
-		return nil, err2
-	}
-
 	// 保存用户代码到用户的执行路径，并获取编译文件列表
 	var compileFiles []string
+	var err2 *e.Error
 	if compileFiles, err2 = j.saveUserCode(judgeRequest.Language, judgeRequest.Code, executePath); err2 != nil {
 		return nil, err2
 	}
@@ -319,7 +327,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	compileOptions := &judger.CompileOptions{
 		Language:      judgeRequest.Language,
 		LimitTime:     LimitCompileTime,
-		ExcludedPaths: []string{executePath, localCodePath},
+		ExcludedPaths: []string{executePath},
 	}
 	var compileResult *judger.CompileResult
 	if compileResult, err = j.judgeCore.Compile(compileFiles, executeFilePath, compileOptions); err != nil {
@@ -343,7 +351,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 		LimitTime:     LimitExecuteTime,
 		MemoryLimit:   LimitExecuteMemory,
 		CPUQuota:      QuotaExecuteCpu,
-		ExcludedPaths: []string{executePath, localCodePath},
+		ExcludedPaths: []string{executePath},
 	}
 	if err = j.judgeCore.Execute(executeFilePath, inputCh, outputCh, exitCh, executeOptions); err != nil {
 		return nil, e.ErrUnknown
