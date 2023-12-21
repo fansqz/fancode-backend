@@ -12,9 +12,7 @@ type Problem struct {
 	Number      string `gorm:"column:number;type:varchar(255);unique_index:idx_number" json:"number"`
 	Description string `gorm:"column:description;type:text" json:"description"`
 	Title       string `gorm:"column:title" json:"title"`
-	// 存放题目内容的路径
-	Path       string `gorm:"column:path" json:"path"`
-	Difficulty int    `gorm:"column:difficulty" json:"difficulty"`
+	Difficulty  int    `gorm:"column:difficulty" json:"difficulty"`
 	// 0空值，1启用，-1停用
 	Enable int `gorm:"column:enable" json:"enable"`
 	// 支持的语言用,分割

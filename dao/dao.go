@@ -6,6 +6,7 @@ var ProviderSet = wire.NewSet(
 	NewProblemAttemptDao,
 	NewProblemBankDao,
 	NewProblemDao,
+	NewProblemCaseDao,
 	NewSubmissionDao,
 	NewSysApiDao,
 	NewSysMenuDao,

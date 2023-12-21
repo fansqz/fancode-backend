@@ -15,8 +15,6 @@ type ProblemDao interface {
 	GetProblemNameByID(db *gorm.DB, problemID uint) (string, error)
 	// GetProblemByID 根据题目id获取题目
 	GetProblemByID(db *gorm.DB, problemID uint) (*po.Problem, error)
-	// GetProblemFilePathByID 根据题目id获取题目文件的path
-	GetProblemFilePathByID(db *gorm.DB, id uint) (string, error)
 	// InsertProblem 添加题库
 	InsertProblem(db *gorm.DB, problem *po.Problem) error
 	// UpdateProblem 更新题目
@@ -24,7 +22,6 @@ type ProblemDao interface {
 	UpdateProblem(db *gorm.DB, problem *po.Problem) error
 	// UpdateProblemField 根据字段进行更新
 	UpdateProblemField(db *gorm.DB, id uint, field string, value string) error
-	UpdatePathByID(db *gorm.DB, path string, id uint) error
 	// CheckProblemNumberExists 检测用户ID是否存在
 	CheckProblemNumberExists(db *gorm.DB, problemCode string) (bool, error)
 	// SetProblemEnable 让一个题目可用
@@ -99,34 +96,23 @@ func (p *problemDao) GetProblemList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*p
 
 func (p *problemDao) GetProblemCount(db *gorm.DB, problem *po.Problem) (int64, error) {
 	var count int64
-	db2 := db
 	if problem != nil && problem.Name != "" {
-		db2 = db2.Where("name like ?", "%"+problem.Name+"%")
+		db = db.Where("name like ?", "%"+problem.Name+"%")
 	}
 	if problem != nil && problem.Number != "" {
-		db2 = db2.Where("number = ?", problem.Number)
+		db = db.Where("number = ?", problem.Number)
 	}
 	if problem != nil && problem.Difficulty != 0 {
-		db2 = db2.Where("difficulty = ?", problem.Difficulty)
+		db = db.Where("difficulty = ?", problem.Difficulty)
 	}
 	if problem != nil && problem.BankID != nil {
-		db2 = db2.Where("bank_id = ?", problem.BankID)
+		db = db.Where("bank_id = ?", problem.BankID)
 	}
 	if problem != nil && problem.Enable != 0 {
-		db2 = db2.Where("enable = ?", problem.Enable)
+		db = db.Where("enable = ?", problem.Enable)
 	}
-	err := db2.Model(&po.Problem{}).Count(&count).Error
+	err := db.Model(&po.Problem{}).Count(&count).Error
 	return count, err
-}
-
-func (p *problemDao) GetProblemFilePathByID(db *gorm.DB, id uint) (string, error) {
-	row := db.Model(&po.Problem{}).Select("path").Where("id = ?", id)
-	if row.Error != nil {
-		return "", row.Error
-	}
-	problem := &po.Problem{}
-	row.Scan(&problem)
-	return problem.Path, nil
 }
 
 func (p *problemDao) InsertProblem(db *gorm.DB, problem *po.Problem) error {
@@ -155,11 +141,6 @@ func (p *problemDao) UpdateProblemField(db *gorm.DB, id uint, field string, valu
 		return err
 	}
 	return nil
-}
-
-func (p *problemDao) UpdatePathByID(db *gorm.DB, path string, id uint) error {
-	return db.Model(&po.Problem{}).
-		Where("id = ?", id).Update("path", path).Error
 }
 
 func (p *problemDao) CheckProblemNumberExists(db *gorm.DB, problemCode string) (bool, error) {

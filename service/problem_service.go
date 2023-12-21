@@ -4,20 +4,14 @@ import (
 	conf "FanCode/config"
 	"FanCode/dao"
 	e "FanCode/error"
-	"FanCode/file_store"
 	"FanCode/global"
 	"FanCode/models/dto"
 	"FanCode/models/po"
-	r "FanCode/models/vo"
 	"FanCode/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"log"
-	"mime/multipart"
-	"net/http"
 	"os"
-	"path/filepath"
-	"strconv"
 	"time"
 )
 
@@ -27,17 +21,13 @@ type ProblemService interface {
 	// InsertProblem 添加题目
 	InsertProblem(problem *po.Problem, ctx *gin.Context) (uint, *e.Error)
 	// UpdateProblem 更新题目
-	UpdateProblem(Problem *po.Problem, ctx *gin.Context, file *multipart.FileHeader) *e.Error
+	UpdateProblem(Problem *po.Problem, ctx *gin.Context) *e.Error
 	// DeleteProblem 删除题目
 	DeleteProblem(id uint) *e.Error
 	// GetProblemList 获取题目列表
 	GetProblemList(query *dto.PageQuery) (*dto.PageInfo, *e.Error)
 	// GetUserProblemList 用户获取题目列表
 	GetUserProblemList(ctx *gin.Context, query *dto.PageQuery) (*dto.PageInfo, *e.Error)
-	// DownloadProblemZipFile 下载题目压缩文件
-	DownloadProblemZipFile(ctx *gin.Context, problemID uint)
-	// DownloadProblemTemplateFile 获取题目模板文件
-	DownloadProblemTemplateFile(ctx *gin.Context)
 	// GetProblemByID 获取题目信息
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
 	// GetProblemByNumber 根据题目编号获取题目信息
@@ -51,14 +41,16 @@ type ProblemService interface {
 type problemService struct {
 	config            *conf.AppConfig
 	problemDao        dao.ProblemDao
+	problemCaseDao    dao.ProblemCaseDao
 	problemAttemptDao dao.ProblemAttemptDao
 }
 
-func NewProblemService(config *conf.AppConfig, problemDao dao.ProblemDao, attemptDao dao.ProblemAttemptDao) ProblemService {
+func NewProblemService(config *conf.AppConfig, pd dao.ProblemDao, pcd dao.ProblemCaseDao, ad dao.ProblemAttemptDao) ProblemService {
 	return &problemService{
 		config:            config,
-		problemDao:        problemDao,
-		problemAttemptDao: attemptDao,
+		problemDao:        pd,
+		problemCaseDao:    pcd,
+		problemAttemptDao: ad,
 	}
 }
 
@@ -112,25 +104,11 @@ func (q *problemService) InsertProblem(problem *po.Problem, ctx *gin.Context) (u
 	return problem.ID, nil
 }
 
-func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context, file *multipart.FileHeader) *e.Error {
-	path, err := q.problemDao.GetProblemFilePathByID(global.Mysql, problem.ID)
-	if err != nil {
-		log.Println(err)
-		return e.ErrProblemUpdateFailed
-	}
-	if problem.Enable == 1 && (path == "" && file == nil) {
-		return e.NewCustomMsg("该题目没有上传编程文件，不可启动")
-	}
-	if file != nil {
-		// 更新文件
-		err2 := q.UploadProblemFile(ctx, file, problem.ID)
-		return err2
-	}
+func (q *problemService) UpdateProblem(problem *po.Problem, ctx *gin.Context) *e.Error {
 	problem.UpdatedAt = time.Now()
 	// 更新题目
-	err2 := q.problemDao.UpdateProblem(global.Mysql, problem)
-	if err2 != nil {
-		log.Println(err2)
+	if err := q.problemDao.UpdateProblem(global.Mysql, problem); err != nil {
+		log.Println(err)
 		return e.ErrProblemUpdateFailed
 	}
 	return nil
@@ -146,23 +124,12 @@ func (q *problemService) DeleteProblem(id uint) *e.Error {
 	if problem == nil || problem.Number == "" {
 		return e.ErrProblemNotExist
 	}
-	if problem.Path != "" {
-		// 删除题目文件
-		s := file_store.NewProblemCOS(q.config.COSConfig)
-		err = s.DeleteFolder(problem.Path)
-		if err != nil {
-			return e.ErrProblemDeleteFailed
-		}
-		// 删除本地文件
-		localPath := getLocalProblemPath(q.config, problem.Path)
-		err = utils.CheckAndDeletePath(localPath)
-		if err != nil {
-			return e.ErrProblemDeleteFailed
-		}
+	// 删除用例
+	if err = q.problemCaseDao.DeleteProblemCaseByProblemID(global.Mysql, id); err != nil {
+		return e.ErrMysql
 	}
 	// 删除题目
-	err = q.problemDao.DeleteProblemByID(global.Mysql, id)
-	if err != nil {
+	if err = q.problemDao.DeleteProblemByID(global.Mysql, id); err != nil {
 		return e.ErrMysql
 	}
 	return nil
@@ -235,45 +202,6 @@ func (q *problemService) GetUserProblemList(ctx *gin.Context, query *dto.PageQue
 	return pageInfo, nil
 }
 
-// UploadProblemFile 保存到oss的时候，以id做为文件名
-func (q *problemService) UploadProblemFile(ctx *gin.Context, file *multipart.FileHeader, problemID uint) *e.Error {
-	path := strconv.Itoa(int(problemID))
-	filename := file.Filename
-	// 保存文件到本地
-	tempPath := q.config.FilePathConfig.TempDir
-	tempPath = tempPath + "/" + utils.GetUUID()
-	err := ctx.SaveUploadedFile(file, tempPath+"/"+filename)
-	if err != nil {
-		log.Println(err)
-		return e.ErrProblemFileUploadFailed
-	}
-	//解压
-	err = utils.Extract(tempPath+"/"+filename, tempPath+"/"+path)
-	if err != nil {
-		log.Println(err)
-		return e.ErrProblemFileUploadFailed
-	}
-	//检测文件内有一个文件夹，或者是多个文件
-	ProblemPathInLocal, _ := getSingleDirectoryPath(tempPath + "/" + path)
-	s := file_store.NewProblemCOS(q.config.COSConfig)
-	err = s.DeleteFolder(strconv.Itoa(int(problemID)))
-	s.UploadFolder(path, ProblemPathInLocal)
-	// 存储到数据库
-	updateError := q.problemDao.UpdatePathByID(global.Mysql, path, problemID)
-	if updateError != nil {
-		return e.ErrMysql
-	}
-	// 删除temp中所有文件
-	os.RemoveAll(tempPath)
-	// 删除本地题目的文件
-	localPath := getLocalProblemPath(q.config, path)
-	err = utils.CheckAndDeletePath(localPath)
-	if err != nil {
-		_ = utils.CheckAndDeletePath(localPath)
-	}
-	return nil
-}
-
 func (q *problemService) GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error) {
 	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
 	if err == gorm.ErrRecordNotFound {
@@ -302,89 +230,9 @@ func (q *problemService) GetProblemTemplateCode(problemID uint, language string)
 	return code, nil
 }
 
-func getCaseFolderByPath(config *conf.AppConfig, path string) string {
-	localpath := getLocalProblemPath(config, path)
-	return localpath + "/io"
-}
-
-// 如果文件夹内有且仅有一个文件夹，返回内部文件夹路径
-func getSingleDirectoryPath(path string) (string, error) {
-	dirEntries, err := os.ReadDir(path)
-	if err != nil {
-		return path, err
-	}
-
-	// 检查目录中文件和文件夹的数量
-	if len(dirEntries) != 1 || !dirEntries[0].IsDir() {
-		return path, nil
-	}
-
-	return filepath.Join(path, dirEntries[0].Name()), nil
-}
-
-func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint) {
-	result := r.NewResult(ctx)
-	path, err := q.problemDao.GetProblemFilePathByID(global.Mysql, problemID)
-	if err != nil {
-		result.Error(e.ErrProblemZipFileDownloadFailed)
-		return
-	}
-	temp := getTempDir(q.config)
-	// 最后删除临时文件夹
-	defer func() {
-		// 删除临时文件夹和压缩包
-		err = os.RemoveAll(temp)
-		if err != nil {
-			os.RemoveAll(temp)
-		}
-	}()
-	localPath := temp + "/" + strconv.Itoa(int(problemID))
-	zipPath := localPath + ".zip"
-	store := file_store.NewProblemCOS(q.config.COSConfig)
-	err = store.DownloadAndCompressFolder(path, localPath, zipPath)
-	if err != nil {
-		log.Println(err)
-		result.Error(e.ErrProblemZipFileDownloadFailed)
-		return
-	}
-	var content []byte
-	content, err = os.ReadFile(zipPath)
-	if err != nil {
-		result.Error(e.ErrProblemZipFileDownloadFailed)
-		return
-	}
-	ctx.Writer.WriteHeader(http.StatusOK)
-	ctx.Header("Content-Disposition", "attachment; filename="+strconv.Itoa(int(problemID))+".zip")
-	ctx.Header("Content-Type", "application/zip")
-	ctx.Writer.Write(content)
-}
-
-func (q *problemService) DownloadProblemTemplateFile(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	path := q.config.FilePathConfig.ProblemFileTemplate
-	content, err := os.ReadFile(path)
-	if err != nil {
-		result.Error(e.ErrProblemZipFileDownloadFailed)
-		return
-	}
-	ctx.Writer.WriteHeader(http.StatusOK)
-	ctx.Header("Content-Disposition", "attachment; filename="+"编程文件模板.zip")
-	ctx.Header("Content-Type", "application/zip")
-	ctx.Writer.Write(content)
-}
-
 // todo: 是否要加事务
 func (q *problemService) UpdateProblemEnable(id uint, enable int) *e.Error {
-	//检测题目文件是否存在
-	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
-	if err != nil {
-		return e.ErrMysql
-	}
-	if problem.Path == "" {
-		return e.ErrProblemFilePathNotExist
-	}
-	err = q.problemDao.SetProblemEnable(global.Mysql, id, enable)
-	if err != nil {
+	if err := q.problemDao.SetProblemEnable(global.Mysql, id, enable); err != nil {
 		return e.ErrMysql
 	}
 	return nil

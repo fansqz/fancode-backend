@@ -20,10 +20,6 @@ type ProblemManagementController interface {
 	GetProblemByID(ctx *gin.Context)
 	// UpdateProblem 更新题目
 	UpdateProblem(ctx *gin.Context)
-	// DownloadProblemFile 下载题目的编程文件
-	DownloadProblemFile(ctx *gin.Context)
-	// DownloadProblemTemplateFile 下载题目的编程文件的模板文件
-	DownloadProblemTemplateFile(ctx *gin.Context)
 	// UpdateProblemEnable 设置题目可用
 	UpdateProblemEnable(ctx *gin.Context)
 }
@@ -77,8 +73,7 @@ func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 	// 读取id
 	problem.ID = uint(utils.AtoiOrDefault(ctx.PostForm("id"), 0))
 	// 读取文件
-	file, _ := ctx.FormFile("file")
-	if err = q.problemService.UpdateProblem(problem, ctx, file); err != nil {
+	if err = q.problemService.UpdateProblem(problem, ctx); err != nil {
 		result.Error(err)
 		return
 	}
@@ -126,15 +121,6 @@ func (q *problemManagementController) GetProblemByID(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData(problem)
-}
-
-func (q *problemManagementController) DownloadProblemFile(ctx *gin.Context) {
-	pid := utils.GetIntParamOrDefault(ctx, "id", 0)
-	q.problemService.DownloadProblemZipFile(ctx, uint(pid))
-}
-
-func (q *problemManagementController) DownloadProblemTemplateFile(ctx *gin.Context) {
-	q.problemService.DownloadProblemTemplateFile(ctx)
 }
 
 func (q *problemManagementController) UpdateProblemEnable(ctx *gin.Context) {

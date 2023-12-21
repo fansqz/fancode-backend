@@ -14,7 +14,6 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -45,20 +44,22 @@ type judgeService struct {
 	config            *conf.AppConfig
 	judgeCore         *judger.JudgeCore
 	problemService    ProblemService
+	problemCaseDao    dao.ProblemCaseDao
 	submissionDao     dao.SubmissionDao
 	problemAttemptDao dao.ProblemAttemptDao
 	problemDao        dao.ProblemDao
 }
 
-func NewJudgeService(config *conf.AppConfig, problemService ProblemService, submissionDao dao.SubmissionDao,
-	attemptDao dao.ProblemAttemptDao, problemDao dao.ProblemDao) JudgeService {
+func NewJudgeService(config *conf.AppConfig, ps ProblemService, sd dao.SubmissionDao,
+	ad dao.ProblemAttemptDao, pd dao.ProblemDao, pcd dao.ProblemCaseDao) JudgeService {
 	return &judgeService{
 		config:            config,
 		judgeCore:         judger.NewJudgeCore(),
-		problemService:    problemService,
-		submissionDao:     submissionDao,
-		problemAttemptDao: attemptDao,
-		problemDao:        problemDao,
+		problemService:    ps,
+		problemCaseDao:    pcd,
+		submissionDao:     sd,
+		problemAttemptDao: ad,
+		problemDao:        pd,
 	}
 }
 
@@ -139,24 +140,12 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		UserID:    ctx.Keys["user"].(*dto.UserInfo).ID,
 	}
 
-	//读取题目到本地
-	problem, err := j.problemDao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
-	if err != nil {
-		return nil, e.ErrExecuteFailed
-	}
-	if err = checkAndDownloadQuestionFile(j.config, problem.Path); err != nil {
-		return nil, e.ErrExecuteFailed
-	}
-
 	// executePath 执行路径，用户的临时文件
 	executePath := getExecutePath(j.config)
-	if err = os.MkdirAll(executePath, os.ModePerm); err != nil {
+	if err := os.MkdirAll(executePath, os.ModePerm); err != nil {
 		return nil, e.ErrExecuteFailed
 	}
 	defer os.RemoveAll(executePath)
-
-	// 保存题目文件的路径
-	problemPath := getLocalProblemPath(j.config, problem.Path)
 
 	// 保存用户代码到用户的执行路径，并获取编译文件列表
 	var compileFiles []string
@@ -176,6 +165,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		LimitTime:     LimitCompileTime,
 	}
 	var compileResult *judger.CompileResult
+	var err error
 	if compileResult, err = j.judgeCore.Compile(compileFiles, executeFilePath, compileOptions); err != nil {
 		return nil, e.ErrUnknown
 	}
@@ -186,11 +176,9 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 
 	// 运行
-	casePathForIn := path.Join(problemPath, "in")
-	casePathForOut := path.Join(problemPath, "out")
-	files, err3 := os.ReadDir(casePathForIn)
-	if err3 != nil {
-		return nil, e.ErrServer
+	caseList, err := j.problemCaseDao.GetProblemCaseList2(global.Mysql, judgeRequest.ProblemID)
+	if err != nil {
+		return nil, e.ErrUnknown
 	}
 	inputCh := make(chan []byte)
 	outputCh := make(chan judger.ExecuteResult)
@@ -211,46 +199,31 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 
 	beginTime := time.Now()
-	for _, fileInfo := range files {
-		if !fileInfo.IsDir() && strings.HasSuffix(fileInfo.Name(), ".in") {
+	for _, c := range caseList {
+		// 输入数据
+		inputCh <- []byte(c.Input)
 
-			// 输入数据
-			var input []byte
-			input, err = os.ReadFile(path.Join(casePathForIn, fileInfo.Name()))
-			if err != nil {
-				log.Println(err)
-				return nil, e.ErrExecuteFailed
+		// 读取输出数据
+		select {
+		case executeResult := <-outputCh:
+			// 运行出错
+			if !executeResult.Executed {
+				submission.Status = constants.RuntimeError
+				submission.ErrorMessage = executeResult.ErrorMessage
+				return submission, nil
 			}
-			inputCh <- input
 
-			// 读取输出数据
-			select {
-			case executeResult := <-outputCh:
-				// 运行出错
-				if !executeResult.Executed {
-					submission.Status = constants.RuntimeError
-					submission.ErrorMessage = executeResult.ErrorMessage
-					return submission, nil
-				}
-
-				// 读取.out文件
-				outFilePath := path.Join(casePathForOut, strings.ReplaceAll(fileInfo.Name(), ".in", ".out"))
-				var outFileContent []byte
-				if outFileContent, err = os.ReadFile(outFilePath); err != nil {
-					return nil, e.ErrExecuteFailed
-				}
-
-				// 结果不正确则结束
-				if !j.compareAnswer(string(executeResult.Output), string(outFileContent)) {
-					submission.Status = constants.WrongAnswer
-					submission.CaseName = strings.Split(fileInfo.Name(), ".")[0]
-					submission.CaseData = string(input)
-					submission.ExpectedOutput = string(outFileContent)
-					submission.UserOutput = string(executeResult.Output)
-					return submission, nil
-				}
+			// 结果不正确则结束
+			if !j.compareAnswer(string(executeResult.Output), c.Output) {
+				submission.Status = constants.WrongAnswer
+				submission.CaseName = c.Name
+				submission.CaseData = c.Input
+				submission.ExpectedOutput = c.Output
+				submission.UserOutput = string(executeResult.Output)
+				return submission, nil
 			}
 		}
+
 	}
 	endTime := time.Now()
 	submission.Status = constants.Accepted
@@ -297,27 +270,18 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 		ProblemID: judgeRequest.ProblemID,
 	}
 
-	//读取题目到本地，并编译
-	problem, err := j.problemDao.GetProblemByID(global.Mysql, judgeRequest.ProblemID)
-	if err != nil {
-		return nil, e.ErrExecuteFailed
-	}
-	if err = checkAndDownloadQuestionFile(j.config, problem.Path); err != nil {
-		return nil, e.ErrExecuteFailed
-	}
-
 	// executePath 用户执行目录
 	executePath := getExecutePath(j.config)
-	if err = os.MkdirAll(executePath, os.ModePerm); err != nil {
+	if err := os.MkdirAll(executePath, os.ModePerm); err != nil {
 		return nil, e.ErrExecuteFailed
 	}
 	defer os.RemoveAll(executePath)
 
 	// 保存用户代码到用户的执行路径，并获取编译文件列表
 	var compileFiles []string
-	var err2 *e.Error
-	if compileFiles, err2 = j.saveUserCode(judgeRequest.Language, judgeRequest.Code, executePath); err2 != nil {
-		return nil, err2
+	var err *e.Error
+	if compileFiles, err = j.saveUserCode(judgeRequest.Language, judgeRequest.Code, executePath); err != nil {
+		return nil, err
 	}
 
 	// 输出的执行文件路劲
@@ -330,7 +294,8 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 		ExcludedPaths: []string{executePath},
 	}
 	var compileResult *judger.CompileResult
-	if compileResult, err = j.judgeCore.Compile(compileFiles, executeFilePath, compileOptions); err != nil {
+	var err2 error
+	if compileResult, err2 = j.judgeCore.Compile(compileFiles, executeFilePath, compileOptions); err2 != nil {
 		return nil, e.ErrUnknown
 	}
 	if !compileResult.Compiled {
@@ -353,7 +318,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 		CPUQuota:      QuotaExecuteCpu,
 		ExcludedPaths: []string{executePath},
 	}
-	if err = j.judgeCore.Execute(executeFilePath, inputCh, outputCh, exitCh, executeOptions); err != nil {
+	if err2 = j.judgeCore.Execute(executeFilePath, inputCh, outputCh, exitCh, executeOptions); err2 != nil {
 		return nil, e.ErrUnknown
 	}
 

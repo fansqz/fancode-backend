@@ -28,7 +28,6 @@ func NewProblemDtoForGet(problem *po.Problem) *ProblemDtoForGet {
 		Number:      problem.Number,
 		Description: problem.Description,
 		Title:       problem.Title,
-		Path:        problem.Path,
 		Difficulty:  problem.Difficulty,
 		Languages:   problem.Languages,
 		Enable:      problem.Enable,
@@ -57,7 +56,6 @@ func NewProblemDtoForList(problem *po.Problem) *ProblemDtoForList {
 		Name:       problem.Name,
 		Number:     problem.Number,
 		Title:      problem.Title,
-		Path:       problem.Path,
 		Difficulty: problem.Difficulty,
 		Enable:     problem.Enable,
 	}

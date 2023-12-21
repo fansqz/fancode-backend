@@ -120,7 +120,6 @@ func (r *sysRoleDao) DeleteRoleMenusByRoleID(db *gorm.DB, roleID uint) error {
 	if err := db.Model(&role).Association("Menus").Clear(); err != nil {
 		return err
 	}
-
 	return nil
 }
 

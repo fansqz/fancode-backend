@@ -18,12 +18,6 @@ const (
 	AcmJavaCodeFilePath = "./resources/acmTemplate/java"
 )
 
-// getLocalProblemPath 根据题目的相对路径，获取题目的本地路径
-// 题目会存储在本地的一个固定的目录中，problemPath是相对路径
-func getLocalProblemPath(config *config.AppConfig, problemPath string) string {
-	return path.Join(config.FilePathConfig.ProblemFileDir, problemPath)
-}
-
 // getExecutePath 给用户的此次运行生成一个临时目录
 func getExecutePath(config *config.AppConfig) string {
 	uuid := utils.GetUUID()
