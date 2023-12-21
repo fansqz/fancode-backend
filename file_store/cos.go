@@ -8,7 +8,6 @@ import (
 	"github.com/tencentyun/cos-go-sdk-v5"
 	"github.com/tencentyun/cos-go-sdk-v5/debug"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -157,10 +156,14 @@ func (c *cosStore) DownloadAndCompressFolder(storePath, localPath, zipPath strin
 		defer resp.Body.Close()
 
 		// 读取文件内容
-		data, err := ioutil.ReadAll(resp.Body)
+		data, err := io.ReadAll(resp.Body)
 		if err != nil {
 			fmt.Println("Failed to read file:", err)
 			return err
+		}
+
+		if len(data) == 0 {
+			continue
 		}
 
 		// 创建文件夹
@@ -172,7 +175,7 @@ func (c *cosStore) DownloadAndCompressFolder(storePath, localPath, zipPath strin
 		}
 
 		// 将文件内容写入本地文件
-		err = ioutil.WriteFile(filePathInLocal, data, 0644)
+		err = os.WriteFile(filePathInLocal, data, 0644)
 		if err != nil {
 			fmt.Println("Failed to save file:", err)
 			return err

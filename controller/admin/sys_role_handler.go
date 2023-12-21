@@ -1,12 +1,13 @@
 package admin
 
 import (
+	"FanCode/controller/utils"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
-	"strconv"
+	"gorm.io/gorm"
 )
 
 // SysRoleController 角色管理相关功能
@@ -43,12 +44,7 @@ func NewSysRoleController(roleService service.SysRoleService) SysRoleController 
 
 func (s *sysRoleController) GetRoleByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	roleIDStr := ctx.Param("id")
-	roleID, err := strconv.Atoi(roleIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	roleID := utils.GetIntParamOrDefault(ctx, "id", 0)
 	user, err2 := s.sysRoleService.GetRoleByID(uint(roleID))
 	if err2 != nil {
 		result.Error(err2)
@@ -74,17 +70,15 @@ func (s *sysRoleController) InsertSysRole(ctx *gin.Context) {
 func (s *sysRoleController) UpdateSysRole(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	sysRoleIDString := ctx.PostForm("id")
-	sysRoleID, err := strconv.Atoi(sysRoleIDString)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
+	sysRoleID := utils.AtoiOrDefault(sysRoleIDString, 0)
+	sysRole := &po.SysRole{
+		Model: gorm.Model{
+			ID: uint(sysRoleID),
+		},
+		Name:        ctx.PostForm("name"),
+		Description: ctx.PostForm("description"),
 	}
-	sysRole := &po.SysRole{}
-	sysRole.ID = uint(sysRoleID)
-	sysRole.Name = ctx.PostForm("name")
-	sysRole.Description = ctx.PostForm("description")
-	err2 := s.sysRoleService.UpdateSysRole(sysRole)
-	if err2 != nil {
+	if err2 := s.sysRoleService.UpdateSysRole(sysRole); err2 != nil {
 		result.Error(err2)
 		return
 	}
@@ -93,15 +87,9 @@ func (s *sysRoleController) UpdateSysRole(ctx *gin.Context) {
 
 func (s *sysRoleController) DeleteSysRole(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	ids := ctx.Param("id")
-	id, convertErr := strconv.Atoi(ids)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	err2 := s.sysRoleService.DeleteSysRole(uint(id))
-	if err2 != nil {
-		result.Error(err2)
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
+	if err := s.sysRoleService.DeleteSysRole(uint(id)); err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessData("删除成功")
@@ -110,7 +98,7 @@ func (s *sysRoleController) DeleteSysRole(ctx *gin.Context) {
 // GetSysRoleList 读取一个列表的角色
 func (s *sysRoleController) GetSysRoleList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := GetPageQueryByQuery(ctx)
+	pageQuery, err := utils.GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return
@@ -136,13 +124,11 @@ type insertApisToRoleRequest struct {
 func (s *sysRoleController) UpdateRoleApis(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var json insertApisToRoleRequest
-	err := ctx.BindJSON(&json)
-	if err != nil {
+	if err := ctx.BindJSON(&json); err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err2 := s.sysRoleService.UpdateRoleApis(json.RoleID, json.ApiIDs)
-	if err2 != nil {
+	if err2 := s.sysRoleService.UpdateRoleApis(json.RoleID, json.ApiIDs); err2 != nil {
 		result.Error(err2)
 		return
 	}
@@ -157,13 +143,11 @@ type insertMenusToRoleRequest struct {
 func (s *sysRoleController) UpdateRoleMenus(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var json insertMenusToRoleRequest
-	err := ctx.BindJSON(&json)
-	if err != nil {
+	if err := ctx.BindJSON(&json); err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err2 := s.sysRoleService.UpdateRoleMenus(json.RoleID, json.MenuIDs)
-	if err2 != nil {
+	if err2 := s.sysRoleService.UpdateRoleMenus(json.RoleID, json.MenuIDs); err2 != nil {
 		result.Error(err2)
 		return
 	}
@@ -172,12 +156,7 @@ func (s *sysRoleController) UpdateRoleMenus(ctx *gin.Context) {
 
 func (s *sysRoleController) GetApiIDsByRoleID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
 	apiIDs, err2 := s.sysRoleService.GetApiIDsByRoleID(uint(id))
 	if err2 != nil {
 		result.Error(err2)
@@ -188,12 +167,7 @@ func (s *sysRoleController) GetApiIDsByRoleID(ctx *gin.Context) {
 
 func (s *sysRoleController) GetMenuIDsByRoleID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
 	menuIDs, err2 := s.sysRoleService.GetMenuIDsByRoleID(uint(id))
 	if err2 != nil {
 		result.Error(err2)

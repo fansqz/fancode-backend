@@ -18,7 +18,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -47,11 +46,6 @@ type ProblemService interface {
 	GetProblemTemplateCode(problemID uint, language string) (string, *e.Error)
 	// UpdateProblemEnable 设置题目可用
 	UpdateProblemEnable(id uint, enable int) *e.Error
-
-	// todo: 支持线上编辑题目
-	GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error)
-	GetCaseFileByID(id uint, page int, pageSize int) (*dto.PageInfo, *e.Error)
-	UpdateProblemField(id uint, field string, value string) *e.Error
 }
 
 type problemService struct {
@@ -308,93 +302,6 @@ func (q *problemService) GetProblemTemplateCode(problemID uint, language string)
 	return code, nil
 }
 
-func (q *problemService) GetProblemFileListByID(id uint) ([]*dto.FileDto, *e.Error) {
-	// 获取题目文件
-	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
-	if err != nil {
-		return nil, e.ErrMysql
-	}
-	if problem.Path == "" {
-		return nil, e.ErrProblemFileNotExist
-	}
-	// 下载文件到本地
-	err = checkAndDownloadQuestionFile(q.config, problem.Path)
-	if err != nil {
-		return nil, e.ErrProblemGetFailed
-	}
-	// 读取文件,仅会读取一个层级的文件
-	localPath := getLocalProblemPath(q.config, problem.Path)
-	files, err2 := os.ReadDir(localPath)
-	if err2 != nil {
-		return nil, e.ErrExecuteFailed
-	}
-	fileDtoList := make([]*dto.FileDto, 10)
-	for _, fileInfo := range files {
-		if fileInfo.IsDir() {
-			continue
-		}
-		var content []byte
-		content, err = os.ReadFile(localPath + "/" + fileInfo.Name())
-		if err != nil {
-			continue
-		}
-		fileDto := &dto.FileDto{
-			Name:    fileInfo.Name(),
-			Content: string(content),
-		}
-		fileDtoList = append(fileDtoList, fileDto)
-	}
-	return fileDtoList, nil
-}
-
-func (q *problemService) GetCaseFileByID(id uint, page int, pageSize int) (*dto.PageInfo, *e.Error) {
-	// 获取题目文件
-	problem, err := q.problemDao.GetProblemByID(global.Mysql, id)
-	if err != nil {
-		return nil, e.ErrMysql
-	}
-	if problem.Path == "" {
-		return nil, e.ErrProblemFileNotExist
-	}
-	// 下载文件到本地
-	err = checkAndDownloadQuestionFile(q.config, problem.Path)
-	if err != nil {
-		return nil, e.ErrProblemGetFailed
-	}
-	//根据输入类型获取输入文件列表
-	ioFileList := make([]string, 10)
-	files, _ := os.ReadDir(getCaseFolderByPath(q.config, problem.Path))
-	for _, fileInfo := range files {
-		if strings.HasSuffix(fileInfo.Name(), ".in") {
-			ioFileList = append(ioFileList, fileInfo.Name())
-		}
-	}
-	// 分页查询
-	index1 := (page - 1) * pageSize
-	index2 := index1 + pageSize
-	if index2 > len(ioFileList) {
-		index2 = len(ioFileList)
-	}
-	ioFileList2 := ioFileList[index1:index2]
-	ioFilePageInfo := &dto.PageInfo{
-		Total: int64(len(ioFileList)),
-		Size:  int64(len(ioFileList2)),
-		List:  ioFileList2,
-	}
-	return ioFilePageInfo, nil
-}
-
-func (q *problemService) UpdateProblemField(id uint, field string, value string) *e.Error {
-	if field == "name" || field == "code" || field == "description" || field == "title" {
-		err := q.problemDao.UpdateProblemField(global.Mysql, id, field, value)
-		if err != nil {
-			return e.ErrProblemUpdateFailed
-		}
-		return nil
-	}
-	return e.ErrProblemUpdateFailed
-}
-
 func getCaseFolderByPath(config *conf.AppConfig, path string) string {
 	localpath := getLocalProblemPath(config, path)
 	return localpath + "/io"
@@ -436,6 +343,7 @@ func (q *problemService) DownloadProblemZipFile(ctx *gin.Context, problemID uint
 	store := file_store.NewProblemCOS(q.config.COSConfig)
 	err = store.DownloadAndCompressFolder(path, localPath, zipPath)
 	if err != nil {
+		log.Println(err)
 		result.Error(e.ErrProblemZipFileDownloadFailed)
 		return
 	}

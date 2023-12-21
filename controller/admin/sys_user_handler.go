@@ -1,12 +1,13 @@
 package admin
 
 import (
+	"FanCode/controller/utils"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
-	"strconv"
+	"gorm.io/gorm"
 )
 
 type SysUserController interface {
@@ -40,12 +41,7 @@ func NewSysUserController(userService service.SysUserService) SysUserController 
 
 func (s *sysUserController) GetUserByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	userIDStr := ctx.Param("id")
-	userID, err := strconv.Atoi(userIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	userID := utils.GetIntParamOrDefault(ctx, "id", 0)
 	user, err2 := s.sysUserService.GetUserByID(uint(userID))
 	if err2 != nil {
 		result.Error(err2)
@@ -56,17 +52,12 @@ func (s *sysUserController) GetUserByID(ctx *gin.Context) {
 
 func (s *sysUserController) InsertSysUser(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	loginName := ctx.PostForm("loginName")
-	username := ctx.PostForm("username")
-	password := ctx.PostForm("password")
-	email := ctx.PostForm("email")
-	phone := ctx.PostForm("phone")
 	id, err := s.sysUserService.InsertSysUser(&po.SysUser{
-		LoginName: loginName,
-		Username:  username,
-		Password:  password,
-		Email:     email,
-		Phone:     phone,
+		LoginName: ctx.PostForm("loginName"),
+		Username:  ctx.PostForm("username"),
+		Password:  ctx.PostForm("password"),
+		Email:     ctx.PostForm("email"),
+		Phone:     ctx.PostForm("phone"),
 	})
 	if err != nil {
 		result.Error(err)
@@ -77,26 +68,18 @@ func (s *sysUserController) InsertSysUser(ctx *gin.Context) {
 
 func (s *sysUserController) UpdateSysUser(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	idStr := ctx.PostForm("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
+	id := utils.AtoiOrDefault(ctx.PostForm("id"), 0)
+	user := &po.SysUser{
+		Model: gorm.Model{
+			ID: uint(id),
+		},
+		LoginName: ctx.PostForm("loginName"),
+		Username:  ctx.PostForm("username"),
+		Password:  ctx.PostForm("password"),
+		Email:     ctx.PostForm("email"),
+		Phone:     ctx.PostForm("phone"),
 	}
-	loginName := ctx.PostForm("loginName")
-	username := ctx.PostForm("username")
-	password := ctx.PostForm("password")
-	email := ctx.PostForm("email")
-	phone := ctx.PostForm("phone")
-	user := &po.SysUser{}
-	user.ID = uint(id)
-	user.LoginName = loginName
-	user.Username = username
-	user.Password = password
-	user.Email = email
-	user.Phone = phone
-	err2 := s.sysUserService.UpdateSysUser(user)
-	if err2 != nil {
+	if err2 := s.sysUserService.UpdateSysUser(user); err2 != nil {
 		result.Error(err2)
 		return
 	}
@@ -105,12 +88,7 @@ func (s *sysUserController) UpdateSysUser(ctx *gin.Context) {
 
 func (s *sysUserController) DeleteSysUser(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
 	err2 := s.sysUserService.DeleteSysUser(uint(id))
 	if err2 != nil {
 		result.Error(err2)
@@ -121,7 +99,7 @@ func (s *sysUserController) DeleteSysUser(ctx *gin.Context) {
 
 func (s *sysUserController) GetSysUserList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := GetPageQueryByQuery(ctx)
+	pageQuery, err := utils.GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return
@@ -156,13 +134,11 @@ type updateUserRolesRequest struct {
 func (s *sysUserController) UpdateUserRoles(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var request updateUserRolesRequest
-	err := ctx.BindJSON(&request)
-	if err != nil {
+	if err := ctx.BindJSON(&request); err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err2 := s.sysUserService.UpdateUserRoles(request.UserID, request.RoleIDs)
-	if err2 != nil {
+	if err2 := s.sysUserService.UpdateUserRoles(request.UserID, request.RoleIDs); err2 != nil {
 		result.Error(err2)
 		return
 	}
@@ -171,12 +147,7 @@ func (s *sysUserController) UpdateUserRoles(ctx *gin.Context) {
 
 func (s *sysUserController) GetRoleIDsByUserID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
 	roleIDs, err2 := s.sysUserService.GetRoleIDsByUserID(uint(id))
 	if err2 != nil {
 		result.Error(err2)

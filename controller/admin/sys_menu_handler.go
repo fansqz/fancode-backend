@@ -1,11 +1,13 @@
 package admin
 
 import (
+	"FanCode/controller/utils"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"strconv"
 )
 
@@ -46,15 +48,9 @@ func (s *sysMenuController) GetMenuCount(ctx *gin.Context) {
 
 func (s *sysMenuController) DeleteMenuByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	err2 := s.sysMenuService.DeleteMenuByID(uint(id))
-	if err2 != nil {
-		result.Error(err2)
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
+	if err := s.sysMenuService.DeleteMenuByID(uint(id)); err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessMessage("删除成功")
@@ -62,31 +58,23 @@ func (s *sysMenuController) DeleteMenuByID(ctx *gin.Context) {
 
 func (s *sysMenuController) UpdateMenu(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-
-	idStr := ctx.PostForm("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	id := utils.AtoiOrDefault(ctx.PostForm("id"), 0)
 	parentIDStr := ctx.PostForm("parentMenuID")
 	parentID, err := strconv.Atoi(parentIDStr)
 	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	code := ctx.PostForm("code")
-	name := ctx.PostForm("name")
-	description := ctx.PostForm("description")
 	menu := &po.SysMenu{
+		Model: gorm.Model{
+			ID: uint(id),
+		},
 		ParentMenuID: uint(parentID),
-		Code:         code,
-		Name:         name,
-		Description:  description,
+		Code:         ctx.PostForm("code"),
+		Name:         ctx.PostForm("name"),
+		Description:  ctx.PostForm("description"),
 	}
-	menu.ID = uint(id)
-	err2 := s.sysMenuService.UpdateMenu(menu)
-	if err2 != nil {
+	if err2 := s.sysMenuService.UpdateMenu(menu); err2 != nil {
 		result.Error(err2)
 		return
 	}
@@ -95,14 +83,10 @@ func (s *sysMenuController) UpdateMenu(ctx *gin.Context) {
 
 func (s *sysMenuController) GetMenuByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
+	menu, err := s.sysMenuService.GetMenuByID(uint(id))
 	if err != nil {
-		result.Error(e.ErrBadRequest)
-	}
-	menu, err2 := s.sysMenuService.GetMenuByID(uint(id))
-	if err2 != nil {
-		result.Error(err2)
+		result.Error(err)
 		return
 	}
 	result.SuccessData(menu)
@@ -120,24 +104,16 @@ func (s *sysMenuController) GetMenuTree(ctx *gin.Context) {
 
 func (s *sysMenuController) InsertMenu(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	parentIDStr := ctx.PostForm("parentMenuID")
-	parentID, err := strconv.Atoi(parentIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	code := ctx.PostForm("code")
-	name := ctx.PostForm("name")
-	description := ctx.PostForm("description")
+	parentID := utils.AtoiOrDefault(ctx.PostForm("parentMenuID"), 0)
 	menu := &po.SysMenu{
 		ParentMenuID: uint(parentID),
-		Code:         code,
-		Name:         name,
-		Description:  description,
+		Code:         ctx.PostForm("code"),
+		Name:         ctx.PostForm("name"),
+		Description:  ctx.PostForm("description"),
 	}
-	id, err2 := s.sysMenuService.InsertMenu(menu)
-	if err2 != nil {
-		result.Error(err2)
+	id, err := s.sysMenuService.InsertMenu(menu)
+	if err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessData(id)

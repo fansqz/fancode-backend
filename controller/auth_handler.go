@@ -40,8 +40,7 @@ func (u *authController) SendAuthCode(ctx *gin.Context) {
 		return
 	}
 	// 生成code
-	_, err := u.authService.SendAuthCode(email, kind)
-	if err != nil {
+	if _, err := u.authService.SendAuthCode(email, kind); err != nil {
 		result.Error(err)
 		return
 	}
@@ -50,17 +49,17 @@ func (u *authController) SendAuthCode(ctx *gin.Context) {
 
 func (u *authController) UserRegister(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	user := &po.SysUser{}
-	user.Email = ctx.PostForm("email")
-	code := ctx.PostForm("code")
-	user.Username = ctx.PostForm("username")
-	user.Password = ctx.PostForm("password")
-	err := u.authService.UserRegister(user, code)
-	if err != nil {
-		result.Error(err)
-	} else {
-		result.SuccessMessage("注册成功")
+	user := &po.SysUser{
+		Email:    ctx.PostForm("email"),
+		Username: ctx.PostForm("username"),
+		Password: ctx.PostForm("password"),
 	}
+	code := ctx.PostForm("code")
+	if err := u.authService.UserRegister(user, code); err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessMessage("注册成功")
 }
 
 func (u *authController) Login(ctx *gin.Context) {

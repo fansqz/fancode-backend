@@ -1,12 +1,11 @@
 package user
 
 import (
-	e "FanCode/error"
+	"FanCode/controller/utils"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 type ProblemController interface {
@@ -30,21 +29,16 @@ func NewProblemController(problemService service.ProblemService) ProblemControll
 
 func (p *problemController) GetProblemList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := GetPageQueryByQuery(ctx)
+	pageQuery, err := utils.GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return
 	}
 	bankIDStr := ctx.Query("bankID")
 	if bankIDStr != "" {
-		bankID, err := strconv.Atoi(bankIDStr)
-		if err != nil {
-			result.Error(e.ErrBadRequest)
-			return
-		}
-		uintBankID := uint(bankID)
+		bankID := uint(utils.AtoiOrDefault(bankIDStr, 0))
 		pageQuery.Query = &po.Problem{
-			BankID: &uintBankID,
+			BankID: &bankID,
 		}
 	}
 	pageInfo, err := p.problemService.GetUserProblemList(ctx, pageQuery)
@@ -68,16 +62,11 @@ func (p *problemController) GetProblem(ctx *gin.Context) {
 
 func (p *problemController) GetProblemTemplateCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problemIDStr := ctx.Param("problemID")
-	problemID, err := strconv.Atoi(problemIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	problemID := utils.GetIntParamOrDefault(ctx, "problemID", 0)
 	language := ctx.Param("language")
-	code, err2 := p.problemService.GetProblemTemplateCode(uint(problemID), language)
-	if err2 != nil {
-		result.Error(err2)
+	code, err := p.problemService.GetProblemTemplateCode(uint(problemID), language)
+	if err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessData(code)

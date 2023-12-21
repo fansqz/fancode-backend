@@ -1,12 +1,12 @@
 package admin
 
 import (
-	e "FanCode/error"
+	"FanCode/controller/utils"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
-	"strconv"
+	"gorm.io/gorm"
 )
 
 type SysApiController interface {
@@ -46,15 +46,9 @@ func (s *sysApiController) GetApiCount(ctx *gin.Context) {
 
 func (s *sysApiController) DeleteApiByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	err2 := s.sysApiService.DeleteApiByID(uint(id))
-	if err2 != nil {
-		result.Error(err2)
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
+	if err := s.sysApiService.DeleteApiByID(uint(id)); err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessMessage("删除成功")
@@ -62,34 +56,20 @@ func (s *sysApiController) DeleteApiByID(ctx *gin.Context) {
 
 func (s *sysApiController) UpdateApi(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-
-	idStr := ctx.PostForm("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	parentIDStr := ctx.PostForm("parentApiID")
-	parentID, err := strconv.Atoi(parentIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	path := ctx.PostForm("path")
-	method := ctx.PostForm("method")
-	name := ctx.PostForm("name")
-	description := ctx.PostForm("description")
+	id := utils.AtoiOrDefault(ctx.PostForm("id"), 0)
+	parentID := utils.AtoiOrDefault(ctx.PostForm("parentApiID"), 0)
 	api := &po.SysApi{
+		Model: gorm.Model{
+			ID: uint(id),
+		},
 		ParentApiID: uint(parentID),
-		Path:        path,
-		Method:      method,
-		Name:        name,
-		Description: description,
+		Path:        ctx.PostForm("path"),
+		Method:      ctx.PostForm("method"),
+		Name:        ctx.PostForm("name"),
+		Description: ctx.PostForm("description"),
 	}
-	api.ID = uint(id)
-	err2 := s.sysApiService.UpdateApi(api)
-	if err2 != nil {
-		result.Error(err2)
+	if err := s.sysApiService.UpdateApi(api); err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessMessage("修改成功")
@@ -97,14 +77,10 @@ func (s *sysApiController) UpdateApi(ctx *gin.Context) {
 
 func (s *sysApiController) GetApiByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	idStr := ctx.Param("id")
-	id, err := strconv.Atoi(idStr)
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
+	api, err := s.sysApiService.GetApiByID(uint(id))
 	if err != nil {
-		result.Error(e.ErrBadRequest)
-	}
-	api, err2 := s.sysApiService.GetApiByID(uint(id))
-	if err2 != nil {
-		result.Error(err2)
+		result.Error(err)
 		return
 	}
 	result.SuccessData(api)
@@ -122,26 +98,17 @@ func (s *sysApiController) GetApiTree(ctx *gin.Context) {
 
 func (s *sysApiController) InsertApi(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	parentIDStr := ctx.PostForm("parentApiID")
-	parentID, err := strconv.Atoi(parentIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	path := ctx.PostForm("path")
-	method := ctx.PostForm("method")
-	name := ctx.PostForm("name")
-	description := ctx.PostForm("description")
+	parentID := utils.AtoiOrDefault(ctx.PostForm("parentApiID"), 0)
 	api := &po.SysApi{
 		ParentApiID: uint(parentID),
-		Path:        path,
-		Method:      method,
-		Name:        name,
-		Description: description,
+		Path:        ctx.PostForm("path"),
+		Method:      ctx.PostForm("method"),
+		Name:        ctx.PostForm("name"),
+		Description: ctx.PostForm("description"),
 	}
-	id, err2 := s.sysApiService.InsertApi(api)
-	if err2 != nil {
-		result.Error(err2)
+	id, err := s.sysApiService.InsertApi(api)
+	if err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessData(id)

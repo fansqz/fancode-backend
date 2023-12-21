@@ -1,8 +1,8 @@
 package admin
 
 import (
+	"FanCode/controller/utils"
 	e "FanCode/error"
-	"FanCode/models/dto"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
 	"FanCode/service"
@@ -58,7 +58,7 @@ func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 	if err != nil {
 		result.Error(err)
 	}
-	//插入
+	// 添加
 	pID, err2 := q.problemService.InsertProblem(problem, ctx)
 	if err2 != nil {
 		result.Error(err2)
@@ -69,24 +69,17 @@ func (q *problemManagementController) InsertProblem(ctx *gin.Context) {
 
 func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problem, err2 := q.getProblemByForm(ctx)
-	if err2 != nil {
-		result.Error(err2)
+	problem, err := q.getProblemByForm(ctx)
+	if err != nil {
+		result.Error(err)
 		return
 	}
 	// 读取id
-	problemIDString := ctx.PostForm("id")
-	problemID, err := strconv.Atoi(problemIDString)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	problem.ID = uint(problemID)
+	problem.ID = uint(utils.AtoiOrDefault(ctx.PostForm("id"), 0))
 	// 读取文件
 	file, _ := ctx.FormFile("file")
-	err2 = q.problemService.UpdateProblem(problem, ctx, file)
-	if err2 != nil {
-		result.Error(err2)
+	if err = q.problemService.UpdateProblem(problem, ctx, file); err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessData("修改成功")
@@ -94,15 +87,9 @@ func (q *problemManagementController) UpdateProblem(ctx *gin.Context) {
 
 func (q *problemManagementController) DeleteProblem(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	ids := ctx.Param("id")
-	id, convertErr := strconv.Atoi(ids)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	err2 := q.problemService.DeleteProblem(uint(id))
-	if err2 != nil {
-		result.Error(err2)
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
+	if err := q.problemService.DeleteProblem(uint(id)); err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessData("删除成功")
@@ -111,7 +98,7 @@ func (q *problemManagementController) DeleteProblem(ctx *gin.Context) {
 // GetProblemList 读取一个列表的题目
 func (q *problemManagementController) GetProblemList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := GetPageQueryByQuery(ctx)
+	pageQuery, err := utils.GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return
@@ -132,28 +119,17 @@ func (q *problemManagementController) GetProblemList(ctx *gin.Context) {
 
 func (q *problemManagementController) GetProblemByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	ids := ctx.Param("id")
-	id, convertErr := strconv.Atoi(ids)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	problem, err2 := q.problemService.GetProblemByID(uint(id))
-	if err2 != nil {
-		result.Error(err2)
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
+	problem, err := q.problemService.GetProblemByID(uint(id))
+	if err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessData(problem)
 }
 
 func (q *problemManagementController) DownloadProblemFile(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	pidstr := ctx.Param("id")
-	pid, err := strconv.Atoi(pidstr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	pid := utils.GetIntParamOrDefault(ctx, "id", 0)
 	q.problemService.DownloadProblemZipFile(ctx, uint(pid))
 }
 
@@ -163,12 +139,7 @@ func (q *problemManagementController) DownloadProblemTemplateFile(ctx *gin.Conte
 
 func (q *problemManagementController) UpdateProblemEnable(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problemIDStr := ctx.PostForm("problemID")
-	problemID, err := strconv.Atoi(problemIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	problemID := utils.AtoiOrDefault(ctx.PostForm("problemID"), 0)
 	enableStr := ctx.PostForm("enable")
 	var enable int
 	if enableStr == "1" {
@@ -176,9 +147,8 @@ func (q *problemManagementController) UpdateProblemEnable(ctx *gin.Context) {
 	} else {
 		enable = -1
 	}
-	err2 := q.problemService.UpdateProblemEnable(uint(problemID), enable)
-	if err2 != nil {
-		result.Error(err2)
+	if err := q.problemService.UpdateProblemEnable(uint(problemID), enable); err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessMessage("操作成功")
@@ -268,32 +238,4 @@ func (q *problemManagementController) getProblemByQuery(ctx *gin.Context) (*po.P
 		problem.Enable = -1
 	}
 	return problem, nil
-}
-
-func GetPageQueryByQuery(ctx *gin.Context) (*dto.PageQuery, *e.Error) {
-	pageStr := ctx.Query("page")
-	pageSizeStr := ctx.Query("pageSize")
-	var page int
-	var pageSize int
-	var convertErr error
-	page, convertErr = strconv.Atoi(pageStr)
-	if convertErr != nil {
-		return nil, e.ErrBadRequest
-	}
-	pageSize, convertErr = strconv.Atoi(pageSizeStr)
-	if convertErr != nil {
-		return nil, e.ErrBadRequest
-	}
-	if pageSize > 50 {
-		pageSize = 50
-	}
-	sortProperty := ctx.Query("sortProperty")
-	sortRule := ctx.Query("sortRule")
-	answer := &dto.PageQuery{
-		Page:         page,
-		PageSize:     pageSize,
-		SortProperty: sortProperty,
-		SortRule:     sortRule,
-	}
-	return answer, nil
 }

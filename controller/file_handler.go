@@ -45,14 +45,13 @@ func (f *fileController) StartUpload(ctx *gin.Context) {
 func (f *fileController) Upload(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	path := ctx.PostForm("path")
-	fileHead, err2 := ctx.FormFile("chunk")
-	if err2 != nil {
+	fileHead, err := ctx.FormFile("chunk")
+	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
-	err := f.fileService.Upload(path, ctx, fileHead)
-	if err != nil {
-		result.Error(err)
+	if err2 := f.fileService.Upload(path, ctx, fileHead); err2 != nil {
+		result.Error(err2)
 	}
 	result.SuccessMessage("success upload")
 }
@@ -71,8 +70,7 @@ func (f *fileController) CheckChunkSet(ctx *gin.Context) {
 func (f *fileController) CancelUpload(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	path := ctx.PostForm("path")
-	err := f.fileService.CancelUpload(path)
-	if err != nil {
+	if err := f.fileService.CancelUpload(path); err != nil {
 		result.Error(err)
 		return
 	}

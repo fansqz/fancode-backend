@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"FanCode/controller/utils"
 	e "FanCode/error"
 	"FanCode/models/po"
 	r "FanCode/models/vo"
@@ -98,12 +99,7 @@ func (p *problemBankManagementController) UpdateProblemBank(ctx *gin.Context) {
 func (p *problemBankManagementController) DeleteProblemBank(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	// 读取id
-	bankIDString := ctx.Param("id")
-	bankID, err := strconv.Atoi(bankIDString)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	bankID := uint(utils.GetIntParamOrDefault(ctx, "id", 0))
 	// 判断是否强制删除
 	forceDeleteStr := ctx.Param("forceDelete")
 	forceDelete := false
@@ -111,7 +107,7 @@ func (p *problemBankManagementController) DeleteProblemBank(ctx *gin.Context) {
 		forceDelete = true
 	}
 	// 删除题库
-	err2 := p.problemBankService.DeleteProblemBank(uint(bankID), forceDelete)
+	err2 := p.problemBankService.DeleteProblemBank(bankID, forceDelete)
 	if err2 != nil {
 		result.Error(err2)
 		return
@@ -121,7 +117,7 @@ func (p *problemBankManagementController) DeleteProblemBank(ctx *gin.Context) {
 
 func (p *problemBankManagementController) GetProblemBankList(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	pageQuery, err := GetPageQueryByQuery(ctx)
+	pageQuery, err := utils.GetPageQueryByQuery(ctx)
 	if err != nil {
 		result.Error(err)
 		return
@@ -152,12 +148,7 @@ func (p *problemBankManagementController) GetSimpleProblemBankList(ctx *gin.Cont
 
 func (p *problemBankManagementController) GetProblemBankByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	ids := ctx.Param("id")
-	id, convertErr := strconv.Atoi(ids)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
 	bank, err2 := p.problemBankService.GetProblemBankByID(uint(id))
 	if err2 != nil {
 		result.Error(err2)

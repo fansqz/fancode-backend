@@ -1,12 +1,11 @@
 package user
 
 import (
-	e "FanCode/error"
+	"FanCode/controller/utils"
 	"FanCode/models/dto"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 // JudgeController
@@ -34,64 +33,47 @@ func NewJudgeController(judgeService service.JudgeService) JudgeController {
 
 func (j *judgeController) Execute(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problemIDStr := ctx.PostForm("problemID")
-	problemID, err := strconv.Atoi(problemIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
 	judgeRequest := &dto.ExecuteRequestDto{
 		Code:      ctx.PostForm("code"),
 		Input:     ctx.PostForm("input"),
 		CodeType:  ctx.PostForm("codeType"),
 		Language:  ctx.PostForm("language"),
-		ProblemID: uint(problemID),
+		ProblemID: uint(utils.GetIntParamOrDefault(ctx, "problemID", 0)),
 	}
 	// 读取题目id
-	response, err2 := j.judgeService.Execute(judgeRequest)
-	if err2 != nil {
-		result.Error(err2)
-	} else {
-		result.SuccessData(response)
+	response, err := j.judgeService.Execute(judgeRequest)
+	if err != nil {
+		result.Error(err)
+		return
 	}
+	result.SuccessData(response)
 }
 
 func (j *judgeController) Submit(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problemIDStr := ctx.PostForm("problemID")
-	problemID, err := strconv.Atoi(problemIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
+	problemID := utils.AtoiOrDefault(ctx.PostForm("problemID"), 0)
 	judgeRequest := &dto.SubmitRequestDto{
 		Code:      ctx.PostForm("code"),
 		Language:  ctx.PostForm("language"),
 		ProblemID: uint(problemID),
 	}
 	// 读取题目id
-	response, err2 := j.judgeService.Submit(ctx, judgeRequest)
-	if err2 != nil {
-		result.Error(err2)
-	} else {
-		result.SuccessData(response)
+	response, err := j.judgeService.Submit(ctx, judgeRequest)
+	if err != nil {
+		result.Error(err)
+		return
 	}
+	result.SuccessData(response)
 }
 
 func (j *judgeController) SaveCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	// 题库id
-	problemIDStr := ctx.PostForm("problemID")
 	code := ctx.PostForm("code")
 	language := ctx.PostForm("language")
-	problemID, err := strconv.Atoi(problemIDStr)
-	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	err2 := j.judgeService.SaveCode(ctx, uint(problemID), language, code)
-	if err2 != nil {
-		result.Error(err2)
+	problemID := utils.AtoiOrDefault(ctx.PostForm("problemID"), 0)
+	if err := j.judgeService.SaveCode(ctx, uint(problemID), language, code); err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessMessage("保存成功")
@@ -99,15 +81,10 @@ func (j *judgeController) SaveCode(ctx *gin.Context) {
 
 func (j *judgeController) GetCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problemIDStr := ctx.Param("problemID")
-	problemID, err := strconv.Atoi(problemIDStr)
+	problemID := utils.AtoiOrDefault(ctx.PostForm("problemID"), 0)
+	code, err := j.judgeService.GetCode(ctx, uint(problemID))
 	if err != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	code, err2 := j.judgeService.GetCode(ctx, uint(problemID))
-	if err2 != nil {
-		result.Error(err2)
+		result.Error(err)
 		return
 	}
 	result.SuccessData(code)

@@ -8,6 +8,7 @@ var ProviderSet = wire.NewSet(
 	NewJudgeService,
 	NewProblemBankService,
 	NewProblemService,
+	NewProblemCaseService,
 	NewSubmissionService,
 	NewSysApiService,
 	NewSysMenuService,

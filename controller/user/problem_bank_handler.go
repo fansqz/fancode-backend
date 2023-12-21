@@ -1,11 +1,10 @@
 package user
 
 import (
-	e "FanCode/error"
+	"FanCode/controller/utils"
 	r "FanCode/models/vo"
 	"FanCode/service"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 type ProblemBankController interface {
@@ -36,15 +35,10 @@ func (p *problemBankController) GetAllProblemBank(ctx *gin.Context) {
 
 func (p *problemBankController) GetProblemBankByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	ids := ctx.Param("id")
-	id, convertErr := strconv.Atoi(ids)
-	if convertErr != nil {
-		result.Error(e.ErrBadRequest)
-		return
-	}
-	bank, err2 := p.problemBankService.GetProblemBankByID(uint(id))
-	if err2 != nil {
-		result.Error(err2)
+	id := utils.GetIntParamOrDefault(ctx, "id", 0)
+	bank, err := p.problemBankService.GetProblemBankByID(uint(id))
+	if err != nil {
+		result.Error(err)
 		return
 	}
 	result.SuccessData(bank)

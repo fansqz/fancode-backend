@@ -82,15 +82,14 @@ func (a *accountController) UpdateAccountInfo(ctx *gin.Context) {
 		user.Sex = 1
 	}
 	birthDay := ctx.PostForm("birthDay")
-	t, err2 := time.ParseInLocation("2006-01-02 15:04:05", birthDay, time.Local)
-	if err2 != nil {
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", birthDay, time.Local)
+	if err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
 	user.BirthDay = t
-	err3 := a.accountService.UpdateAccountInfo(ctx, user)
-	if err3 != nil {
-		result.Error(err3)
+	if err2 := a.accountService.UpdateAccountInfo(ctx, user); err2 != nil {
+		result.Error(err2)
 		return
 	}
 	result.SuccessMessage("提交成功，重新登录可更新数据")
@@ -107,8 +106,7 @@ func (a *accountController) ChangePassword(ctx *gin.Context) {
 	if newPassword == "" {
 		result.Error(e.ErrBadRequest)
 	}
-	err := a.accountService.ChangePassword(ctx, oldPassword, newPassword)
-	if err != nil {
+	if err := a.accountService.ChangePassword(ctx, oldPassword, newPassword); err != nil {
 		result.Error(err)
 	}
 	result.SuccessMessage("修改成功，请重新登录")
