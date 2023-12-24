@@ -9,6 +9,9 @@ import (
 	"FanCode/models/po"
 	"errors"
 	"gorm.io/gorm"
+	"log"
+	"strconv"
+	"unicode"
 )
 
 // ProblemCaseService
@@ -24,6 +27,10 @@ type ProblemCaseService interface {
 	InsertProblemCase(problemCase *po.ProblemCase) (uint, *e.Error)
 	// UpdateProblemCase 更新题目用例
 	UpdateProblemCase(problemCase *po.ProblemCase) *e.Error
+	// CheckProblemCaseName 检测用例名称是否重复
+	CheckProblemCaseName(name string, problemID uint) (bool, *e.Error)
+	// GenerateNewProblemCaseName 生成一个题目唯一用例名称，递增
+	GenerateNewProblemCaseName(problemID uint) (string, *e.Error)
 }
 
 type problemCaseService struct {
@@ -48,6 +55,7 @@ func (p *problemCaseService) GetProblemCaseList(query *dto.PageQuery) (*dto.Page
 	// 获取用例列表
 	cases, err := p.problemCaseDao.GetProblemCaseList(global.Mysql, query)
 	if err != nil {
+		log.Println("Error while getting problem case list:", err)
 		return nil, e.ErrMysql
 	}
 	newCases := make([]*dto.ProblemCaseDtoForList, len(cases))
@@ -58,6 +66,7 @@ func (p *problemCaseService) GetProblemCaseList(query *dto.PageQuery) (*dto.Page
 	var count int64
 	count, err = p.problemCaseDao.GetProblemCaseCount(global.Mysql, problemCase)
 	if err != nil {
+		log.Println("Error while getting problem case list:", err)
 		return nil, e.ErrMysql
 	}
 	pageInfo := &dto.PageInfo{
@@ -74,6 +83,7 @@ func (p *problemCaseService) GetProblemCaseByID(id uint) (*dto.ProblemCaseDtoFor
 		return nil, e.ErrProblemNotExist
 	}
 	if err != nil {
+		log.Println("Error while getting problem case name:", err)
 		return nil, e.ErrMysql
 	}
 	return dto.NewProblemCaseDtoForGet(problemCase), nil
@@ -85,6 +95,7 @@ func (p *problemCaseService) DeleteProblemCaseByID(id uint) *e.Error {
 		return e.ErrProblemNotExist
 	}
 	if err != nil {
+		log.Println("Error while deleting problem case:", err)
 		return e.ErrMysql
 	}
 	return nil
@@ -93,6 +104,7 @@ func (p *problemCaseService) DeleteProblemCaseByID(id uint) *e.Error {
 func (p *problemCaseService) InsertProblemCase(problemCase *po.ProblemCase) (uint, *e.Error) {
 	err := p.problemCaseDao.InsertProblemCase(global.Mysql, problemCase)
 	if err != nil {
+		log.Println("Error while inserting problem case:", err)
 		return 0, e.ErrMysql
 	}
 	return problemCase.ID, nil
@@ -104,7 +116,70 @@ func (p *problemCaseService) UpdateProblemCase(problemCase *po.ProblemCase) *e.E
 		return e.ErrProblemNotExist
 	}
 	if err != nil {
+		log.Println("Error while updating problem case:", err)
 		return e.ErrMysql
 	}
 	return nil
+}
+
+func (p *problemCaseService) CheckProblemCaseName(name string, problemID uint) (bool, *e.Error) {
+	l, err := p.problemCaseDao.GetProblemCaseList(global.Mysql, &dto.PageQuery{
+		Page:     1,
+		PageSize: 1,
+		Query: &po.ProblemCase{
+			Name:      name,
+			ProblemID: problemID,
+		},
+	})
+	if err != nil {
+		log.Println("Error while checking problem case name:", err)
+		return false, e.ErrMysql
+	}
+	return len(l) == 0, nil
+}
+
+func (p *problemCaseService) GenerateNewProblemCaseName(problemID uint) (string, *e.Error) {
+	// 获取与给定问题ID相关的问题用例列表
+	problemCases, err := p.problemCaseDao.GetProblemCaseList(global.Mysql, &dto.PageQuery{
+		Page:         1,
+		PageSize:     1,
+		SortProperty: "name",
+		SortRule:     "desc",
+		Query: &po.ProblemCase{
+			ProblemID: problemID,
+		},
+	})
+	if err != nil {
+		// 记录错误并返回
+		log.Println("Error while getting problem case list:", err)
+		return "", e.ErrMysql
+	}
+
+	// 如果没有找到问题用例，直接返回 "1"
+	if len(problemCases) == 0 {
+		return "1", nil
+	}
+
+	// 获取最新的问题用例
+	latestCase := problemCases[0]
+
+	// 寻找最后一个非数字字符的索引
+	i := len(latestCase.Name) - 1
+	for i >= 0 && unicode.IsDigit(rune(latestCase.Name[i])) {
+		i--
+	}
+
+	// 截取数字部分并转换为整数
+	numericPart := latestCase.Name[i+1:]
+	num, err := strconv.Atoi(numericPart)
+	if err != nil {
+		// 记录错误并返回
+		log.Println("Error converting numeric part to integer:", err)
+		return "", e.ErrUnknown
+	}
+
+	// 递增数字部分并生成新名称
+	num++
+	newName := latestCase.Name[:i+1] + strconv.Itoa(num)
+	return newName, nil
 }

@@ -7,7 +7,7 @@ import "gorm.io/gorm"
 type ProblemCase struct {
 	gorm.Model
 	ProblemID uint   `gorm:"column:problem_id" json:"problemID"`
-	Name      string `gorm:"column:case_name"`
+	Name      string `gorm:"column:name"`
 	Input     string `gorm:"column:input"`
 	Output    string `gorm:"column:output"`
 }
