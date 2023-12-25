@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -234,11 +235,13 @@ func (j *JudgeCore) Execute(execFile string, inputCh <-chan []byte, outputCh cha
 	// 创建cgroup限制资源
 	cgroup, err := NewCGroup(utils.GetUUID())
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	if options != nil && options.MemoryLimit != 0 {
 		err = cgroup.SetMemoryLimit(options.MemoryLimit)
 		if err != nil {
+			log.Println(err)
 			return err
 		}
 	}
