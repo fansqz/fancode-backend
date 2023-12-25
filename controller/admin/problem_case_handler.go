@@ -96,7 +96,7 @@ func (p *problemCaseManagementController) UpdateProblemCase(ctx *gin.Context) {
 		result.Error(err)
 		return
 	}
-	result.SuccessMessage("用例添加成功")
+	result.SuccessMessage("用例更新成功")
 }
 
 func (p *problemCaseManagementController) DeleteProblemCase(ctx *gin.Context) {
@@ -112,8 +112,9 @@ func (p *problemCaseManagementController) DeleteProblemCase(ctx *gin.Context) {
 func (p *problemCaseManagementController) CheckProblemCaseName(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	problemID := uint(utils.GetIntQueryOrDefault(ctx, "problemID", 0))
+	id := uint(utils.GetIntQueryOrDefault(ctx, "id", 0))
 	name := ctx.Query("name")
-	b, err := p.problemCaseService.CheckProblemCaseName(name, problemID)
+	b, err := p.problemCaseService.CheckProblemCaseName(id, name, problemID)
 	if err != nil {
 		result.Error(err)
 		return

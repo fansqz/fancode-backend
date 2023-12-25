@@ -28,7 +28,7 @@ type ProblemCaseService interface {
 	// UpdateProblemCase 更新题目用例
 	UpdateProblemCase(problemCase *po.ProblemCase) *e.Error
 	// CheckProblemCaseName 检测用例名称是否重复
-	CheckProblemCaseName(name string, problemID uint) (bool, *e.Error)
+	CheckProblemCaseName(id uint, name string, problemID uint) (bool, *e.Error)
 	// GenerateNewProblemCaseName 生成一个题目唯一用例名称，递增
 	GenerateNewProblemCaseName(problemID uint) (string, *e.Error)
 }
@@ -122,7 +122,7 @@ func (p *problemCaseService) UpdateProblemCase(problemCase *po.ProblemCase) *e.E
 	return nil
 }
 
-func (p *problemCaseService) CheckProblemCaseName(name string, problemID uint) (bool, *e.Error) {
+func (p *problemCaseService) CheckProblemCaseName(id uint, name string, problemID uint) (bool, *e.Error) {
 	l, err := p.problemCaseDao.GetProblemCaseList(global.Mysql, &dto.PageQuery{
 		Page:     1,
 		PageSize: 1,
@@ -135,7 +135,7 @@ func (p *problemCaseService) CheckProblemCaseName(name string, problemID uint) (
 		log.Println("Error while checking problem case name:", err)
 		return false, e.ErrMysql
 	}
-	return len(l) == 0, nil
+	return len(l) == 0 || len(l) == 1 && l[0].ID == id, nil
 }
 
 func (p *problemCaseService) GenerateNewProblemCaseName(problemID uint) (string, *e.Error) {
