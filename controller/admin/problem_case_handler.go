@@ -20,6 +20,10 @@ type ProblemCaseManagementController interface {
 	UpdateProblemCase(ctx *gin.Context)
 	// DeleteProblemCase 删除用例
 	DeleteProblemCase(ctx *gin.Context)
+	// CheckProblemCaseName 检测用例名称是否重复
+	CheckProblemCaseName(ctx *gin.Context)
+	// GenerateNewProblemCaseName 生成一个用例名称
+	GenerateNewProblemCaseName(ctx *gin.Context)
 }
 
 type problemCaseManagementController struct {
@@ -53,7 +57,7 @@ func (p *problemCaseManagementController) GetProblemCaseList(ctx *gin.Context) {
 
 func (p *problemCaseManagementController) GetProblemCaseByID(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	caseID := uint(utils.GetIntQueryOrDefault(ctx, "id", 0))
+	caseID := uint(utils.GetIntParamOrDefault(ctx, "id", 0))
 	answer, err := p.problemCaseService.GetProblemCaseByID(caseID)
 	if err != nil {
 		result.Error(err)
@@ -92,7 +96,7 @@ func (p *problemCaseManagementController) UpdateProblemCase(ctx *gin.Context) {
 		result.Error(err)
 		return
 	}
-	result.SuccessMessage("用例添加成功")
+	result.SuccessMessage("用例更新成功")
 }
 
 func (p *problemCaseManagementController) DeleteProblemCase(ctx *gin.Context) {
@@ -103,4 +107,28 @@ func (p *problemCaseManagementController) DeleteProblemCase(ctx *gin.Context) {
 		return
 	}
 	result.SuccessMessage("用例删除成功")
+}
+
+func (p *problemCaseManagementController) CheckProblemCaseName(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	problemID := uint(utils.GetIntQueryOrDefault(ctx, "problemID", 0))
+	id := uint(utils.GetIntQueryOrDefault(ctx, "id", 0))
+	name := ctx.Query("name")
+	b, err := p.problemCaseService.CheckProblemCaseName(id, name, problemID)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(b)
+}
+
+func (p *problemCaseManagementController) GenerateNewProblemCaseName(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	problemID := uint(utils.GetIntQueryOrDefault(ctx, "problemID", 0))
+	name, err := p.problemCaseService.GenerateNewProblemCaseName(problemID)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(name)
 }

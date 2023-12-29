@@ -48,7 +48,6 @@ type ExecuteRequestDto struct {
 	Code      string // 代码
 	Input     string // 自测用例
 	Language  string // 编程语言
-	CodeType  string // acm或核心代码
 }
 
 // ExecuteResultDto 执行的响应结果

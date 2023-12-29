@@ -51,6 +51,7 @@ func main() {
 		&po.SysUser{},
 		&po.ProblemBank{},
 		&po.Problem{},
+		&po.ProblemCase{},
 		&po.ProblemAttempt{},
 		&po.Submission{},
 	)

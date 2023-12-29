@@ -36,9 +36,8 @@ func (j *judgeController) Execute(ctx *gin.Context) {
 	judgeRequest := &dto.ExecuteRequestDto{
 		Code:      ctx.PostForm("code"),
 		Input:     ctx.PostForm("input"),
-		CodeType:  ctx.PostForm("codeType"),
 		Language:  ctx.PostForm("language"),
-		ProblemID: uint(utils.GetIntParamOrDefault(ctx, "problemID", 0)),
+		ProblemID: uint(utils.AtoiOrDefault(ctx.PostForm("problemID"), 0)),
 	}
 	// 读取题目id
 	response, err := j.judgeService.Execute(judgeRequest)
@@ -81,7 +80,7 @@ func (j *judgeController) SaveCode(ctx *gin.Context) {
 
 func (j *judgeController) GetCode(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	problemID := utils.AtoiOrDefault(ctx.PostForm("problemID"), 0)
+	problemID := utils.GetIntParamOrDefault(ctx, "problemID", 0)
 	code, err := j.judgeService.GetCode(ctx, uint(problemID))
 	if err != nil {
 		result.Error(err)
