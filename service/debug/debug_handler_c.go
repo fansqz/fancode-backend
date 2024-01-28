@@ -27,6 +27,7 @@ type debugHandlerC struct {
 	stdin       io.WriteCloser
 	stdout      io.ReadCloser
 	stderr      io.ReadCloser
+	stdoutCh    chan []byte
 }
 
 func NewDebugHandlerC() DebugHandler {
@@ -74,10 +75,6 @@ func (d *debugHandlerC) Start(execFile string, options *StartDebugOptions) (*Deb
 		d.breakpoints = options.Breakpoints
 	}
 
-	var limitTime int64 = 0
-	if options != nil && options.LimitTime > 0 {
-		limitTime = options.LimitTime
-	}
 	if err := d.configGDB(d.workPath); err != nil {
 		return nil, err
 	}
@@ -85,20 +82,19 @@ func (d *debugHandlerC) Start(execFile string, options *StartDebugOptions) (*Deb
 	d.stdin, _ = d.process.StdinPipe()
 	d.stdout, _ = d.process.StdoutPipe()
 	d.stderr, _ = d.process.StderrPipe()
-
+	d.stdoutCh = make(chan []byte, 10)
 	// 执行启动
 	if err := d.process.Start(); err != nil {
 		return nil, err
 	}
 
-	debugResult := &DebugResult{}
+	// 启动协程读取输出数据
+	go d.readStdoutFunc()
 
+	debugResult := &DebugResult{}
 	// 读取输出
-	ctx, cancel := d.getTimeoutContext(limitTime)
-	defer cancel()
-	_, timeout := d.readStdout1(ctx)
-	if timeout {
-		// 超时，杀死进程
+	if out, _ := d.readStdout(); out == "" {
+		// 无数据杀死进程
 		if err := d.process.Process.Kill(); err != nil {
 			return nil, err
 		}
@@ -108,28 +104,17 @@ func (d *debugHandlerC) Start(execFile string, options *StartDebugOptions) (*Deb
 
 	// 取消gdb缓存
 	d.stdin.Write([]byte("call setbuf(stdout, NULL)\n"))
-	d.readStdout1(ctx)
-	// 设置一些断点
-	d.stdin.Write([]byte("b scanf\n"))
-	d.readStdout1(ctx)
-	d.stdin.Write([]byte("b getchar\n"))
-	d.readStdout1(ctx)
+	d.readStdout()
 
+	// 设置断点
 	for _, bp := range d.breakpoints {
 		_, _ = d.stdin.Write([]byte("b " + bp.File + ":" + strconv.Itoa(bp.Line) + "\n"))
-		d.readStdout1(ctx)
+		d.readStdout()
 	}
 
 	// 开始运行
 	d.stdin.Write([]byte("r\n"))
-	var gdbout string
-	gdbout, debugResult.UserOutput, timeout = d.flushAndReadStdout1(ctx)
-
-	debugResult.IsEnd = d.parseGdbOutput(gdbout)
-	if timeout {
-		d.process.Process.Kill()
-		debugResult.IsEnd = true
-	}
+	d.flushAndReadStdoutForDebugResult(debugResult)
 
 	// 读取堆栈信息
 	debugResult.BackTrace = d.getBackTrace()
@@ -140,22 +125,25 @@ func (d *debugHandlerC) Start(execFile string, options *StartDebugOptions) (*Deb
 	return debugResult, nil
 }
 
-func (d *debugHandlerC) Restart(options *DebugOptions) (*DebugResult, error) {
-	var limitTime int64 = 0
-	if options != nil && options.LimitTime > 0 {
-		limitTime = options.LimitTime
+func (d *debugHandlerC) readStdoutFunc() {
+	for {
+		b := make([]byte, 10*1024)
+		n, err := d.stdout.Read(b)
+		if err != nil {
+			break
+		}
+		d.stdoutCh <- b[0:n]
 	}
-
-	debugResult := &DebugResult{}
-	ctx, cancel := d.getTimeoutContext(limitTime)
-	defer cancel()
+}
+func (d *debugHandlerC) Restart() (*DebugResult, error) {
 
 	// 开始运行
 	d.stdin.Write([]byte("r\n"))
-	d.readStdout1(ctx)
+	d.readStdout()
 	d.stdin.Write([]byte("y\n"))
 
-	d.flushAndReadStdout2(ctx, debugResult)
+	debugResult := &DebugResult{}
+	d.flushAndReadStdoutForDebugResult(debugResult)
 	if debugResult.IsEnd {
 		return debugResult, nil
 	}
@@ -183,7 +171,7 @@ func (d *debugHandlerC) getBackTrace() BackTrace {
 
 	d.stdin.Write([]byte("bt\n"))
 	// 读取调用栈信息
-	staceData := d.readStdout2()
+	staceData, _ := d.readStdout()
 	stace := strings.Split(staceData, "#")
 	stace = stace[1:]
 	re := regexp.MustCompile(`\d+\s+(0x[0-9a-f]+)?\s?(\w+)?\s?\((.*?)\) at (\S+):(\d+)`)
@@ -219,32 +207,25 @@ func parseInt(s string) int {
 	return result
 }
 
-func (d *debugHandlerC) Next(num int, options *DebugOptions) (*DebugResult, error) {
-	return d.next("n", num, options)
+func (d *debugHandlerC) Next(num int) (*DebugResult, error) {
+	return d.next("n", num)
 }
 
-func (d *debugHandlerC) Step(num int, options *DebugOptions) (*DebugResult, error) {
-	return d.next("s", num, options)
+func (d *debugHandlerC) Step(num int) (*DebugResult, error) {
+	return d.next("s", num)
 }
 
-func (d *debugHandlerC) Continue(num int, options *DebugOptions) (*DebugResult, error) {
-	return d.next("c", num, options)
+func (d *debugHandlerC) Continue(num int) (*DebugResult, error) {
+	return d.next("c", num)
 }
 
-func (d *debugHandlerC) next(cmd string, num int, options *DebugOptions) (*DebugResult, error) {
-	var limitTime int64 = 0
-	if options != nil && options.LimitTime > 0 {
-		limitTime = options.LimitTime
-	}
+func (d *debugHandlerC) next(cmd string, num int) (*DebugResult, error) {
 	d.stdin.Write([]byte(cmd + " " + strconv.Itoa(num) + "\n"))
 
-	// 读取输出
-	ctx, cancel := d.getTimeoutContext(limitTime)
-	defer cancel()
 	debugResult := &DebugResult{}
 
 	// 解析输出
-	d.flushAndReadStdout2(ctx, debugResult)
+	d.flushAndReadStdoutForDebugResult(debugResult)
 	if debugResult.IsEnd {
 		return debugResult, nil
 	}
@@ -262,7 +243,7 @@ func (d *debugHandlerC) AddBreakpoints(breakpoints []Breakpoint) error {
 	d.breakpoints = d.removeFromBreakpointSlice(d.breakpoints, breakpoints)
 	for _, bp := range breakpoints {
 		d.stdin.Write([]byte("b " + bp.File + ":" + strconv.Itoa(bp.Line) + "\n"))
-		d.readStdout1(context.Background())
+		d.readStdout()
 	}
 	return nil
 }
@@ -291,7 +272,7 @@ func (d *debugHandlerC) removeFromBreakpointSlice(source, toRemove []Breakpoint)
 func (d *debugHandlerC) RemoveBreakpoints(breakpoints []Breakpoint) error {
 	for _, bp := range breakpoints {
 		d.stdin.Write([]byte("clear " + bp.File + ":" + strconv.Itoa(bp.Line) + "\n"))
-		d.readStdout1(context.Background())
+		d.readStdout()
 	}
 	return nil
 }
@@ -317,75 +298,55 @@ func (d *debugHandlerC) redirect(ctx context.Context, debugResult *DebugResult) 
 	// 如果调用栈中没有目标文件，程序直接执行到下一个断点，并退出
 	if index == -1 {
 		d.stdin.Write([]byte("c\n"))
-		d.flushAndReadStdout2(ctx, debugResult)
+		d.flushAndReadStdoutForDebugResult(debugResult)
 		return
 	}
 
 	// 跳出函数，直到回到关注文件
 	for i := 0; i < index; i++ {
 		d.stdin.Write([]byte("f\n"))
-		d.flushAndReadStdout2(ctx, debugResult)
+		d.flushAndReadStdoutForDebugResult(debugResult)
 	}
 }
 
-// flushAndReadStdout1
-// 刷新控制台的用户输出，并读取
-// 返回1.gdb输出 2. 用户输出 3. 是否超时
-func (d *debugHandlerC) flushAndReadStdout1(ctx context.Context) (string, string, bool) {
-	gdbOutput, timeout1 := d.readStdout1(ctx)
-	d.stdin.Write([]byte("call (void)fflush(0)\n"))
-	userOutput, timeout2 := d.readStdout1(ctx)
-	return gdbOutput, userOutput, timeout1 || timeout2
-}
-
-// flushAndReadStdout2
+// flushAndReadStdoutForDebugResult
 // 刷新控制台的用户输出，并读取数据添加到debugResult中
-func (d *debugHandlerC) flushAndReadStdout2(ctx context.Context, debugResult *DebugResult) {
-	timeout := false
-	gdbout := ""
-	userOutput := ""
-	gdbout, userOutput, timeout = d.flushAndReadStdout1(ctx)
+// 会读取两次控制台，第一次读取gdb输出，第二次读取用户输出
+func (d *debugHandlerC) flushAndReadStdoutForDebugResult(debugResult *DebugResult) {
+	gdbout, _ := d.readStdout()
+	userOutput, gdbEnd := d.flushAndReadStdout()
 	debugResult.IsEnd = d.parseGdbOutput(gdbout)
 	debugResult.UserOutput += userOutput
-	if timeout {
-		d.process.Process.Kill()
-		debugResult.IsEnd = true
-	}
+	debugResult.IsEnd = gdbEnd
 }
 
-// readStdout1
-// 读取read中的输出，返回输出内容和是否超时
-// 1. gdb输出， 2. 是否超时
-func (d *debugHandlerC) readStdout1(ctx context.Context) (string, bool) {
-	answer := ""
-	readBuffer := make([]byte, 1024*4)
-	for {
-		n, _ := d.stdout.Read(readBuffer)
-		if n > 0 {
-			answer += string(readBuffer[0:n])
-		}
+// flushAndReadStdout
+// 刷新控制台的用户输出，并读取
+// 返回1.gdb输出
+func (d *debugHandlerC) flushAndReadStdout() (string, bool) {
+	d.stdin.Write([]byte("call (void)fflush(0)\n"))
+	return d.readStdout()
+}
+
+// readStdout 读取gdb输出
+// answer: 输出信息
+// gdbEnd: 是否含有(gdb)标识
+func (d *debugHandlerC) readStdout() (answer string, gdbEnd bool) {
+	// 超时时间设置为0.02秒
+	timeout := time.Microsecond * 200
+	select {
+	case <-time.After(timeout):
+		return "", false
+	case output := <-d.stdoutCh:
+		// 成功获取输出
+		answer = string(output)
 		answer = strings.TrimRight(answer, " ")
 		if strings.HasSuffix(answer, "(gdb)") {
-			break
+			answer = answer[:len(answer)-5]
+			gdbEnd = true
 		}
-		// 不停有输出，或者一直没有输出
-		deadline, ok := ctx.Deadline()
-		if ok {
-			timeout := time.Until(deadline)
-			if timeout < 0 {
-				return answer, true
-			}
-		}
+		return
 	}
-	// 移除(gdb)
-	answer = answer[:len(answer)-5]
-	return answer, false
-}
-
-// 读取read中的输出，不设置超时
-func (d *debugHandlerC) readStdout2() string {
-	result, _ := d.readStdout1(context.Background())
-	return result
 }
 
 // parseGdbOutput 解析gdb输出，返回用户程序是否结束

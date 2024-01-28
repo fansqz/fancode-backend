@@ -31,6 +31,6 @@ func testCode(t *testing.T) {
 
 	fmt.Println(debugResult)
 
-	debugResult, _ = debugHandler.Next(1, nil)
+	debugResult, _ = debugHandler.Next(1)
 	fmt.Println(err)
 }

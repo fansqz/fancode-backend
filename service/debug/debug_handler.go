@@ -13,13 +13,13 @@ type DebugHandler interface {
 	// Start 开启调试
 	Start(execFile string, options *StartDebugOptions) (*DebugResult, error)
 	// Restart 重新开始调试
-	Restart(options *DebugOptions) (*DebugResult, error)
+	Restart() (*DebugResult, error)
 	// Next 下num步，不会进入函数内部
-	Next(num int, options *DebugOptions) (*DebugResult, error)
+	Next(num int) (*DebugResult, error)
 	// Step 下num步，会进入函数内部
-	Step(num int, options *DebugOptions) (*DebugResult, error)
+	Step(num int) (*DebugResult, error)
 	// Continue 忽略n个断点继续执行
-	Continue(num int, options *DebugOptions) (*DebugResult, error)
+	Continue(num int) (*DebugResult, error)
 	// AddBreakpoints 添加断点
 	AddBreakpoints(breakpoints []Breakpoint) error
 	// RemoveBreakpoints 移除断点

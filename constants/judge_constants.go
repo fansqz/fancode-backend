@@ -20,6 +20,6 @@ const (
 )
 
 const (
-	CodeTypeAcm  = "acm"
-	CodeTypeCore = "core_code"
+	GdbCore = "gdb"
+	PdbCore = "pdb"
 )
