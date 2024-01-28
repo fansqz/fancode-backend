@@ -1,4 +1,4 @@
-package core
+package debug
 
 import (
 	"FanCode/constants"
