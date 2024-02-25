@@ -6,6 +6,7 @@ import "github.com/gorilla/websocket"
 type WsService interface {
 	AddWsConn(key int32, conn *websocket.Conn)
 	RemoveConn(key int32)
+	GetConn(key int32) (*websocket.Conn, bool)
 }
 
 // wsService

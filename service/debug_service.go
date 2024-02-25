@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"os"
+	"path"
 )
 
 // DebugService
@@ -22,11 +23,11 @@ type DebugService interface {
 
 type debugService struct {
 	config       *config.AppConfig
-	judgeService *judgeService
-	wsService    *wsService
+	judgeService JudgeService
+	wsService    WsService
 }
 
-func NewDebugService(cf *config.AppConfig, js *judgeService, ws *wsService) DebugService {
+func NewDebugService(cf *config.AppConfig, js JudgeService, ws WsService) DebugService {
 	return &debugService{
 		config:       cf,
 		judgeService: js,
@@ -73,7 +74,7 @@ func (d *debugService) Start(ctx *gin.Context, startReq dto.StartDebugRequest) {
 	// 保存用户代码到用户的执行路径，并获取编译文件列表
 	var compileFiles []string
 	var err2 *e.Error
-	if compileFiles, err2 = d.judgeService.saveUserCode(startReq.Language,
+	if compileFiles, err2 = d.saveUserCode(startReq.Language,
 		startReq.Code, executePath); err2 != nil {
 		// Add logging for error
 		log.Printf("SaveUserCode error: %v\n", err2)
@@ -105,6 +106,27 @@ func (d *debugService) Start(ctx *gin.Context, startReq dto.StartDebugRequest) {
 	}
 	resp := dto.NewSuccessDebugResponseByRequest(&startReq.DebugRequestBase, "调试任务启动成功")
 	wsConn.WriteJSON(resp)
+}
+
+// saveUserCode
+// 保存用户代码到用户的executePath，并返回需要编译的文件列表
+func (d *debugService) saveUserCode(language constants.LanguageType, codeStr string, executePath string) ([]string, *e.Error) {
+	var compileFiles []string
+	var mainFile string
+	var err2 *e.Error
+
+	if mainFile, err2 = getMainFileNameByLanguage(language); err2 != nil {
+		log.Println(err2)
+		return nil, err2
+	}
+	if err := os.WriteFile(path.Join(executePath, mainFile), []byte(codeStr), 0644); err != nil {
+		log.Println(err)
+		return nil, e.ErrServer
+	}
+	// 将main文件进行编译即可
+	compileFiles = []string{path.Join(executePath, mainFile)}
+
+	return compileFiles, nil
 }
 
 // ListenAndHandleDebugEvents 循环监控调试事件，并生成event响应给用户
