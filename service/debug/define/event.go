@@ -1,44 +1,20 @@
 package define
 
+import "FanCode/constants"
+
 // BreakpointEvent 断点事件
 // 该event指示有关断点的某些信息已更改。
 type BreakpointEvent struct {
-	Reason ReasonType
+	Reason constants.BreakpointReasonType
 }
-
-type ReasonType string
-
-const (
-	ChangeType  ReasonType = "change"
-	NewType     ReasonType = "new"
-	RemovedType ReasonType = "removed"
-)
 
 // OutputEvent
 // 该事件表明目标已经产生了一些输出。
 type OutputEvent struct {
-	Category OutputCategory // 输出类型
-	Output   string         // 输出内容
-	Line     int            // 产生输出的位置的行。
+	Category constants.OutputCategory // 输出类型
+	Output   string                   // 输出内容
+	Line     int                      // 产生输出的位置的行。
 }
-
-// OutputCategory 输出类型定义
-type OutputCategory string
-
-const (
-	// Console 在客户端的默认消息UI中显示输出
-	Console OutputCategory = "console"
-	// Important 提示客户端在客户端UI中显示输出
-	// 用于重要和高度可见的信息，例如作为弹出窗口通知。此类别应仅用于重要邮件
-	// 来自调试器(而不是debuggee)。这个类别值是一个提示，客户端可能会忽略这个提示
-	Important OutputCategory = "important"
-	// Stdout 将输出显示为被调试程序的正常程序输出。
-	Stdout OutputCategory = "stdout"
-	// Stderr 将输出显示为错误程序从被调试程序输出。
-	Stderr OutputCategory = "stderr"
-	// Telemetry 将输出发送到Telemetry，而不是显示给用户。
-	Telemetry OutputCategory = "telemetry"
-)
 
 // StoppedEvent
 // 该event表明，由于某些原因，被调试进程的执行已经停止。

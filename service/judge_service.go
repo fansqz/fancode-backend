@@ -92,7 +92,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 			UserID:    userId,
 			ProblemID: judgeRequest.ProblemID,
 			Code:      judgeRequest.Code,
-			Language:  judgeRequest.Language,
+			Language:  string(judgeRequest.Language),
 			Status:    constants.InProgress,
 		}
 		problemAttempt.SubmissionCount++
@@ -117,7 +117,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 
 	problemAttempt.Code = judgeRequest.Code
-	problemAttempt.Language = judgeRequest.Language
+	problemAttempt.Language = string(judgeRequest.Language)
 	// 有记录则更新
 	problemAttempt.SubmissionCount++
 	if submission.Status == constants.Accepted {
@@ -142,7 +142,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*po.Submission, *e.Error) {
 	// 提交结果对象
 	submission := &po.Submission{
-		Language:  judgeRequest.Language,
+		Language:  string(judgeRequest.Language),
 		Code:      judgeRequest.Code,
 		ProblemID: judgeRequest.ProblemID,
 		UserID:    ctx.Keys["user"].(*dto.UserInfo).ID,
@@ -250,7 +250,7 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 // saveUserCode
 // 保存用户代码到用户的executePath，并返回需要编译的文件列表
-func (j *judgeService) saveUserCode(language string, codeStr string, executePath string) ([]string, *e.Error) {
+func (j *judgeService) saveUserCode(language constants.LanguageType, codeStr string, executePath string) ([]string, *e.Error) {
 	var compileFiles []string
 	var mainFile string
 	var err2 *e.Error
@@ -270,13 +270,13 @@ func (j *judgeService) saveUserCode(language string, codeStr string, executePath
 }
 
 // 根据编程语言获取该编程语言的Main文件名称
-func getMainFileNameByLanguage(language string) (string, *e.Error) {
+func getMainFileNameByLanguage(language constants.LanguageType) (string, *e.Error) {
 	switch language {
-	case constants.ProgramC:
+	case constants.LanguageC:
 		return "main.c", nil
-	case constants.ProgramJava:
+	case constants.LanguageJava:
 		return "Main.java", nil
-	case constants.ProgramGo:
+	case constants.LanguageGo:
 		return "main.go", nil
 	default:
 		return "", e.ErrLanguageNotSupported

@@ -1,8 +1,10 @@
 package judger
 
+import "FanCode/constants"
+
 // ExecuteOptions 执行文件可选操作
 type ExecuteOptions struct {
-	Language        string
+	Language        constants.LanguageType
 	LimitTime       int64 // 资源限制
 	MemoryLimit     int64
 	CPUQuota        int64
@@ -22,7 +24,7 @@ type ExecuteResult struct {
 
 // CompileOptions 编译文件可选参数
 type CompileOptions struct {
-	Language        string
+	Language        constants.LanguageType
 	LimitTime       int64
 	ExcludedPaths   []string // 屏蔽的敏感路径
 	ReplacementPath string   // 取代敏感路径的路径

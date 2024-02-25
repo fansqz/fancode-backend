@@ -32,14 +32,14 @@ func getTempDir(config *config.AppConfig) string {
 	return executePath
 }
 
-func getAcmCodeTemplate(language string) (string, error) {
+func getAcmCodeTemplate(language constants.LanguageType) (string, error) {
 	var filePath string
 	switch language {
-	case constants.ProgramC:
+	case constants.LanguageC:
 		filePath = AcmCCodeFilePath
-	case constants.ProgramGo:
+	case constants.LanguageGo:
 		filePath = AcmGoCodeFilePath
-	case constants.ProgramJava:
+	case constants.LanguageJava:
 		filePath = AcmJavaCodeFilePath
 	}
 	code, err := os.ReadFile(filePath)

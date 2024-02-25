@@ -22,7 +22,7 @@ const (
 	CompileLimitTime = 1000 * 10
 )
 
-type gdbCore struct {
+type gdbDebugger struct {
 	gdbProcess  *exec.Cmd       // 调试进程
 	userProcess *exec.Cmd       // 用户进程
 	breakpoints []de.Breakpoint // 断点
@@ -41,13 +41,13 @@ type gdbCore struct {
 	userMessageChan chan []byte
 }
 
-func NewGdbCore() de.DebugCore {
-	return &gdbCore{
+func NewGdbDebugger() de.Debugger {
+	return &gdbDebugger{
 		judger: judger.NewJudgeCore(),
 	}
 }
 
-func (g *gdbCore) Launch(compileFiles []string, workPath string) (chan interface{}, error) {
+func (g *gdbDebugger) Launch(compileFiles []string, workPath string) (chan interface{}, error) {
 	// 设置gdb文件
 	if err := g.configGDB(g.workPath); err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (g *gdbCore) Launch(compileFiles []string, workPath string) (chan interface
 		execFile := path.Join(workPath, "main")
 		// 进行编译
 		r, err := g.judger.Compile(compileFiles, execFile, &judger.CompileOptions{
-			Language:        constants.ProgramC,
+			Language:        constants.LanguageC,
 			LimitTime:       CompileLimitTime,
 			ExcludedPaths:   []string{workPath},
 			ReplacementPath: "/",
@@ -115,12 +115,12 @@ func (g *gdbCore) Launch(compileFiles []string, workPath string) (chan interface
 	return cha, nil
 }
 
-func (g *gdbCore) Start() error {
+func (g *gdbDebugger) Start() error {
 	return g.sendCommandToGDB("run")
 }
 
 // DeadlineRead 设置超时的读取，超出超时事件就会关闭Read
-func (g *gdbCore) deadlineRead(read io.ReadCloser, timeout time.Duration) ([]byte, error) {
+func (g *gdbDebugger) deadlineRead(read io.ReadCloser, timeout time.Duration) ([]byte, error) {
 	// 创建一个缓冲区用于存储读取的数据
 	buf := new(bytes.Buffer)
 
@@ -151,7 +151,7 @@ func (g *gdbCore) deadlineRead(read io.ReadCloser, timeout time.Duration) ([]byt
 
 // closePipe 关闭所有stdout stdin stderr
 // todo: 异常如何处理
-func (g *gdbCore) closePipe() {
+func (g *gdbDebugger) closePipe() {
 	_ = g.userStdin.Close()
 	_ = g.userStdout.Close()
 	_ = g.userStderr.Close()
@@ -161,7 +161,7 @@ func (g *gdbCore) closePipe() {
 }
 
 // sendCommandToGDB 向gdb输入命令
-func (g *gdbCore) sendCommandToGDB(cmd string) error {
+func (g *gdbDebugger) sendCommandToGDB(cmd string) error {
 	// 确保命令以换行符结束，这是 GDB 命令的格式
 	if !strings.HasSuffix(cmd, "\n") {
 		cmd += "\n"
@@ -181,7 +181,7 @@ func (g *gdbCore) sendCommandToGDB(cmd string) error {
 	return nil
 }
 
-func (g *gdbCore) SendToConsole(input string) error {
+func (g *gdbDebugger) SendToConsole(input string) error {
 	n, err := g.userStdin.Write(utils.Slice(input))
 	if err != nil {
 		return fmt.Errorf("failed to send input to user process: %w", err)
@@ -193,19 +193,19 @@ func (g *gdbCore) SendToConsole(input string) error {
 	return nil
 }
 
-func (g *gdbCore) Next() error {
+func (g *gdbDebugger) Next() error {
 	return g.sendCommandToGDB("n 1\n")
 }
 
-func (g *gdbCore) Step() error {
+func (g *gdbDebugger) Step() error {
 	return g.sendCommandToGDB("s 1\n")
 }
 
-func (g *gdbCore) Continue() error {
+func (g *gdbDebugger) Continue() error {
 	return g.sendCommandToGDB("c 1\n")
 }
 
-func (g *gdbCore) AddBreakpoints(source string, breakpoints []de.Breakpoint) ([]de.Breakpoint, error) {
+func (g *gdbDebugger) AddBreakpoints(source string, breakpoints []de.Breakpoint) ([]de.Breakpoint, error) {
 	for _, bp := range breakpoints {
 		bs := utils.Slice("b " + source + ":" + strconv.Itoa(bp.Line) + "\n")
 		n, err := g.gdbStdin.Write(bs)
@@ -226,22 +226,22 @@ func (g *gdbCore) AddBreakpoints(source string, breakpoints []de.Breakpoint) ([]
 	return nil, nil
 }
 
-func (g *gdbCore) RemoveBreakpoints(source string, breakpoints []de.Breakpoint) ([]de.Breakpoint, error) {
+func (g *gdbDebugger) RemoveBreakpoints(source string, breakpoints []de.Breakpoint) ([]de.Breakpoint, error) {
 	// todo
 	return nil, nil
 }
 
-func (g *gdbCore) handlerGdbMessage(message []byte) {
+func (g *gdbDebugger) handlerGdbMessage(message []byte) {
 
 }
 
 // 判断消息类型
-func (g *gdbCore) getMessageType(message []byte) string {
+func (g *gdbDebugger) getMessageType(message []byte) string {
 	return ""
 }
 
 // Terminate todo: 如何正确处理异常
-func (g *gdbCore) Terminate() error {
+func (g *gdbDebugger) Terminate() error {
 	g.closePipe()
 	_ = g.gdbProcess.Process.Kill()
 	_ = g.userProcess.Process.Kill()
@@ -259,7 +259,7 @@ func (g *gdbCore) Terminate() error {
 	return nil
 }
 
-func (d *gdbCore) configGDB(workPath string) error {
+func (d *gdbDebugger) configGDB(workPath string) error {
 	fileStr := "set print elements 0\n" +
 		"set print null-stop on\n" +
 		"set print repeats 0\n" +
@@ -268,7 +268,7 @@ func (d *gdbCore) configGDB(workPath string) error {
 	return os.WriteFile(path.Join(workPath, GdbInitFileName), []byte(fileStr), 0644)
 }
 
-func (d *gdbCore) getTimeoutContext(limitTime int64) (context.Context, context.CancelFunc) {
+func (d *gdbDebugger) getTimeoutContext(limitTime int64) (context.Context, context.CancelFunc) {
 	var ctx context.Context
 	var cancel context.CancelFunc
 	if limitTime != 0 {

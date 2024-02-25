@@ -1,9 +1,9 @@
 package define
 
-// DebugCore
+// Debugger
 // 用户的一次调试过程处理
 // 需要保证并发安全
-type DebugCore interface {
+type Debugger interface {
 	// Launch 开启debuggee
 	// compileFiles 编译的文件列表
 	// workPath 工作目录

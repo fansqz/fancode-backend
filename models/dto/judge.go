@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"FanCode/constants"
 	"FanCode/models/po"
 	"time"
 )
@@ -9,7 +10,7 @@ import (
 type SubmitRequestDto struct {
 	ProblemID uint
 	Code      string
-	Language  string
+	Language  constants.LanguageType
 }
 
 type SubmitResultDto struct {
@@ -44,10 +45,10 @@ func NewSubmitResultDto(submission *po.Submission) *SubmitResultDto {
 
 // ExecuteRequestDto 执行请求需要的dto
 type ExecuteRequestDto struct {
-	ProblemID uint   // 题目id
-	Code      string // 代码
-	Input     string // 自测用例
-	Language  string // 编程语言
+	ProblemID uint                   // 题目id
+	Code      string                 // 代码
+	Input     string                 // 自测用例
+	Language  constants.LanguageType // 编程语言
 }
 
 // ExecuteResultDto 执行的响应结果
