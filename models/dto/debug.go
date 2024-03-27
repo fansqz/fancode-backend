@@ -2,70 +2,35 @@ package dto
 
 import "FanCode/constants"
 
-// ======================DebugBase调试信息的基本结构==============================
-type DebugBase struct {
-	Type constants.DebugMessageType
-}
-
 // =======================以下是request=============================
-// DebugRequestBase 调试相关请求数据
-type DebugRequestBase struct {
-	DebugBase
-	Seq    int32
-	Option constants.DebugOptionType
-}
 
 // StartDebugRequest 启动调试请求
 type StartDebugRequest struct {
-	DebugRequestBase
 	// Code 需要进行debug的用户代码
-	Code string
+	Code string `json:"code"`
 	// Language 调试语言
-	Language constants.LanguageType
+	Language constants.LanguageType `json:"language"`
+	// 初始断点
+	Breakpoints []int `json:"breakpoints"`
 }
 
-// =======================以下是resp=============================
-// DebugResponseBase 调试相关请求数据
-type DebugResponse struct {
-	DebugBase
-	// RequestSeq 请求对应的seq
-	RequestSeq int32
-	// Success 请求是否成功
-	Success bool
-	// RequestOption 请求对应的option
-	RequestOption constants.DebugOptionType
-	// Message 携带信息
-	Message string
+type AddBreakpointRequest struct {
+	Key         string `json:"key"`
+	Breakpoints []int  `json:"breakpoints"`
 }
 
-func NewSuccessDebugResponseByRequest(req *DebugRequestBase, message string) *DebugResponse {
-	return &DebugResponse{
-		DebugBase: DebugBase{
-			Type: req.Type,
-		},
-		Success:       true,
-		RequestSeq:    req.Seq,
-		RequestOption: req.Option,
-		Message:       message,
-	}
+type RemoveBreakpointRequest struct {
+	Key         string `json:"key"`
+	Breakpoints []int  `json:"breakpoints"`
 }
 
-func NewFailDebugResponseByRequest(req *DebugRequestBase, message string) *DebugResponse {
-	return &DebugResponse{
-		DebugBase: DebugBase{
-			Type: req.Type,
-		},
-		Success:       false,
-		RequestSeq:    req.Seq,
-		RequestOption: req.Option,
-		Message:       message,
-	}
+type StartDebugEvent struct {
+	Event   constants.DebugEventType
+	Success bool   `json:"success"`
+	Key     string `json:"key"`
 }
-
-//=======================以下是event=============================
 
 type DebugEventBase struct {
-	DebugBase
 	Seq   int32
 	Event constants.DebugEventType
 }

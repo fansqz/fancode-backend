@@ -31,8 +31,13 @@ func (i *RequestInterceptor) TokenAuthorize() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 检验是否携带token
 		result := r.NewResult(c)
+		path := c.Request.URL.Path
 		// 读取token
 		token := c.Request.Header.Get("token")
+		// 如果是ws请求，那么token放在url中
+		if matchPath(path, "/ws/:token") {
+			token = c.Param("token")
+		}
 		var userInfo *dto.UserInfo
 		if token != "" {
 			claims, err2 := utils.ParseToken(token)
@@ -63,7 +68,6 @@ func (i *RequestInterceptor) TokenAuthorize() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		path := c.Request.URL.Path
 		method := c.Request.Method
 		for _, api := range apis {
 			if matchPath(path, api.Path) {

@@ -58,7 +58,7 @@ func (ws *wsController) handleWebSocket(ctx *gin.Context, w http.ResponseWriter,
 			log.Println(err)
 			return
 		}
-		if messageType == websocket.BinaryMessage {
+		if messageType == websocket.BinaryMessage || messageType == websocket.TextMessage {
 			// 解析json，并根据type交给不同的handler处理
 			var wsReq dto.WsRequest
 			if err = json.Unmarshal(p, &wsReq); err != nil {
@@ -70,7 +70,9 @@ func (ws *wsController) handleWebSocket(ctx *gin.Context, w http.ResponseWriter,
 				ws.debugService.HandleMessage(ctx, wsReq.Data)
 			}
 		} else if messageType == websocket.PingMessage {
-
+			if err = conn.WriteMessage(websocket.TextMessage, []byte("pong")); err != nil {
+				log.Println(err)
+			}
 		} else if messageType == websocket.PongMessage {
 
 		} else if messageType == websocket.CloseMessage {

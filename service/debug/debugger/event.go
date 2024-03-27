@@ -1,11 +1,12 @@
-package define
+package debugger
 
 import "FanCode/constants"
 
 // BreakpointEvent 断点事件
 // 该event指示有关断点的某些信息已更改。
 type BreakpointEvent struct {
-	Reason constants.BreakpointReasonType
+	Reason     constants.BreakpointReasonType
+	Breakpoint Breakpoint
 }
 
 // OutputEvent
@@ -35,6 +36,13 @@ type ContinuedEvent struct {
 type CompileEvent struct {
 	Success bool
 	Message string // 编译产生的信息
+}
+
+// LaunchEvent
+// 启动gdb的事件
+type LaunchEvent struct {
+	Success bool
+	Message string // 启动gdb的消息
 }
 
 // ExitedEvent

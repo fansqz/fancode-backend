@@ -33,6 +33,7 @@ const (
 type DebugEventType string
 
 const (
+	StartEvent      DebugEventType = "start"
 	BreakpointEvent DebugEventType = "breakpoint"
 	OutputEvent     DebugEventType = "output"
 	StoppedEvent    DebugEventType = "stopped"

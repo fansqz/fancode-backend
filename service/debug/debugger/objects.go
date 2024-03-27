@@ -1,8 +1,9 @@
-package define
+package debugger
 
 // Breakpoint 表示断点
 type Breakpoint struct {
-	Line int // 行号
+	File string // 文件名称
+	Line int    // 行号
 }
 
 // StackFrame 表示一个栈帧，包含当前栈帧的函数名称，执行的位置等信息

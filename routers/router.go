@@ -41,7 +41,7 @@ func SetupRouter(
 	r.GET("/ping", c.Ping)
 
 	// ws
-	r.GET("/ws", controller.WsController.HandlerWebSocket)
+	r.GET("/ws/:token", controller.WsController.HandlerWebSocket)
 
 	SetupAuthRoutes(r, controller.AuthController)
 	SetupAccountRoutes(r, controller.AccountController)

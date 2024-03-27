@@ -5,10 +5,11 @@ import (
 	"FanCode/constants"
 	e "FanCode/error"
 	"FanCode/models/dto"
+	"FanCode/models/vo"
 	"FanCode/service/debug"
-	"FanCode/service/debug/define"
+	"FanCode/service/debug/debugger"
+	"FanCode/service/sse"
 	"FanCode/utils"
-	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"log"
 	"os"
@@ -18,7 +19,14 @@ import (
 // DebugService
 // 用户调试相关
 type DebugService interface {
-	HandleMessage(*gin.Context, interface{})
+	Start(ctx *gin.Context, startReq dto.StartDebugRequest)
+	SendToConsole(key string, input string) *e.Error
+	Next(key string) *e.Error
+	Step(key string) *e.Error
+	Continue(key string) *e.Error
+	AddBreakpoints(key string, breakpoints []int) *e.Error
+	RemoveBreakpoints(key string, breakpoints []int) *e.Error
+	Terminate(key string) *e.Error
 }
 
 type debugService struct {
@@ -35,40 +43,13 @@ func NewDebugService(cf *config.AppConfig, js JudgeService, ws WsService) DebugS
 	}
 }
 
-func (d *debugService) HandleMessage(ctx *gin.Context, data interface{}) {
-	var result map[string]interface{}
-
-	// 解析 JSON 到 map
-	data2, err := json.Marshal(data)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	if err := json.Unmarshal(data2, &result); err != nil {
-		log.Println(err)
-		return
-	}
-	option := result["option"].(constants.DebugOptionType)
-	switch option {
-	case constants.StartDebug:
-		var startReq dto.StartDebugRequest
-		if err = json.Unmarshal(data2, &startReq); err != nil {
-			log.Println(err)
-			return
-		}
-		d.Start(ctx, startReq)
-	}
-}
-
 func (d *debugService) Start(ctx *gin.Context, startReq dto.StartDebugRequest) {
-	user := ctx.Keys["user"].(*dto.UserInfo)
-	wsConn, _ := d.wsService.GetConn(int32(user.ID))
+	result := vo.NewResult(ctx)
 	// 创建工作目录, 用户的临时文件
 	executePath := getExecutePath(d.config)
 	if err := os.MkdirAll(executePath, os.ModePerm); err != nil {
 		log.Printf("MkdirAll error: %v\n", err)
-		resp := dto.NewFailDebugResponseByRequest(&startReq.DebugRequestBase, "系统错误")
-		wsConn.WriteJSON(resp)
+		result.Error(e.ErrBadRequest)
 		return
 	}
 	// 保存用户代码到用户的执行路径，并获取编译文件列表
@@ -76,10 +57,7 @@ func (d *debugService) Start(ctx *gin.Context, startReq dto.StartDebugRequest) {
 	var err2 *e.Error
 	if compileFiles, err2 = d.saveUserCode(startReq.Language,
 		startReq.Code, executePath); err2 != nil {
-		// Add logging for error
-		log.Printf("SaveUserCode error: %v\n", err2)
-		resp := dto.NewFailDebugResponseByRequest(&startReq.DebugRequestBase, "系统错误")
-		wsConn.WriteJSON(resp)
+		result.SimpleErrorMessage("保存用户代码失败")
 		return
 	}
 
@@ -87,25 +65,149 @@ func (d *debugService) Start(ctx *gin.Context, startReq dto.StartDebugRequest) {
 	key := utils.GetUUID()
 	if err := debug.StartDebugging(key, startReq.Language, compileFiles, executePath); err != nil {
 		// Add logging for error
-		log.Printf("StartDebugging error: %v\n", err)
-		resp := dto.NewFailDebugResponseByRequest(&startReq.DebugRequestBase, "系统错误")
-		wsConn.WriteJSON(resp)
+		result.SimpleErrorMessage("启动调试失败")
 		return
 	}
 
 	// 读取输入数据的管道并创建协程处理数据
-	channel, _ := debug.GetDebuggerRespChan(key)
-	go d.ListenAndHandleDebugEvents(ctx, channel)
+	debugContext, _ := debug.GetDebugContext(key)
 
-	debugger, _ := debug.GetDebugger(key)
-	if err := debugger.Start(); err != nil {
-		log.Printf("StartDebugging error: %v\n", err)
-		resp := dto.NewFailDebugResponseByRequest(&startReq.DebugRequestBase, "调试任务启动失败")
-		wsConn.WriteJSON(resp)
+	// 等待gdb启动成功
+	ans := <-debugContext.DebuggerChan
+	if launchEvent, ok := ans.(*debugger.LaunchEvent); ok {
+		if !launchEvent.Success {
+			result.SimpleErrorMessage("调试任务启动失败")
+			debug.DestroyDebugContext(key)
+			return
+		}
+	} else {
+		// 启动失败
+		result.SimpleErrorMessage("调试任务启动失败")
 		return
 	}
-	resp := dto.NewSuccessDebugResponseByRequest(&startReq.DebugRequestBase, "调试任务启动成功")
-	wsConn.WriteJSON(resp)
+
+	// gdb调试启动成功，创建管道
+	sse.CreateSssConnection(key, ctx.Writer)
+
+	// 发送连接创建成功的resp
+	sse.SendData(key, &dto.StartDebugEvent{
+		Event:   constants.StartEvent,
+		Success: true,
+		Key:     key,
+	})
+
+	// 监控管道事件
+	go d.listenAndHandleDebugEvents(ctx, debugContext.DebuggerChan)
+
+	// 设置断点
+	breakpoints := make([]debugger.Breakpoint, len(startReq.Breakpoints))
+	mainFile, _ := getMainFileNameByLanguage(debugContext.Language)
+	for i, bp := range startReq.Breakpoints {
+		breakpoints[i] = debugger.Breakpoint{
+			File: mainFile,
+			Line: bp,
+		}
+	}
+	debugContext.Debugger.AddBreakpoints(breakpoints)
+
+	// 开启调试
+	_ = debugContext.Debugger.Start()
+}
+
+func (d *debugService) SendToConsole(key string, input string) *e.Error {
+	// 获取调试上下文
+	debugContext, _ := debug.GetDebugContext(key)
+	if err := debugContext.Debugger.SendToConsole(input); err != nil {
+		log.Println(err)
+		return e.ErrUnknown
+	}
+	return nil
+}
+
+func (d *debugService) Next(key string) *e.Error {
+	// 获取调试上下文
+	debugContext, _ := debug.GetDebugContext(key)
+	if err := debugContext.Debugger.Next(); err != nil {
+		log.Println(err)
+		return e.ErrUnknown
+	}
+	return nil
+}
+
+func (d *debugService) Step(key string) *e.Error {
+	// 获取调试上下文
+	debugContext, _ := debug.GetDebugContext(key)
+	if err := debugContext.Debugger.Step(); err != nil {
+		log.Println(err)
+		return e.ErrUnknown
+	}
+	return nil
+}
+
+func (d *debugService) Continue(key string) *e.Error {
+	// 获取调试上下文
+	debugContext, _ := debug.GetDebugContext(key)
+	if err := debugContext.Debugger.Continue(); err != nil {
+		log.Println(err)
+		return e.ErrUnknown
+	}
+	return nil
+}
+
+func (d *debugService) AddBreakpoints(key string, breakpoints []int) *e.Error {
+	// 获取调试上下文
+	debugContext, _ := debug.GetDebugContext(key)
+	bps := make([]debugger.Breakpoint, len(breakpoints))
+	mainFile, err := getMainFileNameByLanguage(debugContext.Language)
+	if err != nil {
+		return err
+	}
+	for i, breakpoint := range breakpoints {
+		bps[i] = debugger.Breakpoint{
+			File: mainFile,
+			Line: breakpoint,
+		}
+	}
+	if err := debugContext.Debugger.AddBreakpoints(bps); err != nil {
+		log.Println(err)
+		return e.ErrUnknown
+	}
+	return nil
+}
+
+func (d *debugService) RemoveBreakpoints(key string, breakpoints []int) *e.Error {
+	// 获取调试上下文
+	debugContext, _ := debug.GetDebugContext(key)
+	bps := make([]debugger.Breakpoint, len(breakpoints))
+	mainFile, err := getMainFileNameByLanguage(debugContext.Language)
+	if err != nil {
+		return err
+	}
+	for i, breakpoint := range breakpoints {
+		bps[i] = debugger.Breakpoint{
+			File: mainFile,
+			Line: breakpoint,
+		}
+	}
+	if err := debugContext.Debugger.RemoveBreakpoints(bps); err != nil {
+		log.Println(err)
+		return e.ErrUnknown
+	}
+	return nil
+}
+
+func (d *debugService) Terminate(key string) *e.Error {
+	// 获取调试上下文
+	debugContext, _ := debug.GetDebugContext(key)
+	if err := debugContext.Debugger.Terminate(); err != nil {
+		log.Println(err)
+		return e.ErrUnknown
+	}
+	if err := sse.Close(key); err != nil {
+		log.Println(err)
+		return e.ErrUnknown
+	}
+	return nil
 }
 
 // saveUserCode
@@ -129,52 +231,24 @@ func (d *debugService) saveUserCode(language constants.LanguageType, codeStr str
 	return compileFiles, nil
 }
 
-// ListenAndHandleDebugEvents 循环监控调试事件，并生成event响应给用户
-func (d *debugService) ListenAndHandleDebugEvents(ctx *gin.Context, channel chan interface{}) {
+// listenAndHandleDebugEvents 循环监控调试事件，并生成event响应给用户
+func (d *debugService) listenAndHandleDebugEvents(ctx *gin.Context, channel chan interface{}) {
 	for {
 		data := <-channel
-		if _, ok := data.(define.BreakpointEvent); ok {
+		if _, ok := data.(debugger.BreakpointEvent); ok {
 
 		}
-		if _, ok := data.(define.OutputEvent); ok {
+		if _, ok := data.(debugger.OutputEvent); ok {
 
 		}
-		if _, ok := data.(define.StoppedEvent); ok {
+		if _, ok := data.(debugger.StoppedEvent); ok {
 
 		}
-		if _, ok := data.(define.ContinuedEvent); ok {
+		if _, ok := data.(debugger.ContinuedEvent); ok {
 
 		}
-		if _, ok := data.(define.ExitedEvent); ok {
+		if _, ok := data.(debugger.ExitedEvent); ok {
 
 		}
 	}
-}
-
-func (d *debugService) SendToConsole(ctx *gin.Context) {
-
-}
-
-func (d *debugService) Next(ctx *gin.Context) {
-
-}
-
-func (d *debugService) Step(ctx *gin.Context) {
-
-}
-
-func (d *debugService) Continue(ctx *gin.Context) {
-
-}
-
-func (d *debugService) AddBreakpoints(ctx *gin.Context) {
-
-}
-
-func (d *debugService) RemoveBreakpoints(ctx *gin.Context) {
-
-}
-
-func (d *debugService) Terminate(ctx *gin.Context) {
-
 }

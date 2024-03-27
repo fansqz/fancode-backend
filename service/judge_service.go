@@ -81,8 +81,6 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	userId := ctx.Keys["user"].(*dto.UserInfo).ID
 	problemAttempt, err2 := j.problemAttemptDao.GetProblemAttemptByID(tx, userId, judgeRequest.ProblemID)
 	if err2 != nil && !errors.Is(err2, gorm.ErrRecordNotFound) {
-		// Add logging for error
-		log.Println("GetProblemAttemptByID error: %v\n", err2)
 		return nil, e.ErrSubmitFailed
 	}
 

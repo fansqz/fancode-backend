@@ -22,11 +22,11 @@ func NewWsService() WsService {
 }
 
 func (ws *wsService) AddWsConn(key int32, conn *websocket.Conn) {
-	conn, ok := ws.wsMap[key]
+	conn1, ok := ws.wsMap[key]
 	if ok {
-		conn.Close()
-		ws.wsMap[key] = conn
+		conn1.Close()
 	}
+	ws.wsMap[key] = conn
 }
 
 func (ws *wsService) RemoveConn(key int32) {
