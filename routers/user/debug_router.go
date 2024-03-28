@@ -17,7 +17,5 @@ func SetupDebugRoutes(r *gin.Engine, debugController user.DebugController) {
 		judge.POST("/addBreakpoints", debugController.AddBreakpoints)
 		judge.POST("/removeBreakpoints", debugController.RemoveBreakpoints)
 		judge.POST("/terminate", debugController.Terminate)
-		judge.POST("/terminate", debugController.Terminate)
-
 	}
 }
