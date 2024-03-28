@@ -40,9 +40,6 @@ func SetupRouter(
 	//ping
 	r.GET("/ping", c.Ping)
 
-	// ws
-	r.GET("/ws/:token", controller.WsController.HandlerWebSocket)
-
 	SetupAuthRoutes(r, controller.AuthController)
 	SetupAccountRoutes(r, controller.AccountController)
 	admin.SetupSysApiRoutes(r, controller.ApiController)
@@ -53,6 +50,7 @@ func SetupRouter(
 	admin.SetupProblemRoutes(r, controller.ProblemManagementController)
 	admin.SetupProblemCaseRoutes(r, controller.ProblemCaseManagementController)
 	user.SetupJudgeRoutes(r, controller.JudgeController)
+	user.SetupDebugRoutes(r, controller.DebugController)
 	user.SetupProblemRoutes(r, controller.ProblemController)
 	user.SetupProblemBankRoutes(r, controller.ProblemBankController)
 	user.SetupSubmissionRoutes(r, controller.SubmissionController)
