@@ -32,14 +32,12 @@ type DebugService interface {
 type debugService struct {
 	config       *config.AppConfig
 	judgeService JudgeService
-	wsService    WsService
 }
 
-func NewDebugService(cf *config.AppConfig, js JudgeService, ws WsService) DebugService {
+func NewDebugService(cf *config.AppConfig, js JudgeService) DebugService {
 	return &debugService{
 		config:       cf,
 		judgeService: js,
-		wsService:    ws,
 	}
 }
 
