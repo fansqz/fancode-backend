@@ -10,6 +10,7 @@ func SetupDebugRoutes(r *gin.Engine, debugController user.DebugController) {
 	judge := r.Group("/debug")
 	{
 		judge.POST("/start", debugController.Start)
+		judge.GET("/sse/:key", debugController.CreateSseConnect)
 		judge.POST("/next", debugController.Next)
 		judge.POST("/step", debugController.Step)
 		judge.POST("/continue", debugController.Continue)

@@ -57,9 +57,10 @@ func initApp(appConfig *config.AppConfig) (*http.Server, error) {
 	authService := service.NewAuthService(appConfig, sysUserDao, sysMenuDao, sysRoleDao)
 	authController := controller.NewAuthController(authService)
 	controllerController := controller.NewController(problemBankManagementController, problemManagementController, problemCaseManagementController, sysApiController, sysMenuController, sysRoleController, sysUserController, judgeController, debugController, problemController, problemBankController, submissionController, accountController, authController)
+	recoverPanicInterceptor := interceptor.NewRecoverPanicInterceptor()
 	corsInterceptor := interceptor.NewCorsInterceptor()
 	requestInterceptor := interceptor.NewRequestInterceptor(sysRoleService, sysUserService)
-	engine := routers.SetupRouter(appConfig, controllerController, corsInterceptor, requestInterceptor)
+	engine := routers.SetupRouter(appConfig, controllerController, recoverPanicInterceptor, corsInterceptor, requestInterceptor)
 	server := newApp(engine, appConfig)
 	return server, nil
 }

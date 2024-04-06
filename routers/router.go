@@ -19,6 +19,7 @@ import (
 func SetupRouter(
 	config *conf.AppConfig,
 	controller *c.Controller,
+	panicInterceptor *interceptor.RecoverPanicInterceptor,
 	corsInterceptor *interceptor.CorsInterceptor,
 	requestInterceptor *interceptor.RequestInterceptor,
 ) *gin.Engine {
@@ -28,9 +29,10 @@ func SetupRouter(
 
 	r := gin.Default()
 
+	// 拦截panic
+	r.Use(panicInterceptor.RecoverPanic())
 	// 允许跨域
 	r.Use(corsInterceptor.Cors())
-
 	// 拦截非法用户
 	r.Use(requestInterceptor.TokenAuthorize())
 

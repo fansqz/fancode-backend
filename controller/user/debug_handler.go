@@ -9,8 +9,10 @@ import (
 )
 
 type DebugController interface {
-	// Start 启动调试，会创建一个sse链接
+	// Start 启动调试
 	Start(ctx *gin.Context)
+	// CreateSseConnect 会创建一个sse链接，用于接受服务器响应
+	CreateSseConnect(ctx *gin.Context)
 	// SendToConsole 提交
 	SendToConsole(ctx *gin.Context)
 	// Next
@@ -41,11 +43,21 @@ func NewDebugController(ds service.DebugService) DebugController {
 func (d *debugController) Start(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var startReq dto.StartDebugRequest
-	if err := ctx.BindJSON(startReq); err != nil {
-		result.Error(e.ErrBadRequest)
+	if err := ctx.BindJSON(&startReq); err != nil {
 		return
 	}
-	d.debugService.Start(ctx, startReq)
+	key, err := d.debugService.Start(ctx, startReq)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(key)
+}
+
+// CreateSseConnect
+func (d *debugController) CreateSseConnect(ctx *gin.Context) {
+	key := ctx.Param("key")
+	d.debugService.CreateSseConnect(ctx, key)
 }
 
 // SendToConsole 提交
@@ -97,7 +109,7 @@ func (d *debugController) Continue(ctx *gin.Context) {
 func (d *debugController) AddBreakpoints(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var req dto.AddBreakpointRequest
-	if err := ctx.BindJSON(req); err != nil {
+	if err := ctx.BindJSON(&req); err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}
@@ -112,7 +124,7 @@ func (d *debugController) AddBreakpoints(ctx *gin.Context) {
 func (d *debugController) RemoveBreakpoints(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var req dto.AddBreakpointRequest
-	if err := ctx.BindJSON(req); err != nil {
+	if err := ctx.BindJSON(&req); err != nil {
 		result.Error(e.ErrBadRequest)
 		return
 	}

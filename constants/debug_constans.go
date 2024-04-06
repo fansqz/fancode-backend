@@ -68,3 +68,10 @@ const (
 	// Telemetry 将输出发送到Telemetry，而不是显示给用户。
 	Telemetry OutputCategory = "telemetry"
 )
+
+type StoppedReasonType string
+
+const (
+	BreakpointStopped StoppedReasonType = "breakpoint"
+	StepStopped       StoppedReasonType = "step"
+)
