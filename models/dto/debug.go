@@ -6,7 +6,8 @@ import "FanCode/constants"
 
 // StartDebugRequest 启动调试请求
 type StartDebugRequest struct {
-	// Code 需要进行debug的用户代码
+	Key string `json:"key"`
+	// 用户代码
 	Code string `json:"code"`
 	// Language 调试语言
 	Language constants.LanguageType `json:"language"`
@@ -24,18 +25,21 @@ type RemoveBreakpointRequest struct {
 	Breakpoints []int  `json:"breakpoints"`
 }
 
-type StartDebugEvent struct {
-	Event   constants.DebugEventType
-	Success bool   `json:"success"`
-	Key     string `json:"key"`
-}
-
 // CompileEvent
 // 编译事件
 type CompileEvent struct {
 	Event   constants.DebugEventType `json:"event"`
 	Success bool                     `json:"success"`
 	Message string                   `json:"message"` // 编译产生的信息
+}
+
+// LaunchEvent
+// 加载用户代码事件
+type LaunchEvent struct {
+	Event   constants.DebugEventType `json:"event"`
+	Success bool                     `json:"success"`
+	Message string                   `json:"message"` // 启动gdb的消息
+	Key     string                   `json:"key"`
 }
 
 // BreakpointEvent 断点事件
@@ -49,10 +53,8 @@ type BreakpointEvent struct {
 // OutputEvent
 // 该事件表明目标已经产生了一些输出。
 type OutputEvent struct {
-	Event    constants.DebugEventType `json:"event"`
-	Category constants.OutputCategory `json:"category"` // 输出类型
-	Output   string                   `json:"output"`   // 输出内容
-	Line     int                      `json:"line"`     // 产生输出的位置的行。
+	Event  constants.DebugEventType `json:"event"`
+	Output string                   `json:"output"` // 输出内容
 }
 
 // StoppedEvent

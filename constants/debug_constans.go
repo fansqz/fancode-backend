@@ -51,24 +51,6 @@ const (
 	RemovedType BreakpointReasonType = "removed"
 )
 
-// OutputCategory 输出类型定义
-type OutputCategory string
-
-const (
-	// Console 在客户端的默认消息UI中显示输出
-	Console OutputCategory = "console"
-	// Important 提示客户端在客户端UI中显示输出
-	// 用于重要和高度可见的信息，例如作为弹出窗口通知。此类别应仅用于重要邮件
-	// 来自调试器(而不是debuggee)。这个类别值是一个提示，客户端可能会忽略这个提示
-	Important OutputCategory = "important"
-	// Stdout 将输出显示为被调试程序的正常程序输出。
-	Stdout OutputCategory = "stdout"
-	// Stderr 将输出显示为错误程序从被调试程序输出。
-	Stderr OutputCategory = "stderr"
-	// Telemetry 将输出发送到Telemetry，而不是显示给用户。
-	Telemetry OutputCategory = "telemetry"
-)
-
 type StoppedReasonType string
 
 const (

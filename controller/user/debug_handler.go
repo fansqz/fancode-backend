@@ -1,6 +1,7 @@
 package user
 
 import (
+	"FanCode/constants"
 	e "FanCode/error"
 	"FanCode/models/dto"
 	r "FanCode/models/vo"
@@ -9,6 +10,7 @@ import (
 )
 
 type DebugController interface {
+	CreateDebugSession(ctx *gin.Context)
 	// Start 启动调试
 	Start(ctx *gin.Context)
 	// CreateSseConnect 会创建一个sse链接，用于接受服务器响应
@@ -25,8 +27,8 @@ type DebugController interface {
 	AddBreakpoints(ctx *gin.Context)
 	// RemoveBreakpoints
 	RemoveBreakpoints(ctx *gin.Context)
-	// Terminate
-	Terminate(ctx *gin.Context)
+	// CloseDebugSession
+	CloseDebugSession(ctx *gin.Context)
 }
 
 type debugController struct {
@@ -39,19 +41,31 @@ func NewDebugController(ds service.DebugService) DebugController {
 	}
 }
 
-// Start 启动调试，会创建一个sse链接
+func (d *debugController) CreateDebugSession(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	language := ctx.PostForm("language")
+	languageType := constants.LanguageType(language)
+	key, err := d.debugService.CreateDebugSession(ctx, languageType)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(key)
+}
+
+// Start 开始调试
 func (d *debugController) Start(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	var startReq dto.StartDebugRequest
 	if err := ctx.BindJSON(&startReq); err != nil {
 		return
 	}
-	key, err := d.debugService.Start(ctx, startReq)
+	err := d.debugService.Start(ctx, startReq)
 	if err != nil {
 		result.Error(err)
 		return
 	}
-	result.SuccessData(key)
+	result.SuccessMessage("启动成功")
 }
 
 // CreateSseConnect
@@ -135,11 +149,11 @@ func (d *debugController) RemoveBreakpoints(ctx *gin.Context) {
 	result.SuccessMessage("请求成功")
 }
 
-// Terminate
-func (d *debugController) Terminate(ctx *gin.Context) {
+// CloseDebugSession
+func (d *debugController) CloseDebugSession(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	key := ctx.PostForm("key")
-	if err := d.debugService.Terminate(key); err != nil {
+	if err := d.debugService.CloseDebugSession(key); err != nil {
 		result.Error(err)
 		return
 	}

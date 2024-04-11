@@ -6,15 +6,13 @@ import "FanCode/constants"
 // 该event指示有关断点的某些信息已更改。
 type BreakpointEvent struct {
 	Reason      constants.BreakpointReasonType
-	Breakpoints []Breakpoint
+	Breakpoints []*Breakpoint
 }
 
 // OutputEvent
-// 该事件表明目标已经产生了一些输出。
+// 用户程序输出
 type OutputEvent struct {
-	Category constants.OutputCategory // 输出类型
-	Output   string                   // 输出内容
-	Line     int                      // 产生输出的位置的行。
+	Output string // 输出内容
 }
 
 // StoppedEvent
@@ -52,7 +50,7 @@ type CompileEvent struct {
 }
 
 // LaunchEvent
-// 启动gdb的事件
+// 调试资源准备成功
 type LaunchEvent struct {
 	Success bool
 	Message string // 启动gdb的消息

@@ -29,6 +29,7 @@ require (
 	github.com/creack/pty v1.1.21 // indirect
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/fansqz/GoDebugger v0.0.0-20240410171143-8a9b9cb15513 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -58,7 +59,8 @@ require (
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/sys v0.19.0 // indirect
+	golang.org/x/term v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
