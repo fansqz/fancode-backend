@@ -18,10 +18,12 @@ type Debugger interface {
 	Start() error
 	// SendToConsole 输入数据到控制台
 	SendToConsole(input string) error
-	// Next 下一步，不会进入函数内部
-	Next() error
-	// Step 下n一步，会进入函数内部
-	Step() error
+	// StepOver 下一步，不会进入函数内部
+	StepOver() error
+	// StepIn 下一步，会进入函数内部
+	StepIn() error
+	// StepOut 单步退出
+	StepOut() error
 	// Continue 忽略继续执行
 	Continue() error
 	// AddBreakpoints 添加断点

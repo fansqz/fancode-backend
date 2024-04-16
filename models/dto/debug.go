@@ -39,7 +39,6 @@ type LaunchEvent struct {
 	Event   constants.DebugEventType `json:"event"`
 	Success bool                     `json:"success"`
 	Message string                   `json:"message"` // 启动gdb的消息
-	Key     string                   `json:"key"`
 }
 
 // BreakpointEvent 断点事件
@@ -71,18 +70,18 @@ type StoppedEvent struct {
 // 请注意:debug adapter不期望发送此事件来响应暗示执行继续的请求，例如启动或继续。
 // 它只有在没有先前的request暗示这一点时，才有必要发送一个持续的事件。
 type ContinuedEvent struct {
-	Event constants.DebugEventType
+	Event constants.DebugEventType `json:"event"`
 }
 
 // ExitedEvent
 // 该event表明被调试对象已经退出并返回exit code。
 type ExitedEvent struct {
-	Event    constants.DebugEventType
-	ExitCode int
+	Event    constants.DebugEventType `json:"event"`
+	ExitCode int                      `json:"exitCode"`
 }
 
 // TerminatedEvent
 // 程序退出事件
 type TerminatedEvent struct {
-	Event constants.DebugEventType
+	Event constants.DebugEventType `json:"event"`
 }

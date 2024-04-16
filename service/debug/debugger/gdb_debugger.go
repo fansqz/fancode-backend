@@ -4,9 +4,7 @@ import (
 	"FanCode/constants"
 	"FanCode/service/judger"
 	"errors"
-	"fmt"
 	"github.com/fansqz/GoDebugger/gdb"
-	"io"
 	"log"
 	"path"
 	"path/filepath"
@@ -30,11 +28,14 @@ type gdbDebugger struct {
 
 	// 保证map的线程安全
 	lock sync.RWMutex
-	// 断点映射
 	// dap中没有断点编号，但是gdb却有，该映射是number:(file:line)的映射
 	breakpointMap map[string]string
 	// dap中没有断点编号，但是gdb却有，该映射是(file:line):number的映射
 	breakpointInverseMap map[string]string
+
+	// 由于为了防止stepIn操作会进入系统依赖内部的特殊处理
+	preDeleteContinues     int
+	preDeleteContinuesLock sync.Mutex
 }
 
 func NewGdbDebugger(gdbCallback NotificationCallback) Debugger {
@@ -55,7 +56,7 @@ func NewGdbDebugger(gdbCallback NotificationCallback) Debugger {
 
 // gdbNotificationCallback 处理gdb异步响应的回调
 func (g *gdbDebugger) gdbNotificationCallback(m map[string]interface{}) {
-	fmt.Println(m)
+	log.Println(m)
 	typ := g.getStringFromMap(m, "type")
 	switch typ {
 	case "exec":
@@ -67,6 +68,13 @@ func (g *gdbDebugger) gdbNotificationCallback(m map[string]interface{}) {
 			g.processStoppedData(payload)
 		case "running":
 			// 程序执行
+			g.preDeleteContinuesLock.Lock()
+			if g.preDeleteContinues > 0 {
+				g.preDeleteContinues--
+				g.preDeleteContinuesLock.Unlock()
+				return
+			}
+			g.preDeleteContinuesLock.Unlock()
 			g.callback(&ContinuedEvent{})
 		}
 	}
@@ -80,23 +88,35 @@ func (g *gdbDebugger) processStoppedData(m interface{}) {
 	r := g.getStringFromMap(m, "reason")
 	if r == "breakpoint-hit" {
 		reason = constants.BreakpointStopped
-		breakpointNum := g.getStringFromMap(m, "bkptno")
-		// 读取断点
-		g.lock.RLock()
-		var bk string
-		bk, _ = g.breakpointMap[breakpointNum]
-		g.lock.RUnlock()
-		file, line = g.parseBreakpoint(bk)
+		frame := g.getInterfaceFromMap(m, "frame")
+		// 检测是否还在workpath范围
+		fullname := g.getStringFromMap(frame, "fullname")
+		file = g.maskPath(fullname)
+		lineStr := g.getStringFromMap(frame, "line")
+		line, _ = strconv.Atoi(lineStr)
 		// 返回停留的断点位置
 		g.callback(&StoppedEvent{
 			Reason: reason,
 			File:   file,
 			Line:   line,
 		})
-	} else if r == "end-stepping-range" {
+	} else if r == "end-stepping-range" || r == "function-finished" {
 		reason = constants.StepStopped
 		frame := g.getInterfaceFromMap(m, "frame")
-		file = g.maskPath(g.getStringFromMap(frame, "file"))
+		// 检测是否还在workpath范围
+		fullname := g.getStringFromMap(frame, "fullname")
+		if !strings.HasPrefix(fullname, g.workPath) {
+			// 说明通过step进入了系统依赖内部
+			err := g.StepOut()
+			if err == nil {
+				g.preDeleteContinuesLock.Lock()
+				g.preDeleteContinues++
+				g.preDeleteContinuesLock.Unlock()
+				return
+			}
+			log.Println(err)
+		}
+		file = g.maskPath(fullname)
 		lineStr := g.getStringFromMap(frame, "line")
 		line, _ = strconv.Atoi(lineStr)
 		// 返回停留的断点位置
@@ -202,12 +222,8 @@ func (g *gdbDebugger) processUserOutput() {
 	for {
 		n, err := g.gdb.Read(b)
 		if err != nil {
-			if err != io.EOF {
-				// 如果不是EOF，打印出错误信息
-				log.Printf("读取数据时发生错误: %v", err)
-			} else {
-				return
-			}
+			log.Println(err)
+			return
 		}
 		output := string(b[0:n])
 		g.callback(&OutputEvent{
@@ -226,13 +242,18 @@ func (g *gdbDebugger) SendToConsole(input string) error {
 	return err
 }
 
-func (g *gdbDebugger) Next() error {
+func (g *gdbDebugger) StepOver() error {
 	err := g.gdb.SendAsync("exec-next", func(obj map[string]interface{}) {})
 	return err
 }
 
-func (g *gdbDebugger) Step() error {
+func (g *gdbDebugger) StepIn() error {
 	err := g.gdb.SendAsync("exec-step", func(obj map[string]interface{}) {})
+	return err
+}
+
+func (g *gdbDebugger) StepOut() error {
+	err := g.gdb.SendAsync("exec-finish", func(obj map[string]interface{}) {})
 	return err
 }
 
@@ -326,22 +347,6 @@ func (g *gdbDebugger) RemoveBreakpoints(breakpoints []*Breakpoint) error {
 	return nil
 }
 
-// Terminate todo: 如何正确处理异常
-func (g *gdbDebugger) Terminate() error {
-	//g.closePipe()
-	//_ = g.gdbProcess.Process.Kill()
-	//g.gdbProcess = nil
-	//g.gdbStdin = nil
-	//g.gdbStdout = nil
-	//g.gdbStderr = nil
-	//// 清除WorkPath
-	//os.RemoveAll(g.workPath)
-	//g.workPath = ""
-	//g.ptyMaster.Close()
-	//g.ptySlave.Close()
-	return nil
-}
-
 func (g *gdbDebugger) maskPath(message string) string {
 	if message == "" {
 		return ""
@@ -359,4 +364,16 @@ func (g *gdbDebugger) maskPath(message string) string {
 	re := regexp.MustCompile(pattern)
 	message = re.ReplaceAllString(message, repl)
 	return message
+}
+
+func (g *gdbDebugger) Terminate() error {
+	_ = g.gdb.Exit()
+	// 保证map的线程安全
+	g.lock.Lock()
+	defer g.lock.Unlock()
+	g.breakpointMap = make(map[string]string, 10)
+	g.breakpointInverseMap = make(map[string]string, 10)
+	g.preDeleteContinues = 0
+	g.callback(&TerminatedEvent{})
+	return nil
 }

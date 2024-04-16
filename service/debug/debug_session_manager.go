@@ -22,6 +22,11 @@ func (d *debugSessionManage) CreateDebugSession(key string, language constants.L
 	}
 	channel := make(chan interface{}, 10)
 	notificationCallback := func(data interface{}) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Println(r)
+			}
+		}()
 		channel <- data
 	}
 	var debugger de.Debugger
@@ -30,10 +35,12 @@ func (d *debugSessionManage) CreateDebugSession(key string, language constants.L
 		debugger = de.NewGdbDebugger(notificationCallback)
 	}
 	d.debugContextMap[key] = &DebugSession{
-		StopProcessEventChan: make(chan struct{}),
-		Language:             language,
-		Debugger:             debugger,
-		DebuggerChan:         channel,
+		StopProcessDebuggerEventChan: make(chan struct{}, 2),
+		StopProcessDtoEventChan:      make(chan struct{}, 2),
+		DebuggerEventChan:            channel,
+		DtoEventChan:                 make(chan interface{}, 10),
+		Language:                     language,
+		Debugger:                     debugger,
 	}
 	return nil
 }
@@ -50,14 +57,16 @@ func (d *debugSessionManage) DestroyDebugSession(key string) {
 	if !ok {
 		return
 	}
-	for i := 0; i < 3; i++ {
-		if err := debugContext.Debugger.Terminate(); err != nil {
-			log.Println(err)
-			continue
-		} else {
-			break
-		}
+	if err := debugContext.Debugger.Terminate(); err != nil {
+		log.Println(err)
 	}
-	close(d.debugContextMap[key].DebuggerChan)
+
+	debugContext.StopProcessDebuggerEventChan <- struct{}{}
+	debugContext.StopProcessDtoEventChan <- struct{}{}
+
+	close(debugContext.StopProcessDebuggerEventChan)
+	close(debugContext.StopProcessDtoEventChan)
+	close(debugContext.DebuggerEventChan)
+	close(debugContext.DtoEventChan)
 	delete(d.debugContextMap, key)
 }

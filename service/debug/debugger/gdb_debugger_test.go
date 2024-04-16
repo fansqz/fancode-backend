@@ -33,8 +33,8 @@ int main() {                              //2
 	scanf("%d", &a);                      //6
     printf("a * a = %d\n", a * a);        //7
 	b = 3;                                //8
-	b++;                                  //9
-	b+=2;                                 //10
+	scanf("%d", &a);                      //9
+    printf("a + a = %d\n", a + a);        //10
     return 0;                             //11
 }
 `
@@ -59,7 +59,7 @@ int main() {                              //2
 	}, data)
 
 	// 添加断点
-	err = debug.AddBreakpoints([]*Breakpoint{{"/main.c", 4}, {"/main.c", 8}})
+	err = debug.AddBreakpoints([]*Breakpoint{{"/main.c", 4}, {"/main.c", 8}, {"/main.c", 11}})
 	assert.Nil(t, err)
 	data = <-cha
 	assert.Equal(t, &BreakpointEvent{
@@ -70,6 +70,11 @@ int main() {                              //2
 	assert.Equal(t, &BreakpointEvent{
 		Reason:      constants.NewType,
 		Breakpoints: []*Breakpoint{{"/main.c", 8}},
+	}, data)
+	data = <-cha
+	assert.Equal(t, &BreakpointEvent{
+		Reason:      constants.NewType,
+		Breakpoints: []*Breakpoint{{"/main.c", 11}},
 	}, data)
 
 	// 启动用户程序
@@ -116,17 +121,8 @@ int main() {                              //2
 		Line:   8,
 	}, data)
 
-	// 测试移除断点
-	err = debug.RemoveBreakpoints([]*Breakpoint{{"main.c", 10}})
-	assert.Nil(t, err)
-	data = <-cha
-	assert.Equal(t, &BreakpointEvent{
-		Reason:      constants.RemovedType,
-		Breakpoints: []*Breakpoint{{"/main.c", 10}},
-	}, data)
-
 	// 测试step
-	err = debug.Step()
+	err = debug.StepOver()
 	assert.Nil(t, err)
 	data = <-cha
 	assert.Equal(t, &ContinuedEvent{}, data)
@@ -137,11 +133,37 @@ int main() {                              //2
 		Line:   9,
 	}, data)
 
-	// 测试结束
-	err = debug.Continue()
+	//  测试stepIn是否会进入系统依赖的函数内部
+	err = debug.StepIn()
 	assert.Nil(t, err)
 	data = <-cha
 	assert.Equal(t, &ContinuedEvent{}, data)
+	assert.Equal(t, len(cha), 0)
+
+	// 输入scanf
+	err = debug.SendToConsole("10\n")
+	assert.Nil(t, err)
+	data = <-cha
+	assert.Equal(t, &StoppedEvent{
+		Reason: constants.BreakpointStopped,
+		File:   "/main.c",
+		Line:   10,
+	}, data)
+
+	// 测试结束
+	err = debug.Continue()
+	assert.Nil(t, err)
+	j = 0
+	for i := 0; i < 2; i++ {
+		data = <-cha
+		switch data.(type) {
+		case *ContinuedEvent:
+			j++
+		case *OutputEvent:
+			j += 2
+			assert.Equal(t, &OutputEvent{"a + a = 20\n"}, data)
+		}
+	}
 	data = <-cha
 	assert.Equal(t, &ExitedEvent{
 		ExitCode: 0,

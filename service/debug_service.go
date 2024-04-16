@@ -8,10 +8,13 @@ import (
 	"FanCode/models/vo"
 	"FanCode/service/debug"
 	"FanCode/service/debug/debugger"
-	"FanCode/service/sse"
 	"FanCode/utils"
+	json2 "encoding/json"
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 	"os"
 	"path"
 )
@@ -23,16 +26,18 @@ type DebugService interface {
 	CreateDebugSession(ctx *gin.Context, language constants.LanguageType) (string, *e.Error)
 	// CreateSseConnect 创建sse连接
 	CreateSseConnect(ctx *gin.Context, key string)
+	// CloseDebugSession 关闭用户程序并关闭调试session
+	CloseDebugSession(key string) *e.Error
+
 	// Start 加载并启动用户程序
 	Start(ctx *gin.Context, startReq dto.StartDebugRequest) *e.Error
 	SendToConsole(key string, input string) *e.Error
-	Next(key string) *e.Error
-	Step(key string) *e.Error
+	StepIn(key string) *e.Error
+	StepOver(key string) *e.Error
+	StepOut(key string) *e.Error
 	Continue(key string) *e.Error
 	AddBreakpoints(key string, breakpoints []int) *e.Error
 	RemoveBreakpoints(key string, breakpoints []int) *e.Error
-	// CloseDebugSession 关闭用户程序并关闭调试session
-	CloseDebugSession(key string) *e.Error
 }
 
 type debugService struct {
@@ -54,6 +59,49 @@ func (d *debugService) CreateDebugSession(ctx *gin.Context, language constants.L
 		return "", e.NewCustomMsg("系统出错")
 	}
 	return key, nil
+}
+
+func (d *debugService) CreateSseConnect(ctx *gin.Context, key string) {
+	result := vo.NewResult(ctx)
+	session, y := debug.DebugSessionManage.GetDebugSession(key)
+	if !y {
+		result.SimpleErrorMessage("key 不存在")
+		return
+	}
+	w := ctx.Writer
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Transfer-Encoding", "chunked")
+
+	fmt.Fprintf(w, "data: %s\n\n", "connect success")
+	// 刷新缓冲，确保立即发送到客户端
+	flusher, _ := w.(http.Flusher)
+	flusher.Flush()
+	// 遍历channel获取event并发送给前端
+	channel := session.DtoEventChan
+	stopChannel := session.StopProcessDtoEventChan
+	for {
+		select {
+		case event := <-channel:
+			json, err := json2.Marshal(event)
+			if err != nil {
+				continue
+			}
+			// 写入事件数据
+			fmt.Fprintf(w, "data: %s\n\n", string(json))
+			// 刷新缓冲，确保立即发送到客户端
+			flusher.Flush()
+		case <-stopChannel:
+			return
+		}
+	}
+}
+
+func (d *debugService) CloseDebugSession(key string) *e.Error {
+	// 获取调试上下文
+	debug.DebugSessionManage.DestroyDebugSession(key)
+	return nil
 }
 
 func (d *debugService) Start(ctx *gin.Context, startReq dto.StartDebugRequest) *e.Error {
@@ -78,29 +126,21 @@ func (d *debugService) Start(ctx *gin.Context, startReq dto.StartDebugRequest) *
 	}
 	debugge := debugSession.Debugger
 
-	// 暂停event的处理
-	debugSession.StopProcessEventChan <- struct{}{}
-
 	//启动用户程序
 	err := debugge.Launch(compileFiles, executePath, startReq.Language)
 	if err != nil {
 		return e.ErrUnknown
 	}
-
 	go func() {
 		for {
-			data := <-debugSession.DebuggerChan
+			data := <-debugSession.DebuggerEventChan
+			d.sendEventToSse(startReq.Key, d.getDebuggerEventToDtoEvent(data))
 			if event, ok := data.(*debugger.LaunchEvent); ok {
 				if event.Success {
-					d.processDebugEvent(startReq.Key, data)
 					break
 				} else {
-					d.processDebugEvent(startReq.Key, data)
-					go d.startProcessDebugEvent(startReq.Key)
 					return
 				}
-			} else {
-				d.processDebugEvent(startReq.Key, data)
 			}
 		}
 
@@ -118,53 +158,41 @@ func (d *debugService) Start(ctx *gin.Context, startReq dto.StartDebugRequest) *
 		// 确保所有断点都添加成功
 		j := 0
 		for {
-			data := <-debugSession.DebuggerChan
+			data := <-debugSession.DebuggerEventChan
+			d.sendEventToSse(startReq.Key, d.getDebuggerEventToDtoEvent(data))
 			if _, ok := data.(*debugger.BreakpointEvent); ok {
 				j++
 				if j == len(breakpoints) {
 					break
 				}
 			}
-			d.processDebugEvent(startReq.Key, data)
 		}
 
 		// 启动用户程序
 		_ = debugge.Start()
-		go d.startProcessDebugEvent(startReq.Key)
+		for {
+			select {
+			case data := <-debugSession.DebuggerEventChan:
+				d.sendEventToSse(startReq.Key, d.getDebuggerEventToDtoEvent(data))
+			case _ = <-debugSession.StopProcessDtoEventChan:
+				return
+			}
+		}
 	}()
 	return nil
 }
 
-func (d *debugService) CreateSseConnect(ctx *gin.Context, key string) {
-	result := vo.NewResult(ctx)
-	sse.Close(key)
-	_, y := debug.DebugSessionManage.GetDebugSession(key)
-	if !y {
-		result.SimpleErrorMessage("key 不存在")
-		return
+func (d *debugService) sendEventToSse(key string, event interface{}) error {
+	session, ok := debug.DebugSessionManage.GetDebugSession(key)
+	if !ok {
+		return errors.New("key 不存在")
 	}
-	// gdb调试启动成功，创建管道
-	sse.CreateSssConnection(key, ctx.Writer)
-	d.startProcessDebugEvent(key)
+	channel := session.DtoEventChan
+	channel <- event
+	return nil
 }
 
-func (d *debugService) startProcessDebugEvent(key string) {
-	debugContext, y := debug.DebugSessionManage.GetDebugSession(key)
-	if !y {
-		return
-	}
-	// 循环遍历所有输入数据
-	for {
-		select {
-		case data := <-debugContext.DebuggerChan:
-			d.processDebugEvent(key, data)
-		case _ = <-debugContext.StopProcessEventChan:
-			return
-		}
-	}
-}
-
-func (d *debugService) processDebugEvent(key string, data interface{}) {
+func (d *debugService) getDebuggerEventToDtoEvent(data interface{}) interface{} {
 	var event interface{}
 	if bevent, ok := data.(*debugger.BreakpointEvent); ok {
 		bps := make([]int, len(bevent.Breakpoints))
@@ -192,7 +220,7 @@ func (d *debugService) processDebugEvent(key string, data interface{}) {
 	}
 	if _, ok := data.(*debugger.ContinuedEvent); ok {
 		event = dto.ContinuedEvent{
-			Event: constants.CompileEvent,
+			Event: constants.ContinuedEvent,
 		}
 	}
 	if eevent, ok := data.(*debugger.ExitedEvent); ok {
@@ -201,9 +229,21 @@ func (d *debugService) processDebugEvent(key string, data interface{}) {
 			ExitCode: eevent.ExitCode,
 		}
 	}
-	if err := sse.SendData(key, event); err != nil {
-		log.Println(err)
+	if levent, ok := data.(*debugger.LaunchEvent); ok {
+		event = dto.LaunchEvent{
+			Event:   constants.LaunchEvent,
+			Success: levent.Success,
+			Message: levent.Message,
+		}
 	}
+	if cevent, ok := data.(*debugger.CompileEvent); ok {
+		event = dto.CompileEvent{
+			Event:   constants.CompileEvent,
+			Success: cevent.Success,
+			Message: cevent.Message,
+		}
+	}
+	return event
 }
 
 func (d *debugService) SendToConsole(key string, input string) *e.Error {
@@ -216,20 +256,30 @@ func (d *debugService) SendToConsole(key string, input string) *e.Error {
 	return nil
 }
 
-func (d *debugService) Next(key string) *e.Error {
+func (d *debugService) StepIn(key string) *e.Error {
 	// 获取调试上下文
 	debugContext, _ := debug.DebugSessionManage.GetDebugSession(key)
-	if err := debugContext.Debugger.Next(); err != nil {
+	if err := debugContext.Debugger.StepIn(); err != nil {
 		log.Println(err)
 		return e.ErrUnknown
 	}
 	return nil
 }
 
-func (d *debugService) Step(key string) *e.Error {
+func (d *debugService) StepOut(key string) *e.Error {
 	// 获取调试上下文
 	debugContext, _ := debug.DebugSessionManage.GetDebugSession(key)
-	if err := debugContext.Debugger.Step(); err != nil {
+	if err := debugContext.Debugger.StepOut(); err != nil {
+		log.Println(err)
+		return e.ErrUnknown
+	}
+	return nil
+}
+
+func (d *debugService) StepOver(key string) *e.Error {
+	// 获取调试上下文
+	debugContext, _ := debug.DebugSessionManage.GetDebugSession(key)
+	if err := debugContext.Debugger.StepOver(); err != nil {
 		log.Println(err)
 		return e.ErrUnknown
 	}
@@ -282,20 +332,6 @@ func (d *debugService) RemoveBreakpoints(key string, breakpoints []int) *e.Error
 		}
 	}
 	if err := debugContext.Debugger.RemoveBreakpoints(bps); err != nil {
-		log.Println(err)
-		return e.ErrUnknown
-	}
-	return nil
-}
-
-func (d *debugService) CloseDebugSession(key string) *e.Error {
-	// 获取调试上下文
-	debugContext, _ := debug.DebugSessionManage.GetDebugSession(key)
-	if err := debugContext.Debugger.Terminate(); err != nil {
-		log.Println(err)
-		return e.ErrUnknown
-	}
-	if err := sse.Close(key); err != nil {
 		log.Println(err)
 		return e.ErrUnknown
 	}

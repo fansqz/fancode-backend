@@ -33,13 +33,13 @@ const (
 type DebugEventType string
 
 const (
-	StartEvent      DebugEventType = "start"
 	BreakpointEvent DebugEventType = "breakpoint"
 	OutputEvent     DebugEventType = "output"
 	StoppedEvent    DebugEventType = "stopped"
 	ContinuedEvent  DebugEventType = "continued"
 	CompileEvent    DebugEventType = "compile"
 	ExitedEvent     DebugEventType = "exited"
+	LaunchEvent     DebugEventType = "launch"
 )
 
 // BreakpointReasonType 断点改变类型
@@ -51,9 +51,19 @@ const (
 	RemovedType BreakpointReasonType = "removed"
 )
 
+// StoppedReasonType 程序停止类型
 type StoppedReasonType string
 
 const (
 	BreakpointStopped StoppedReasonType = "breakpoint"
 	StepStopped       StoppedReasonType = "step"
+)
+
+// StepType 单步调试类型
+type StepType string
+
+const (
+	StepIn   StepType = "stepIn"
+	StepOut  StepType = "stepOut"
+	StepOver StepType = "stepOver"
 )

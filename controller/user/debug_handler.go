@@ -17,10 +17,12 @@ type DebugController interface {
 	CreateSseConnect(ctx *gin.Context)
 	// SendToConsole 提交
 	SendToConsole(ctx *gin.Context)
-	// Next
-	Next(ctx *gin.Context)
 	// Step
-	Step(ctx *gin.Context)
+	StepIn(ctx *gin.Context)
+	// Step
+	StepOut(ctx *gin.Context)
+	// Step
+	StepOver(ctx *gin.Context)
 	// Continue
 	Continue(ctx *gin.Context)
 	// AddBreakpoints
@@ -86,11 +88,11 @@ func (d *debugController) SendToConsole(ctx *gin.Context) {
 	result.SuccessMessage("请求成功")
 }
 
-// Next
-func (d *debugController) Next(ctx *gin.Context) {
+// Step
+func (d *debugController) StepIn(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	key := ctx.PostForm("key")
-	if err := d.debugService.Next(key); err != nil {
+	if err := d.debugService.StepIn(key); err != nil {
 		result.Error(err)
 		return
 	}
@@ -98,10 +100,21 @@ func (d *debugController) Next(ctx *gin.Context) {
 }
 
 // Step
-func (d *debugController) Step(ctx *gin.Context) {
+func (d *debugController) StepOut(ctx *gin.Context) {
 	result := r.NewResult(ctx)
 	key := ctx.PostForm("key")
-	if err := d.debugService.Step(key); err != nil {
+	if err := d.debugService.StepOut(key); err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessMessage("请求成功")
+}
+
+// Step
+func (d *debugController) StepOver(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	key := ctx.PostForm("key")
+	if err := d.debugService.StepOver(key); err != nil {
 		result.Error(err)
 		return
 	}
