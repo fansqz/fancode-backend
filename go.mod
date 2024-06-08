@@ -29,7 +29,7 @@ require (
 	github.com/creack/pty v1.1.21 // indirect
 	github.com/cyrus-and/gdb v0.0.0-20230321224603-9424cb2f2a86 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/fansqz/GoDebugger v0.0.0-20240410171143-8a9b9cb15513 // indirect
+	github.com/fansqz/GoDebugger v0.0.0-20240504042909-0657f462f5b2 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect

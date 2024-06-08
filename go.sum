@@ -28,6 +28,8 @@ github.com/fansqz/GoDebugger v0.0.0-20240409144720-e8bfe2457cdc h1:oKrCgpIYjacCI
 github.com/fansqz/GoDebugger v0.0.0-20240409144720-e8bfe2457cdc/go.mod h1:HAQW2XRKNo05ZTikc9IVWiJubihfWkgtEY9kLlf0ggU=
 github.com/fansqz/GoDebugger v0.0.0-20240410171143-8a9b9cb15513 h1:EpPsmDzYUecmzNnlG6vSTLQrwuYoKxDg1XQ+Dtfq99Q=
 github.com/fansqz/GoDebugger v0.0.0-20240410171143-8a9b9cb15513/go.mod h1:etw/kHOpFCaIkf/2gpD7oYZd0ntf8F5RXRb8nZhD9xM=
+github.com/fansqz/GoDebugger v0.0.0-20240504042909-0657f462f5b2 h1:VksUbjmJBAMsQtDHVK7QoVm1zG8qwb8AcaC+V1YMaVM=
+github.com/fansqz/GoDebugger v0.0.0-20240504042909-0657f462f5b2/go.mod h1:etw/kHOpFCaIkf/2gpD7oYZd0ntf8F5RXRb8nZhD9xM=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/fsnotify/fsnotify v1.4.9 h1:hsms1Qyu0jgnwNXIxa+/V/PDsU6CfLf6CNO8H7IWoS4=
 github.com/fsnotify/fsnotify v1.4.9/go.mod h1:znqG4EE+3YCdAaPaxE2ZRY/06pZUdp0tY4IgpuI1SZQ=

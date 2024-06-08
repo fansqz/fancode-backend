@@ -3,6 +3,7 @@ package debug
 import (
 	"FanCode/constants"
 	de "FanCode/service/debug/debugger"
+	"FanCode/service/debug/debugger/gdb_debugger"
 	"log"
 )
 
@@ -32,7 +33,7 @@ func (d *debugSessionManage) CreateDebugSession(key string, language constants.L
 	var debugger de.Debugger
 	switch language {
 	case constants.LanguageC:
-		debugger = de.NewGdbDebugger(notificationCallback)
+		debugger = gdb_debugger.NewGdbDebugger(notificationCallback)
 	}
 	d.debugContextMap[key] = &DebugSession{
 		StopProcessDebuggerEventChan: make(chan struct{}, 2),

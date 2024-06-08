@@ -1,17 +1,32 @@
 package debugger
 
+import "FanCode/constants"
+
 // Breakpoint 表示断点
 type Breakpoint struct {
 	File string // 文件名称
 	Line int    // 行号
 }
 
-// StackFrame 表示一个栈帧，包含当前栈帧的函数名称，执行的位置等信息
+// StackFrame 栈帧
 type StackFrame struct {
-	Function string // 调用函数名称
-	Args     string // 参数
-	File     string // 函数所在文件
-	Line     int    // 方法返回地址
+	Id   string // 栈帧id
+	Name string // 函数名称
+	Path string // 文件路径
+	Line int
 }
 
-type BackTrace []StackFrame
+// Scope 作用域
+type Scope struct {
+	Name               constants.ScopeName
+	VariablesReference string // 作用域的引用
+}
+
+// Variable 变量
+type Variable struct {
+	Name  string
+	Type  string
+	Value string
+	// 变量引用
+	VariablesReference string
+}

@@ -32,6 +32,12 @@ type Debugger interface {
 	// RemoveBreakpoints 移除断点
 	// 返回的是移除成功的断点
 	RemoveBreakpoints(breakpoints []*Breakpoint) error
+	// GetStackTrace 获取栈帧
+	GetStackTrace() ([]*StackFrame, error)
+	// GetFrameVariables 获取某个栈帧中的变量列表
+	GetFrameVariables(frameId string) ([]*Variable, error)
+	// GetVariables 查看引用的值
+	GetVariables(reference string) ([]*Variable, error)
 	// Terminate 终止调试
 	// 调用完该命令以后可以重新Launch
 	Terminate() error

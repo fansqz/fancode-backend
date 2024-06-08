@@ -67,3 +67,25 @@ const (
 	StepOut  StepType = "stepOut"
 	StepOver StepType = "stepOver"
 )
+
+// ScopeName 作用域名称
+type ScopeName string
+
+// Local: 函数或当前代码块内的局部变量。这是最常访问的作用域，包含了当前栈帧中的局部变量和参数。
+// Global: 整个程序的全局变量。这包括在函数、类或文件范围之外声明的所有变量。
+// Static: 存在于静态存储区域的静态变量，生命周期贯穿程序执行的整个过程。它通常包括静态成员变量。
+// Class: 当前类级别的作用域，包含了类的成员变量。
+// Object: 针对特定对象的作用域，包含了对象的属性。
+// Closure: 函数闭包的作用域。在一些编程语言中，如果一个内部函数访问了其外部函数的变量，则一个闭包会被创建。
+// Module: 模块级别的作用域，通常指向程序中一个模块或命名空间内的变量。
+// Register (Debugger Internal): 寄存器级别的作用域，通常用于底层编程或汇编层面的调试，引用硬件寄存器的内容。
+const (
+	ScopeLocal    ScopeName = "local"
+	ScopeGlobal   ScopeName = "global"
+	ScopeStatic   ScopeName = "static"
+	ScopeClass    ScopeName = "class"
+	ScopeObject   ScopeName = "object"
+	ScopeClosure  ScopeName = "closure"
+	ScopeModule   ScopeName = "module"
+	ScopeRegister ScopeName = "register"
+)

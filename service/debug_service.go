@@ -157,14 +157,11 @@ func (d *debugService) Start(ctx *gin.Context, startReq dto.StartDebugRequest) *
 
 		// 确保所有断点都添加成功
 		j := 0
-		for {
+		for j < len(breakpoints) {
 			data := <-debugSession.DebuggerEventChan
 			d.sendEventToSse(startReq.Key, d.getDebuggerEventToDtoEvent(data))
 			if _, ok := data.(*debugger.BreakpointEvent); ok {
 				j++
-				if j == len(breakpoints) {
-					break
-				}
 			}
 		}
 
@@ -207,7 +204,7 @@ func (d *debugService) getDebuggerEventToDtoEvent(data interface{}) interface{} 
 	}
 	if oevent, ok := data.(*debugger.OutputEvent); ok {
 		event = dto.OutputEvent{
-			Event:  constants.StoppedEvent,
+			Event:  constants.OutputEvent,
 			Output: oevent.Output,
 		}
 	}
