@@ -38,6 +38,9 @@ type DebugService interface {
 	Continue(key string) *e.Error
 	AddBreakpoints(key string, breakpoints []int) *e.Error
 	RemoveBreakpoints(key string, breakpoints []int) *e.Error
+	GetStackTrace(key string) ([]*debugger.StackFrame, *e.Error)
+	GetFrameVariables(key string, frameId string) ([]*debugger.Variable, *e.Error)
+	GetVariables(key string, reference string) ([]*debugger.Variable, *e.Error)
 }
 
 type debugService struct {
@@ -333,6 +336,33 @@ func (d *debugService) RemoveBreakpoints(key string, breakpoints []int) *e.Error
 		return e.ErrUnknown
 	}
 	return nil
+}
+
+func (d *debugService) GetStackTrace(key string) ([]*debugger.StackFrame, *e.Error) {
+	debugContext, _ := debug.DebugSessionManage.GetDebugSession(key)
+	stackFrames, err := debugContext.Debugger.GetStackTrace()
+	if err != nil {
+		return nil, e.ErrUnknown
+	}
+	return stackFrames, nil
+}
+
+func (d *debugService) GetFrameVariables(key string, frameId string) ([]*debugger.Variable, *e.Error) {
+	debugContext, _ := debug.DebugSessionManage.GetDebugSession(key)
+	variables, err := debugContext.Debugger.GetFrameVariables(frameId)
+	if err != nil {
+		return nil, e.ErrUnknown
+	}
+	return variables, nil
+}
+
+func (d *debugService) GetVariables(key string, reference string) ([]*debugger.Variable, *e.Error) {
+	debugContext, _ := debug.DebugSessionManage.GetDebugSession(key)
+	variables, err := debugContext.Debugger.GetVariables(reference)
+	if err != nil {
+		return nil, e.ErrUnknown
+	}
+	return variables, nil
 }
 
 // saveUserCode

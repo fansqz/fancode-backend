@@ -10,10 +10,10 @@ type Breakpoint struct {
 
 // StackFrame 栈帧
 type StackFrame struct {
-	Id   string // 栈帧id
-	Name string // 函数名称
-	Path string // 文件路径
-	Line int
+	Id   string `json:"id"`   // 栈帧id
+	Name string `json:"name"` // 函数名称
+	Path string `json:"path"` // 文件路径
+	Line int    `json:"line"`
 }
 
 // Scope 作用域
@@ -24,9 +24,9 @@ type Scope struct {
 
 // Variable 变量
 type Variable struct {
-	Name  string
-	Type  string
-	Value string
+	Name  string `json:"name"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
 	// 变量引用
-	VariablesReference string
+	Reference string `json:"reference"`
 }

@@ -17,19 +17,25 @@ type DebugController interface {
 	CreateSseConnect(ctx *gin.Context)
 	// SendToConsole 提交
 	SendToConsole(ctx *gin.Context)
-	// Step
+	// StepIn 单步调试，会进入函数内部
 	StepIn(ctx *gin.Context)
-	// Step
+	// StepOut 单步调试，会跳出当前程序
 	StepOut(ctx *gin.Context)
-	// Step
+	// StepOver 单步调试，跳过不进入程序内部
 	StepOver(ctx *gin.Context)
-	// Continue
+	// Continue 到达下一个断点
 	Continue(ctx *gin.Context)
-	// AddBreakpoints
+	// AddBreakpoints 添加断点
 	AddBreakpoints(ctx *gin.Context)
-	// RemoveBreakpoints
+	// RemoveBreakpoints 移除断点
 	RemoveBreakpoints(ctx *gin.Context)
-	// CloseDebugSession
+	// GetStackTrace 获取当前栈信息
+	GetStackTrace(ctx *gin.Context)
+	// GetFrameVariables 根据栈帧id获取变量列表
+	GetFrameVariables(ctx *gin.Context)
+	// GetVariables 根据引用获取变量信息，如果是指针，获取指针指向的内容，如果是结构体，获取结构体内容
+	GetVariables(ctx *gin.Context)
+	// CloseDebugSession 关闭调试session
 	CloseDebugSession(ctx *gin.Context)
 }
 
@@ -150,7 +156,7 @@ func (d *debugController) AddBreakpoints(ctx *gin.Context) {
 // RemoveBreakpoints
 func (d *debugController) RemoveBreakpoints(ctx *gin.Context) {
 	result := r.NewResult(ctx)
-	var req dto.AddBreakpointRequest
+	var req dto.RemoveBreakpointRequest
 	if err := ctx.BindJSON(&req); err != nil {
 		result.Error(e.ErrBadRequest)
 		return
@@ -171,4 +177,40 @@ func (d *debugController) CloseDebugSession(ctx *gin.Context) {
 		return
 	}
 	result.SuccessMessage("请求成功")
+}
+
+func (d *debugController) GetStackTrace(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	key := ctx.PostForm("key")
+	stackFrames, err := d.debugService.GetStackTrace(key)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(stackFrames)
+}
+
+func (d *debugController) GetFrameVariables(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	key := ctx.PostForm("key")
+	frameId := ctx.PostForm("frameId")
+	variables, err := d.debugService.GetFrameVariables(key, frameId)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(variables)
+}
+
+// GetVariables 根据引用获取变量信息，如果是指针，获取指针指向的内容，如果是结构体，获取结构体内容
+func (d *debugController) GetVariables(ctx *gin.Context) {
+	result := r.NewResult(ctx)
+	key := ctx.PostForm("key")
+	reference := ctx.PostForm("reference")
+	variables, err := d.debugService.GetVariables(key, reference)
+	if err != nil {
+		result.Error(err)
+		return
+	}
+	result.SuccessData(variables)
 }

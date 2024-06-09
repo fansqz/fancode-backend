@@ -503,12 +503,12 @@ func (g *gdbDebugger) convertVariableMapToVariableStruct(variables []interface{}
 		valueExist := g.checkKeyFromMap(v, "value")
 		if !valueExist {
 			// 结构体类型
-			variable.VariablesReference = fmt.Sprintf("v-%s-%s", frameId, variable.Name)
+			variable.Reference = fmt.Sprintf("v-%s-%s", frameId, variable.Name)
 		} else {
 			// 判断类型是否是指针类型
 			t := strings.Split(variable.Type, " ")
 			if len(t) > 1 {
-				variable.VariablesReference = fmt.Sprintf("p-%s-%s", frameId, variable.Name)
+				variable.Reference = fmt.Sprintf("p-%s-%s", frameId, variable.Name)
 			}
 		}
 		answer = append(answer, variable)

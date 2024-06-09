@@ -19,6 +19,9 @@ func SetupDebugRoutes(r *gin.Engine, debugController user.DebugController) {
 		judge.POST("/sendToConsole", debugController.SendToConsole)
 		judge.POST("/addBreakpoints", debugController.AddBreakpoints)
 		judge.POST("/removeBreakpoints", debugController.RemoveBreakpoints)
+		judge.POST("/stackTrace", debugController.GetStackTrace)
+		judge.POST("/frame/variables", debugController.GetFrameVariables)
+		judge.POST("/variables", debugController.GetVariables)
 		judge.POST("/session/close", debugController.CloseDebugSession)
 	}
 }
