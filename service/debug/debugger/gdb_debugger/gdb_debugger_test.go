@@ -302,8 +302,8 @@ void manipulatePointers() { // 57
 	variables, err := debug.GetFrameVariables(stacks[0].Id)
 	assert.Nil(t, err)
 	for _, variable := range variables {
-		if variable.VariablesReference != "" {
-			v, err := debug.GetVariables(variable.VariablesReference)
+		if variable.Reference != "" {
+			v, err := debug.GetVariables(variable.Reference)
 			fmt.Println(v)
 			assert.Nil(t, err)
 		}
@@ -321,12 +321,12 @@ void manipulatePointers() { // 57
 	// 测试打印三层
 	for _, variable := range variables {
 		fmt.Println(variable)
-		if variable.VariablesReference != "" {
-			vs, _ := debug.GetVariables(variable.VariablesReference)
+		if variable.Reference != "" {
+			vs, _ := debug.GetVariables(variable.Reference)
 			fmt.Println(vs)
 			for _, v := range vs {
-				if v.VariablesReference != "" {
-					cd, _ := debug.GetVariables(v.VariablesReference)
+				if v.Reference != "" {
+					cd, _ := debug.GetVariables(v.Reference)
 					fmt.Println(cd)
 				}
 			}
