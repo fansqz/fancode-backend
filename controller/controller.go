@@ -21,6 +21,7 @@ var ProviderSet = wire.NewSet(
 	user.NewProblemController,
 	user.NewProblemBankController,
 	user.NewSubmissionController,
+	user.NewDebugController,
 	NewController,
 )
 
@@ -33,6 +34,7 @@ type Controller struct {
 	RoleController                  admin.SysRoleController
 	UserController                  admin.SysUserController
 	JudgeController                 user.JudgeController
+	DebugController                 user.DebugController
 	ProblemController               user.ProblemController
 	ProblemBankController           user.ProblemBankController
 	SubmissionController            user.SubmissionController
@@ -49,6 +51,7 @@ func NewController(
 	roleController admin.SysRoleController,
 	userController admin.SysUserController,
 	judgeController user.JudgeController,
+	debugController user.DebugController,
 	problemController user.ProblemController,
 	problemBankController user.ProblemBankController,
 	submissionController user.SubmissionController,
@@ -69,5 +72,6 @@ func NewController(
 		SubmissionController:            submissionController,
 		AccountController:               accountController,
 		AuthController:                  authController,
+		DebugController:                 debugController,
 	}
 }

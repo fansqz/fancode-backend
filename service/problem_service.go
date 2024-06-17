@@ -2,6 +2,7 @@ package service
 
 import (
 	conf "FanCode/config"
+	"FanCode/constants"
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/global"
@@ -223,7 +224,7 @@ func (q *problemService) GetProblemByNumber(number string) (*dto.ProblemDtoForGe
 
 func (q *problemService) GetProblemTemplateCode(problemID uint, language string) (string, *e.Error) {
 	// 读取acm模板
-	code, err := getAcmCodeTemplate(language)
+	code, err := getAcmCodeTemplate(constants.LanguageType(language))
 	if err != nil {
 		return "", e.ErrProblemGetFailed
 	}

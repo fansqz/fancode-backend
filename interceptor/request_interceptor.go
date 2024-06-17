@@ -31,6 +31,7 @@ func (i *RequestInterceptor) TokenAuthorize() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 检验是否携带token
 		result := r.NewResult(c)
+		path := c.Request.URL.Path
 		// 读取token
 		token := c.Request.Header.Get("token")
 		var userInfo *dto.UserInfo
@@ -63,7 +64,6 @@ func (i *RequestInterceptor) TokenAuthorize() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		path := c.Request.URL.Path
 		method := c.Request.Method
 		for _, api := range apis {
 			if matchPath(path, api.Path) {

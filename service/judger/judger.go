@@ -37,9 +37,9 @@ func (j *JudgeCore) Compile(compileFiles []string, outFilePath string, options *
 
 	var cmd *exec.Cmd
 	var ctx context.Context
-	language := j.getLanguage(options)
+	language := constants.LanguageType(j.getLanguage(options))
 	switch language {
-	case constants.ProgramC:
+	case constants.LanguageC:
 		compileFiles = append([]string{"-g", "-o", outFilePath}, compileFiles...)
 		// 创建一个带有超时时间的上下文
 		var cancel context.CancelFunc
@@ -50,9 +50,9 @@ func (j *JudgeCore) Compile(compileFiles []string, outFilePath string, options *
 			ctx = context.Background()
 		}
 		cmd = exec.CommandContext(ctx, "gcc", compileFiles...)
-	case constants.ProgramJava:
+	case constants.LanguageJava:
 		return j.compileJava(compileFiles, outFilePath, options)
-	case constants.ProgramGo:
+	case constants.LanguageGo:
 		compileFiles = append([]string{"build", "-o", outFilePath}, compileFiles...)
 		var cancel context.CancelFunc
 		if options != nil && options.LimitTime != 0 {
@@ -81,8 +81,8 @@ func (j *JudgeCore) Compile(compileFiles []string, outFilePath string, options *
 	return result, nil
 }
 
-func (j *JudgeCore) getLanguage(options *CompileOptions) string {
-	language := constants.ProgramC
+func (j *JudgeCore) getLanguage(options *CompileOptions) constants.LanguageType {
+	language := constants.LanguageC
 	if options != nil && options.Language != "" {
 		language = options.Language
 	}
@@ -213,7 +213,7 @@ func (j *JudgeCore) maskPath(errorMessage string, excludedPaths []string, replac
 
 // Execute 运行
 func (j *JudgeCore) Execute(execFile string, inputCh <-chan []byte, outputCh chan<- ExecuteResult, exitCh <-chan string, options *ExecuteOptions) error {
-	language := constants.ProgramC
+	language := constants.LanguageC
 	if options != nil && options.Language != "" {
 		language = options.Language
 	}
@@ -221,12 +221,12 @@ func (j *JudgeCore) Execute(execFile string, inputCh <-chan []byte, outputCh cha
 	cmdName := ""
 	cmdArg := []string{}
 	switch language {
-	case constants.ProgramC:
+	case constants.LanguageC:
 		cmdName = execFile
-	case constants.ProgramJava:
+	case constants.LanguageJava:
 		cmdName = "java"
 		cmdArg = []string{"-jar", execFile}
-	case constants.ProgramGo:
+	case constants.LanguageGo:
 		cmdName = execFile
 	default:
 		return fmt.Errorf("不支持该语言")

@@ -1,10 +1,12 @@
-#include <stdio.h>
-
-int main() {
-    int a, b;
-    while (scanf("%d %d", &a, &b) != EOF) { // 注意 while 处理多个 case
-        // 64 位输出请用 printf("%lld") to 
-        printf("%d\n", a + b);
-    }
-    return 0;
+#include <stdio.h>           //1
+int main() {                              //2
+    int a, b;                             //3
+    a = 1;                                //4
+	printf("aaa");                        //5
+	scanf("%d", &a);                      //6
+    printf("a * a = %d\n", a * a);        //7
+	b = 3;                                //8
+	scanf("%d", &a);                      //9
+    printf("a + a = %d\n", a + a);        //10
+    return 0;                             //11
 }

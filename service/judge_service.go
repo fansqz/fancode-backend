@@ -14,6 +14,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"log"
 	"os"
 	"path"
 	"strings"
@@ -67,6 +68,8 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	// 提交获取结果
 	submission, err := j.submit(ctx, judgeRequest)
 	if err != nil {
+		// Add logging for error
+		log.Printf("Submit error: %v\n", err)
 		return nil, err
 	}
 
@@ -81,13 +84,13 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		return nil, e.ErrSubmitFailed
 	}
 
-	// 如果本身就没有记录，就插入
+	// 如果本身就没有记录，就添加
 	if errors.Is(err2, gorm.ErrRecordNotFound) {
 		problemAttempt = &po.ProblemAttempt{
 			UserID:    userId,
 			ProblemID: judgeRequest.ProblemID,
 			Code:      judgeRequest.Code,
-			Language:  judgeRequest.Language,
+			Language:  string(judgeRequest.Language),
 			Status:    constants.InProgress,
 		}
 		problemAttempt.SubmissionCount++
@@ -103,6 +106,8 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 		err2 = j.problemAttemptDao.InsertProblemAttempt(tx, problemAttempt)
 		if err2 != nil {
 			tx.Rollback()
+			// Add logging for error
+			log.Printf("InsertProblemAttempt error: %v\n", err2)
 			return nil, e.ErrSubmitFailed
 		}
 		tx.Commit()
@@ -110,7 +115,7 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 
 	problemAttempt.Code = judgeRequest.Code
-	problemAttempt.Language = judgeRequest.Language
+	problemAttempt.Language = string(judgeRequest.Language)
 	// 有记录则更新
 	problemAttempt.SubmissionCount++
 	if submission.Status == constants.Accepted {
@@ -124,6 +129,8 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 	if err2 = j.problemAttemptDao.UpdateProblemAttempt(tx, problemAttempt); err2 != nil {
 		tx.Rollback()
+		// Add logging for error
+		log.Printf("UpdateProblemAttempt error: %v\n", err2)
 		return nil, e.ErrSubmitFailed
 	}
 	tx.Commit()
@@ -131,10 +138,9 @@ func (j *judgeService) Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 }
 
 func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*po.Submission, *e.Error) {
-
 	// 提交结果对象
 	submission := &po.Submission{
-		Language:  judgeRequest.Language,
+		Language:  string(judgeRequest.Language),
 		Code:      judgeRequest.Code,
 		ProblemID: judgeRequest.ProblemID,
 		UserID:    ctx.Keys["user"].(*dto.UserInfo).ID,
@@ -143,6 +149,8 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	// executePath 执行路径，用户的临时文件
 	executePath := getExecutePath(j.config)
 	if err := os.MkdirAll(executePath, os.ModePerm); err != nil {
+		// Add logging for error
+		log.Printf("MkdirAll error: %v\n", err)
 		return nil, e.ErrExecuteFailed
 	}
 	defer os.RemoveAll(executePath)
@@ -152,10 +160,12 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	var err2 *e.Error
 	if compileFiles, err2 = j.saveUserCode(judgeRequest.Language,
 		judgeRequest.Code, executePath); err2 != nil {
+		// Add logging for error
+		log.Printf("SaveUserCode error: %v\n", err2)
 		return nil, err2
 	}
 
-	// 输出执行文件路劲
+	// 输出执行文件路径
 	executeFilePath := path.Join(executePath, "main")
 
 	// 执行编译
@@ -167,17 +177,21 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	var compileResult *judger.CompileResult
 	var err error
 	if compileResult, err = j.judgeCore.Compile(compileFiles, executeFilePath, compileOptions); err != nil {
+		// Add logging for error
+		log.Printf("Compile error: %v\n", err)
 		return nil, e.ErrUnknown
 	}
 	if !compileResult.Compiled {
 		submission.Status = constants.CompileError
-		submission.ErrorMessage = err.Error()
+		submission.ErrorMessage = compileResult.ErrorMessage
 		return submission, nil
 	}
 
 	// 运行
 	caseList, err := j.problemCaseDao.GetProblemCaseList2(global.Mysql, judgeRequest.ProblemID)
 	if err != nil {
+		// Add logging for error
+		log.Printf("GetProblemCaseList2 error: %v\n", err)
 		return nil, e.ErrUnknown
 	}
 	inputCh := make(chan []byte)
@@ -195,6 +209,8 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 	}
 	// 运行可执行文件
 	if err = j.judgeCore.Execute(executeFilePath, inputCh, outputCh, exitCh, executeOption); err != nil {
+		// Add logging for error
+		log.Printf("Execute error: %v\n", err)
 		return nil, e.ErrUnknown
 	}
 
@@ -223,7 +239,6 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 				return submission, nil
 			}
 		}
-
 	}
 	endTime := time.Now()
 	submission.Status = constants.Accepted
@@ -233,16 +248,17 @@ func (j *judgeService) submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestD
 
 // saveUserCode
 // 保存用户代码到用户的executePath，并返回需要编译的文件列表
-func (j *judgeService) saveUserCode(language string, codeStr string, executePath string) ([]string, *e.Error) {
+func (j *judgeService) saveUserCode(language constants.LanguageType, codeStr string, executePath string) ([]string, *e.Error) {
 	var compileFiles []string
 	var mainFile string
-	var err *e.Error
-	var err2 error
+	var err2 *e.Error
 
-	if mainFile, err = getMainFileNameByLanguage(language); err != nil {
-		return nil, err
+	if mainFile, err2 = getMainFileNameByLanguage(language); err2 != nil {
+		log.Println(err2)
+		return nil, err2
 	}
-	if err2 = os.WriteFile(path.Join(executePath, mainFile), []byte(codeStr), 0644); err2 != nil {
+	if err := os.WriteFile(path.Join(executePath, mainFile), []byte(codeStr), 0644); err != nil {
+		log.Println(err)
 		return nil, e.ErrServer
 	}
 	// 将main文件进行编译即可
@@ -252,13 +268,13 @@ func (j *judgeService) saveUserCode(language string, codeStr string, executePath
 }
 
 // 根据编程语言获取该编程语言的Main文件名称
-func getMainFileNameByLanguage(language string) (string, *e.Error) {
+func getMainFileNameByLanguage(language constants.LanguageType) (string, *e.Error) {
 	switch language {
-	case constants.ProgramC:
+	case constants.LanguageC:
 		return "main.c", nil
-	case constants.ProgramJava:
+	case constants.LanguageJava:
 		return "Main.java", nil
-	case constants.ProgramGo:
+	case constants.LanguageGo:
 		return "main.go", nil
 	default:
 		return "", e.ErrLanguageNotSupported
@@ -273,6 +289,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	// executePath 用户执行目录
 	executePath := getExecutePath(j.config)
 	if err := os.MkdirAll(executePath, os.ModePerm); err != nil {
+		log.Println(err)
 		return nil, e.ErrExecuteFailed
 	}
 	defer os.RemoveAll(executePath)
@@ -281,6 +298,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	var compileFiles []string
 	var err *e.Error
 	if compileFiles, err = j.saveUserCode(judgeRequest.Language, judgeRequest.Code, executePath); err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -296,6 +314,7 @@ func (j *judgeService) Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.Execut
 	var compileResult *judger.CompileResult
 	var err2 error
 	if compileResult, err2 = j.judgeCore.Compile(compileFiles, executeFilePath, compileOptions); err2 != nil {
+		log.Println(err2)
 		return nil, e.ErrUnknown
 	}
 	if !compileResult.Compiled {
@@ -342,6 +361,7 @@ func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, language strin
 	tx := global.Mysql.Begin()
 	problemAttempt, err := j.problemAttemptDao.GetProblemAttemptByID(tx, userInfo.ID, problemID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		log.Println(err)
 		return e.ErrMysql
 	}
 
@@ -356,6 +376,7 @@ func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, language strin
 			Status:          0,
 		}
 		if err2 := j.problemAttemptDao.InsertProblemAttempt(tx, problemAttempt); err2 != nil {
+			log.Println(err2)
 			tx.Rollback()
 			return e.ErrMysql
 		}
@@ -382,6 +403,7 @@ func (j *judgeService) GetCode(ctx *gin.Context, problemID uint) (*dto.UserCodeD
 	userInfo := ctx.Keys["user"].(*dto.UserInfo)
 	problemAttempt, err := j.problemAttemptDao.GetProblemAttemptByID(global.Mysql, userInfo.ID, problemID)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		log.Println(err)
 		return nil, e.ErrMysql
 	}
 
@@ -390,11 +412,13 @@ func (j *judgeService) GetCode(ctx *gin.Context, problemID uint) (*dto.UserCodeD
 		// 读取题目
 		problem, err := j.problemDao.GetProblemByID(global.Mysql, problemID)
 		if err != nil {
+			log.Println(err)
 			return nil, e.ErrMysql
 		}
 		code, err2 := j.problemService.GetProblemTemplateCode(problemID,
 			strings.Split(problem.Languages, ",")[0])
 		if err2 != nil {
+			log.Println(err2)
 			return nil, err2
 		}
 		return &dto.UserCodeDto{
@@ -422,6 +446,7 @@ func checkAndDownloadQuestionFile(config *conf.AppConfig, questionPath string) e
 		// 拉取文件
 		store := file_store.NewProblemCOS(config.COSConfig)
 		if err := store.DownloadFolder(questionPath, localPath); err != nil {
+			log.Println(err)
 			return err
 		}
 	}

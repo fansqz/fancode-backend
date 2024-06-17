@@ -14,12 +14,6 @@ const (
 )
 
 const (
-	ProgramC    = "c"
-	ProgramJava = "java"
-	ProgramGo   = "go"
-)
-
-const (
-	CodeTypeAcm  = "acm"
-	CodeTypeCore = "core_code"
+	GdbCore = "gdb"
+	PdbCore = "pdb"
 )
