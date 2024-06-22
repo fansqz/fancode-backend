@@ -198,6 +198,7 @@ typedef union {           // 16
     float fval;           // 18
     char cval;            // 19
 } Value;                  // 20
+typedef int * PTR_INT;
 // 全局变量               // 21
 int globalInt = 10;       // 22
 float globalFloat = 3.14; // 23
@@ -236,7 +237,7 @@ void manipulateLocals(int argint) { // 36
 }                         // 56
 void manipulatePointers() { // 57
     // 动态分配的变量   // 58
-    int* dynamicInt = (int*) malloc(sizeof(int)); // 59
+    PTR_INT dynamicInt = (int*) malloc(sizeof(int)); // 59
     *dynamicInt = 30;           // 60
     // 指针变量         // 61
     int* ptrToInt = &globalInt; // 62
@@ -249,10 +250,12 @@ void manipulatePointers() { // 57
     Color colorArray[3] = { RED, GREEN, BLUE }; // 69
     // 字符串           // 70
     char* string = "Hello, World!"; // 71
-    // 清理动态分配的内存 // 72
-    free(dynamicInt);     // 73
-    free(ptrToColor);     // 74
-}                         // 75
+	// 空指针
+	Item* nilPoit;  //72
+    // 清理动态分配的内存 // 73
+    free(dynamicInt);     // 74
+    free(ptrToColor);     // 75
+}                         // 76
 `
 	if compileFiles, err2 = saveUserCode(constants.LanguageC,
 		code, executePath); err2 != nil {
@@ -278,7 +281,7 @@ void manipulatePointers() { // 57
 	}, data)
 
 	// 添加断点
-	err = debug.AddBreakpoints([]*debugger.Breakpoint{{"/main.c", 53}, {"/main.c", 73}})
+	err = debug.AddBreakpoints([]*debugger.Breakpoint{{"/main.c", 53}, {"/main.c", 76}})
 	assert.Nil(t, err)
 	data = <-cha
 	assert.Equal(t, &debugger.BreakpointEvent{
@@ -288,7 +291,7 @@ void manipulatePointers() { // 57
 	data = <-cha
 	assert.Equal(t, &debugger.BreakpointEvent{
 		Reason:      constants.NewType,
-		Breakpoints: []*debugger.Breakpoint{{"/main.c", 73}},
+		Breakpoints: []*debugger.Breakpoint{{"/main.c", 76}},
 	}, data)
 
 	// 启动用户程序
