@@ -16,10 +16,6 @@ type JudgeController interface {
 	Execute(ctx *gin.Context)
 	// Submit 提交
 	Submit(ctx *gin.Context)
-	// SaveCode 保存代码
-	SaveCode(ctx *gin.Context)
-	// GetCode 读取用户代码
-	GetCode(ctx *gin.Context)
 }
 
 type judgeController struct {
@@ -64,28 +60,4 @@ func (j *judgeController) Submit(ctx *gin.Context) {
 		return
 	}
 	result.SuccessData(response)
-}
-
-func (j *judgeController) SaveCode(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	// 题库id
-	code := ctx.PostForm("code")
-	language := ctx.PostForm("language")
-	problemID := utils.AtoiOrDefault(ctx.PostForm("problemID"), 0)
-	if err := j.judgeService.SaveCode(ctx, uint(problemID), language, code); err != nil {
-		result.Error(err)
-		return
-	}
-	result.SuccessMessage("保存成功")
-}
-
-func (j *judgeController) GetCode(ctx *gin.Context) {
-	result := r.NewResult(ctx)
-	problemID := utils.GetIntParamOrDefault(ctx, "problemID", 0)
-	code, err := j.judgeService.GetCode(ctx, uint(problemID))
-	if err != nil {
-		result.Error(err)
-		return
-	}
-	result.SuccessData(code)
 }

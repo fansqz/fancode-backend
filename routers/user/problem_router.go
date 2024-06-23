@@ -11,6 +11,9 @@ func SetupProblemRoutes(r *gin.Engine, problemController user.ProblemController)
 	{
 		problem.GET("/list", problemController.GetProblemList)
 		problem.GET("/:number", problemController.GetProblem)
-		problem.GET("/code/:problemID/:language", problemController.GetProblemTemplateCode)
+		problem.GET("/code/template/:problemID/:language", problemController.GetProblemTemplateCode)
+		problem.GET("/code/:problemID/:language", problemController.GetUserCode)
+		problem.GET("/code/:problemID", problemController.GetUserCodeByProblemID)
+		problem.POST("/code/save", problemController.SaveUserCode)
 	}
 }

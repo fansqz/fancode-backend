@@ -5,6 +5,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// ProblemAttemptDao
+// 保存用户在一道题目中的做题情况。成功几次失败几次等。
 type ProblemAttemptDao interface {
 	InsertProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error
 	UpdateProblemAttempt(db *gorm.DB, problemAttempt *po.ProblemAttempt) error

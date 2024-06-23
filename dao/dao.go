@@ -12,4 +12,5 @@ var ProviderSet = wire.NewSet(
 	NewSysMenuDao,
 	NewSysRoleDao,
 	NewSysUserDao,
+	NewUserCodeDao,
 )

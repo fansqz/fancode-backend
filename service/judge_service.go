@@ -35,10 +35,6 @@ type JudgeService interface {
 	Submit(ctx *gin.Context, judgeRequest *dto.SubmitRequestDto) (*dto.SubmitResultDto, *e.Error)
 	// Execute 执行
 	Execute(judgeRequest *dto.ExecuteRequestDto) (*dto.ExecuteResultDto, *e.Error)
-	// SaveCode 保存用户代码
-	SaveCode(ctx *gin.Context, problemID uint, language string, code string) *e.Error
-	// GetCode 读取用户代码
-	GetCode(ctx *gin.Context, problemID uint) (*dto.UserCodeDto, *e.Error)
 }
 
 type judgeService struct {
@@ -397,38 +393,6 @@ func (j *judgeService) SaveCode(ctx *gin.Context, problemID uint, language strin
 	}
 	tx.Commit()
 	return nil
-}
-
-func (j *judgeService) GetCode(ctx *gin.Context, problemID uint) (*dto.UserCodeDto, *e.Error) {
-	userInfo := ctx.Keys["user"].(*dto.UserInfo)
-	problemAttempt, err := j.problemAttemptDao.GetProblemAttemptByID(global.Mysql, userInfo.ID, problemID)
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		log.Println(err)
-		return nil, e.ErrMysql
-	}
-
-	// 读取代码模板
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		// 读取题目
-		problem, err := j.problemDao.GetProblemByID(global.Mysql, problemID)
-		if err != nil {
-			log.Println(err)
-			return nil, e.ErrMysql
-		}
-		code, err2 := j.problemService.GetProblemTemplateCode(problemID,
-			strings.Split(problem.Languages, ",")[0])
-		if err2 != nil {
-			log.Println(err2)
-			return nil, err2
-		}
-		return &dto.UserCodeDto{
-			ProblemID: problemID,
-			Code:      code,
-			Language:  strings.Split(problem.Languages, ",")[0],
-		}, nil
-	}
-
-	return dto.NewUserCodeDto(problemAttempt), nil
 }
 
 // 比较用户的答案，忽略\n和空格
