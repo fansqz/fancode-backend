@@ -102,3 +102,29 @@ func (g *gdbDebugger) getPayloadFromMap(m map[string]interface{}) (interface{}, 
 	}
 	return nil, false
 }
+
+// isNullPoint 判断是否是空指针
+// 0x0为空指针。解析16进制，如果为0则为null
+func isNullPoint(address string) bool {
+	address = address[2:]
+	num, _ := strconv.ParseInt(address, 16, 64)
+	return num == 0
+}
+
+// isPointType 判断一个类型是否是指针类型
+// 比如：int *; Color *
+func isPointType(typ string) bool {
+	return strings.LastIndex(typ, "*") != -1
+}
+
+// parseBreakpoint 解析断点
+func parseBreakpoint(bk string) (string, int) {
+	l := strings.Split(bk, ":")
+	if len(l) != 2 {
+		return "", 0
+	}
+	file := l[0]
+	lineStr := l[1]
+	line, _ := strconv.Atoi(lineStr)
+	return file, line
+}

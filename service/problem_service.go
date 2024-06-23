@@ -2,7 +2,6 @@ package service
 
 import (
 	conf "FanCode/config"
-	"FanCode/constants"
 	"FanCode/dao"
 	e "FanCode/error"
 	"FanCode/global"
@@ -33,8 +32,6 @@ type ProblemService interface {
 	GetProblemByID(id uint) (*dto.ProblemDtoForGet, *e.Error)
 	// GetProblemByNumber 根据题目编号获取题目信息
 	GetProblemByNumber(number string) (*dto.ProblemDtoForGet, *e.Error)
-	// GetProblemTemplateCode 获取题目的模板代码
-	GetProblemTemplateCode(problemID uint, language string) (string, *e.Error)
 	// UpdateProblemEnable 设置题目可用
 	UpdateProblemEnable(id uint, enable int) *e.Error
 }
@@ -222,16 +219,6 @@ func (q *problemService) GetProblemByNumber(number string) (*dto.ProblemDtoForGe
 	return dto.NewProblemDtoForGet(problem), nil
 }
 
-func (q *problemService) GetProblemTemplateCode(problemID uint, language string) (string, *e.Error) {
-	// 读取acm模板
-	code, err := getAcmCodeTemplate(constants.LanguageType(language))
-	if err != nil {
-		return "", e.ErrProblemGetFailed
-	}
-	return code, nil
-}
-
-// todo: 是否要加事务
 func (q *problemService) UpdateProblemEnable(id uint, enable int) *e.Error {
 	if err := q.problemDao.SetProblemEnable(global.Mysql, id, enable); err != nil {
 		return e.ErrMysql

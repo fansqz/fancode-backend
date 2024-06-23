@@ -58,108 +58,6 @@ func NewGdbDebugger(gdbCallback debugger.NotificationCallback) debugger.Debugger
 	return d
 }
 
-// gdbNotificationCallback 处理gdb异步响应的回调
-func (g *gdbDebugger) gdbNotificationCallback(m map[string]interface{}) {
-	log.Println(m)
-	typ := g.getStringFromMap(m, "type")
-	switch typ {
-	case "exec":
-		class := g.getStringFromMap(m, "class")
-		switch class {
-		case "stopped":
-			// 程序停止
-			payload := g.getInterfaceFromMap(m, "payload")
-			g.processStoppedData(payload)
-			// 标记程序状态为停止状态
-			g.runningLock.Lock()
-			g.running = false
-			g.runningLock.Unlock()
-		case "running":
-			// 程序执行
-			g.preDeleteContinuesLock.Lock()
-			if g.preDeleteContinues > 0 {
-				g.preDeleteContinues--
-				g.preDeleteContinuesLock.Unlock()
-				return
-			}
-			g.preDeleteContinuesLock.Unlock()
-			// 设置用户程序为执行状态
-			g.runningLock.Lock()
-			g.running = true
-			g.runningLock.Unlock()
-
-			g.callback(&debugger.ContinuedEvent{})
-
-		}
-	}
-
-}
-
-func (g *gdbDebugger) processStoppedData(m interface{}) {
-	var file string
-	var line int
-	var reason constants.StoppedReasonType
-	r := g.getStringFromMap(m, "reason")
-	if r == "breakpoint-hit" {
-		reason = constants.BreakpointStopped
-		frame := g.getInterfaceFromMap(m, "frame")
-		// 检测是否还在workpath范围
-		fullname := g.getStringFromMap(frame, "fullname")
-		file = g.maskPath(fullname)
-		lineStr := g.getStringFromMap(frame, "line")
-		line, _ = strconv.Atoi(lineStr)
-		// 返回停留的断点位置
-		g.callback(&debugger.StoppedEvent{
-			Reason: reason,
-			File:   file,
-			Line:   line,
-		})
-	} else if r == "end-stepping-range" || r == "function-finished" {
-		reason = constants.StepStopped
-		frame := g.getInterfaceFromMap(m, "frame")
-		// 检测是否还在workpath范围
-		fullname := g.getStringFromMap(frame, "fullname")
-		if !strings.HasPrefix(fullname, g.workPath) {
-			// 说明通过step进入了系统依赖内部
-			err := g.StepOut()
-			if err == nil {
-				g.preDeleteContinuesLock.Lock()
-				g.preDeleteContinues++
-				g.preDeleteContinuesLock.Unlock()
-				return
-			}
-			log.Println(err)
-		}
-		file = g.maskPath(fullname)
-		lineStr := g.getStringFromMap(frame, "line")
-		line, _ = strconv.Atoi(lineStr)
-		// 返回停留的断点位置
-		g.callback(&debugger.StoppedEvent{
-			Reason: reason,
-			File:   file,
-			Line:   line,
-		})
-	} else if r == "exited-normally" {
-		// 程序退出
-		g.callback(&debugger.ExitedEvent{
-			ExitCode: 0,
-		})
-	}
-
-}
-
-// parseBreakpoint 解析断点
-func (g *gdbDebugger) parseBreakpoint(bk string) (string, int) {
-	l := strings.Split(bk, ":")
-	if len(l) != 2 {
-		return "", 0
-	}
-	file := l[0]
-	lineStr := l[1]
-	line, _ := strconv.Atoi(lineStr)
-	return file, line
-}
-
 func (g *gdbDebugger) Launch(compileFiles []string, workPath string, language constants.LanguageType) error {
 	// 设置gdb文件
 	g.workPath = workPath
@@ -283,7 +181,6 @@ func (g *gdbDebugger) Continue() error {
 	return err
 }
 
-// todo: 添加断点和删除断点串行执行
 func (g *gdbDebugger) AddBreakpoints(breakpoints []*debugger.Breakpoint) error {
 	g.lock.Lock()
 	defer g.lock.Unlock()
@@ -400,18 +297,14 @@ func (g *gdbDebugger) GetStackTrace() ([]*debugger.StackFrame, error) {
 func (g *gdbDebugger) GetFrameVariables(frameId string) ([]*debugger.Variable, error) {
 	g.runningLock.Lock()
 	defer g.runningLock.Unlock()
+
 	// 获取当前线程id
-	m, err := g.sendWithTimeOut(OptionTimeout, "thread-info")
+	currentThreadId, err := g.getCurrentThreadId()
 	if err != nil {
 		return nil, err
 	}
-	threadMap, success := g.getPayloadFromMap(m)
-	if !success {
-		return nil, errors.New("获取线程id失败")
-	}
-	currentThreadId := g.getStringFromMap(threadMap, "current-thread-id")
-	// 获取栈帧信息
-	m, err = g.sendWithTimeOut(OptionTimeout, "stack-list-variables",
+	// 获取栈帧中所有局部变量
+	m, err := g.sendWithTimeOut(OptionTimeout, "stack-list-variables",
 		"--thread", currentThreadId, "--frame", frameId, "2")
 	if err != nil {
 		return nil, err
@@ -421,94 +314,115 @@ func (g *gdbDebugger) GetFrameVariables(frameId string) ([]*debugger.Variable, e
 		return nil, errors.New("操作失败")
 	}
 	variables := g.getListFromMap(payload, "variables")
-	return g.convertVariableMapToVariableStruct(variables, false, frameId), nil
+	return g.convertToVariableStruct4GetFrameVariables(frameId, variables), nil
 }
 
 func (g *gdbDebugger) GetVariables(reference string) ([]*debugger.Variable, error) {
 	// 正则表达式，捕获栈帧ID和变量名
-	t := strings.Split(reference, "-")
-	// 在字符串中匹配正则表达式
-	if len(t) < 3 {
-		fmt.Println("No matches found")
-		return nil, errors.New("引用格式有问题")
-	}
-	// 从匹配结果中获取捕获组
-	frameId := t[1]
-	structName := t[2]
-	if t[0] == "p" {
-		structName = "*" + structName
-	}
-	// 切换栈帧
-	_, err := g.sendWithTimeOut(OptionTimeout, "stack-select-frame", frameId)
+	refStruct, err := parseReference(reference)
 	if err != nil {
 		return nil, err
 	}
+
+	if refStruct.Type == "v" {
+		// 如果是普通类型需要切换栈帧，同一个变量名，可能在不同栈帧中会有重复，需要定位栈帧和变量名称才能读取到变量值。
+		if _, err = g.sendWithTimeOut(OptionTimeout, "stack-select-frame", refStruct.FrameId); err != nil {
+			return nil, err
+		}
+	}
+
+	// 获取所有children列表并解析
+	var m map[string]interface{}
+
+	name := "structName"
 	// 创建变量
-	m, err := g.sendWithTimeOut(OptionTimeout, "var-create", "structName", "@", structName)
+	if refStruct.Type == "v" {
+		m, err = g.sendWithTimeOut(OptionTimeout, "var-create", name, "@",
+			refStruct.VariableName)
+	} else if refStruct.Type == "p" {
+		m, err = g.sendWithTimeOut(OptionTimeout, "var-create", name, "*",
+			fmt.Sprintf("(%s)%s", refStruct.PointType, refStruct.Address))
+	}
+	if err != nil {
+		return nil, err
+	}
 	defer func() {
 		_, _ = g.sendWithTimeOut(OptionTimeout, "var-delete", "structName")
 	}()
-	if t[0] == "p" {
-		// 如果是指针类型，可以直接查看到值
-		payload, success := g.getPayloadFromMap(m)
-		if !success {
-			return nil, errors.New("系统错误")
-		}
-		g.mapSet(payload, "name", structName)
 
-		// 查看其children数量，如果大于0，说明是结构体或者数组之类的，将其value设置为空
-		m2, err2 := g.sendWithTimeOut(OptionTimeout, "var-info-num-children", "structName")
-		if err2 != nil {
-			return nil, err2
-		}
-		payload2, success2 := g.getPayloadFromMap(m2)
-		if !success2 {
-			return nil, errors.New("系统错误")
-		}
-		n := g.getIntFromMap(payload2, "numchild")
-
-		if n > 0 {
-			g.mapDelete(payload, "value")
-		}
-		return g.convertVariableMapToVariableStruct([]interface{}{payload}, false, frameId), nil
+	if refStruct.FieldPath == "" {
+		m, err = g.sendWithTimeOut(OptionTimeout, "var-list-children", "1",
+			name)
+	} else {
+		m, err = g.sendWithTimeOut(OptionTimeout, "var-list-children", "1",
+			fmt.Sprintf("%s.%s", name, refStruct.FieldPath))
 	}
-
-	if t[0] == "v" {
-		// 读取栈帧变量信息
-		m, err = g.sendWithTimeOut(OptionTimeout, "var-list-children", "2", "structName")
-		if err != nil {
-			return nil, err
-		}
-		payload, success := g.getPayloadFromMap(m)
-		if !success {
-			return nil, errors.New("系统错误")
-		}
-		children := g.getListFromMap(payload, "children")
-		return g.convertVariableMapToVariableStruct(children, true, frameId), nil
+	if err != nil {
+		return nil, err
 	}
-	return nil, errors.New("格式不支持")
+	payload, success := g.getPayloadFromMap(m)
+	if !success {
+		return nil, errors.New("系统错误")
+	}
+	children := g.getListFromMap(payload, "children")
+	return g.convertToVariableStruct4GetVariables(reference, children), nil
 }
 
-func (g *gdbDebugger) convertVariableMapToVariableStruct(variables []interface{}, isChildren bool, frameId string) []*debugger.Variable {
+func (g *gdbDebugger) convertToVariableStruct4GetVariables(ref string, variables []interface{}) []*debugger.Variable {
 	answer := make([]*debugger.Variable, 0, 10)
 	for _, v := range variables {
-		if isChildren {
-			v = g.getInterfaceFromMap(v, "child")
-		}
-		variable := &debugger.Variable{
-			Name:  g.getStringFromMap(v, "name"),
+		v = g.getInterfaceFromMap(v, "child")
+		field := &debugger.Variable{
+			Name:  g.convertVariableName(ref, g.getStringFromMap(v, "name")),
 			Value: g.getStringFromMap(v, "value"),
 			Type:  g.getStringFromMap(v, "type"),
 		}
-		valueExist := g.checkKeyFromMap(v, "value")
-		if !valueExist {
-			// 结构体类型
-			variable.Reference = fmt.Sprintf("v-%s-%s", frameId, variable.Name)
-		} else {
-			// 判断类型是否是指针类型
-			t := strings.Split(variable.Type, " ")
-			if len(t) > 1 {
-				variable.Reference = fmt.Sprintf("p-%s-%s", frameId, variable.Name)
+
+		// 如果value为空说明是结构体类型
+		if !g.checkKeyFromMap(v, "value") {
+			// 已经定位了的结构体下的某个属性，直接加路径即可。
+			field.Reference = getFieldReference(ref, field.Name)
+		}
+
+		// 指针类型，如果有值，但是children又不为0说明是指针类型
+		if g.checkKeyFromMap(v, "value") && g.getIntFromMap(v, "numchild") != 0 {
+			if field.Type != "char *" {
+				address := g.getAddress(field.Value)
+				if !isNullPoint(address) {
+					field.Reference = convertReference(
+						&referenceStruct{Type: "p", PointType: field.Type, Address: address, VariableName: field.Name})
+				}
+			}
+		}
+		answer = append(answer, field)
+	}
+	return answer
+}
+
+// convertToVariableStruct4GetFrameVariables 将从gdb中获取到的变量列表转换成变量结构体
+func (g *gdbDebugger) convertToVariableStruct4GetFrameVariables(frameId string, variables []interface{}) []*debugger.Variable {
+	answer := make([]*debugger.Variable, 0, 10)
+	for _, v := range variables {
+		variable := &debugger.Variable{
+			Name:  g.convertVariableName("", g.getStringFromMap(v, "name")),
+			Value: g.getStringFromMap(v, "value"),
+			Type:  g.getStringFromMap(v, "type"),
+		}
+
+		// 结构体类型，如果value为空说明是结构体类型
+		if !g.checkKeyFromMap(v, "value") {
+			// 如果parentRef不为空，说明是栈帧中的某个结构体变量
+			variable.Reference = convertReference(&referenceStruct{Type: "v", FrameId: frameId, VariableName: variable.Name})
+		}
+
+		// 指针类型，如果有值，但是children又不为0说明是指针类型
+		if g.checkKeyFromMap(v, "value") && g.getChildrenNumber(variable.Name) != 0 {
+			if variable.Type != "char *" {
+				address := g.getAddress(variable.Value)
+				if !isNullPoint(address) {
+					variable.Reference = convertReference(
+						&referenceStruct{Type: "p", PointType: variable.Type, Address: address, VariableName: variable.Name})
+				}
 			}
 		}
 		answer = append(answer, variable)
@@ -531,4 +445,157 @@ func (g *gdbDebugger) Terminate() error {
 	g.preDeleteContinues = 0
 	g.callback(&debugger.TerminatedEvent{})
 	return nil
+}
+
+// getCurrentThreadId 获取当前线程id
+func (g *gdbDebugger) getCurrentThreadId() (string, error) {
+	// 获取当前线程id
+	m, err := g.sendWithTimeOut(OptionTimeout, "thread-info")
+	if err != nil {
+		return "", err
+	}
+	threadMap, success := g.getPayloadFromMap(m)
+	if !success {
+		return "", errors.New("获取线程id失败")
+	}
+	currentThreadId := g.getStringFromMap(threadMap, "current-thread-id")
+	return currentThreadId, nil
+}
+
+// getAddress value中获取地址，由于一个存储地址的value有时候会有各种类型
+// 比如：0x555555602260; 0x555555601020 <globalItem>; 0x5555554008d4 "Hello, World!"
+// 通过该方法从value中获取到地址
+func (g *gdbDebugger) getAddress(value string) string {
+	i := strings.Index(value, " ")
+	if i == -1 {
+		return value
+	} else {
+		return value[0:i]
+	}
+}
+
+// convertVariableName 解析变量名称
+// 由于某些结构体或者指针返回的名称不太美观，所以在这里进行一个转换
+// 比如获取一个结构体的属性，属性名：localItem.id  ->  id
+// 解引用情况：dynamicInt.*(int *)0x555555602260 -> *dynamicInt
+// 数组情况：array.0 -> 0
+func (g *gdbDebugger) convertVariableName(ref string, variableName string) string {
+	index := strings.LastIndex(variableName, ".")
+	if index == -1 {
+		return variableName
+	}
+	if variableName[index+1] == '*' {
+		refStruct, _ := parseReference(ref)
+		return fmt.Sprintf("*%s", refStruct.VariableName)
+	}
+	if variableName[index+1] >= '0' && variableName[index+1] <= '9' {
+		return variableName[index+1:]
+	}
+	return variableName[index+1:]
+}
+
+// gdbNotificationCallback 处理gdb异步响应的回调
+func (g *gdbDebugger) gdbNotificationCallback(m map[string]interface{}) {
+	log.Println(m)
+	typ := g.getStringFromMap(m, "type")
+	switch typ {
+	case "exec":
+		class := g.getStringFromMap(m, "class")
+		switch class {
+		case "stopped":
+			// 程序停止
+			payload := g.getInterfaceFromMap(m, "payload")
+			g.parseStoppedData(payload)
+			// 标记程序状态为停止状态
+			g.runningLock.Lock()
+			g.running = false
+			g.runningLock.Unlock()
+		case "running":
+			// 程序执行
+			g.preDeleteContinuesLock.Lock()
+			if g.preDeleteContinues > 0 {
+				g.preDeleteContinues--
+				g.preDeleteContinuesLock.Unlock()
+				return
+			}
+			g.preDeleteContinuesLock.Unlock()
+			// 设置用户程序为执行状态
+			g.runningLock.Lock()
+			g.running = true
+			g.runningLock.Unlock()
+
+			g.callback(&debugger.ContinuedEvent{})
+
+		}
+	}
+
+}
+
+func (g *gdbDebugger) parseStoppedData(m interface{}) {
+	var file string
+	var line int
+	var reason constants.StoppedReasonType
+	r := g.getStringFromMap(m, "reason")
+	if r == "breakpoint-hit" {
+		reason = constants.BreakpointStopped
+		frame := g.getInterfaceFromMap(m, "frame")
+		// 检测是否还在workpath范围
+		fullname := g.getStringFromMap(frame, "fullname")
+		file = g.maskPath(fullname)
+		lineStr := g.getStringFromMap(frame, "line")
+		line, _ = strconv.Atoi(lineStr)
+		// 返回停留的断点位置
+		g.callback(&debugger.StoppedEvent{
+			Reason: reason,
+			File:   file,
+			Line:   line,
+		})
+	} else if r == "end-stepping-range" || r == "function-finished" {
+		reason = constants.StepStopped
+		frame := g.getInterfaceFromMap(m, "frame")
+		// 检测是否还在workpath范围
+		fullname := g.getStringFromMap(frame, "fullname")
+		if !strings.HasPrefix(fullname, g.workPath) {
+			// 说明通过step进入了系统依赖内部
+			err := g.StepOut()
+			if err == nil {
+				g.preDeleteContinuesLock.Lock()
+				g.preDeleteContinues++
+				g.preDeleteContinuesLock.Unlock()
+				return
+			}
+			log.Println(err)
+		}
+		file = g.maskPath(fullname)
+		lineStr := g.getStringFromMap(frame, "line")
+		line, _ = strconv.Atoi(lineStr)
+		// 返回停留的断点位置
+		g.callback(&debugger.StoppedEvent{
+			Reason: reason,
+			File:   file,
+			Line:   line,
+		})
+	} else if r == "exited-normally" {
+		// 程序退出
+		g.callback(&debugger.ExitedEvent{
+			ExitCode: 0,
+		})
+	}
+}
+
+// getChildrenNumber 获取children数量
+func (g *gdbDebugger) getChildrenNumber(name string) int {
+	_, _ = g.sendWithTimeOut(OptionTimeout, "var-create", name, "@", name)
+	defer func() {
+		_, _ = g.sendWithTimeOut(OptionTimeout, "var-delete", name)
+	}()
+	m, err := g.sendWithTimeOut(OptionTimeout, "var-info-num-children", name)
+	if err != nil {
+		return 0
+	}
+	payload, success := g.getPayloadFromMap(m)
+	if !success {
+		return 0
+	}
+	return g.getIntFromMap(payload, "numchild")
 }

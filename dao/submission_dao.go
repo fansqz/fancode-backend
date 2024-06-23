@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+// SubmissionDao
+// 记录用户每次的提交记录
 type SubmissionDao interface {
 	GetLastSubmission(db *gorm.DB, userID uint, problemID uint) (*po.Submission, error)
 	GetSubmissionList(db *gorm.DB, pageQuery *dto.PageQuery) ([]*po.Submission, error)

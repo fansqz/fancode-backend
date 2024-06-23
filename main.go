@@ -54,6 +54,7 @@ func main() {
 		&po.ProblemCase{},
 		&po.ProblemAttempt{},
 		&po.Submission{},
+		&po.UserCode{},
 	)
 	if err != nil {
 		log.Println(err)
